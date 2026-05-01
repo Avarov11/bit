@@ -288,7 +288,9 @@ export default function ContactPage() {
                   <div className="flex items-center gap-3">
                     {/* Instagram */}
                     <a
-                      href="#"
+                      href="https://www.instagram.com/biteezqa?igsh=NWVuc2Eya2xqMm1y"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Instagram"
                       className="w-10 h-10 rounded-xl bg-white/[0.07] border border-white/10 flex items-center justify-center hover:bg-white/[0.12] hover:border-white/20 transition-all duration-200 hover:-translate-y-0.5"
                     >
