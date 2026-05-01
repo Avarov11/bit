@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design tokens ──────────────────────────────────────── */
+:root {
+  --background: #fdf6f0;
+  --foreground: #1a0a0a;
+  --shadow-warm: rgba(26, 10, 10, 0.10);
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background-color: #fdf6f0;
+  /* Subtle grain texture */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #fdf6f0; }
+::-webkit-scrollbar-thumb { background: #E8B4BC; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #800020; }
+
+/* ─── Selection ──────────────────────────────────────────── */
+::selection { background: #F2D9DE; color: #5C0016; }
+
+/* ─── Scrollbar hide utility ─────────────────────────────── */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .text-balance { text-wrap: balance; }
+
+  /* Warm card surface */
+  .card-warm {
+    background: #fff;
+    box-shadow: 0 2px 8px 0 rgba(26, 10, 10, 0.07);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .card-warm:hover {
+    box-shadow: 0 8px 28px 0 rgba(26, 10, 10, 0.13);
+    transform: translateY(-3px);
+  }
+
+  /* Button press */
+  .btn-press { transition: transform 0.15s ease; }
+  .btn-press:active { transform: scale(0.96); }
+}
+
+/* ─── Date input accent ──────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+}
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  opacity: 0.9;
+}
