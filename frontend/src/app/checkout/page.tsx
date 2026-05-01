@@ -5,14 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, MapPin, Clock, CreditCard, Banknote } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
-const timeSlots = [
-  "10:00 AM – 12:00 PM",
-  "12:00 PM – 2:00 PM",
-  "2:00 PM – 5:00 PM",
-  "5:00 PM – 8:00 PM",
-];
+const timeSlotKeys = ["timeslot_0", "timeslot_1", "timeslot_2", "timeslot_3"];
 
 function Field({
   label, error, ...props
@@ -46,6 +42,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCartStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -76,11 +73,11 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = "Full name is required";
-    if (!form.phone.trim()) e.phone = "Phone number is required";
-    if (!form.email.trim() || !form.email.includes("@")) e.email = "Valid email required";
-    if (!form.pickupDate) e.pickupDate = "Please choose a pickup date";
-    if (!form.pickupTime) e.pickupTime = "Please choose a pickup time";
+    if (!form.name.trim()) e.name = t("checkout_error_name");
+    if (!form.phone.trim()) e.phone = t("checkout_error_phone");
+    if (!form.email.trim() || !form.email.includes("@")) e.email = t("checkout_error_email");
+    if (!form.pickupDate) e.pickupDate = t("checkout_error_pickup_date");
+    if (!form.pickupTime) e.pickupTime = t("checkout_error_pickup_time");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -109,8 +106,12 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <main className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 text-center" style={{ backgroundColor: "#C896A0" }}>
-        <p className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-3">Your cart is empty</p>
-        <Link href="/menu" className="text-[#3D0A14] font-semibold hover:underline">Browse the menu →</Link>
+        <p data-i18n="checkout_empty" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-3">
+          {t("checkout_empty")}
+        </p>
+        <Link href="/menu" data-i18n="checkout_browse_menu" className="text-[#3D0A14] font-semibold hover:underline">
+          {t("checkout_browse_menu")}
+        </Link>
       </main>
     );
   }
@@ -124,10 +125,12 @@ export default function CheckoutPage() {
             <ChevronLeft size={22} />
           </Link>
           <div>
-            <h1 className="font-playfair text-2xl md:text-3xl font-bold text-[#1A0A0A]">
-              Checkout
+            <h1 data-i18n="checkout_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#1A0A0A]">
+              {t("checkout_title")}
             </h1>
-            <p className="text-[#3D0A14]/60 text-sm">Review and confirm your order</p>
+            <p data-i18n="checkout_subtitle" className="text-[#3D0A14]/60 text-sm">
+              {t("checkout_subtitle")}
+            </p>
           </div>
         </div>
       </div>
@@ -137,34 +140,59 @@ export default function CheckoutPage() {
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* ── Form ──────────────────────────────── */}
             <div className="flex-1 w-full space-y-4">
-              <Section title="Contact Information">
-                <Field label="Full Name" type="text" placeholder="Sarah Al-Khatib"
-                  value={form.name} onChange={(e) => set("name", e.target.value)} error={errors.name} />
+              <Section title={t("checkout_contact_section")}>
+                <Field
+                  label={t("checkout_full_name")}
+                  data-i18n="checkout_full_name"
+                  type="text"
+                  placeholder={t("checkout_name_placeholder")}
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  error={errors.name}
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Phone Number" type="tel" placeholder="+961 70 000 000"
-                    value={form.phone} onChange={(e) => set("phone", e.target.value)} error={errors.phone} />
-                  <Field label="Email Address" type="email" placeholder="sarah@email.com"
-                    value={form.email} onChange={(e) => set("email", e.target.value)} error={errors.email} />
+                  <Field
+                    label={t("checkout_phone")}
+                    data-i18n="checkout_phone"
+                    type="tel"
+                    placeholder={t("checkout_phone_placeholder")}
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                    error={errors.phone}
+                  />
+                  <Field
+                    label={t("checkout_email")}
+                    data-i18n="checkout_email"
+                    type="email"
+                    placeholder={t("checkout_email_placeholder")}
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    error={errors.email}
+                  />
                 </div>
               </Section>
 
-              <Section title="Pickup Details">
+              <Section title={t("checkout_pickup_section")}>
                 {/* Store card */}
                 <div className="flex items-start gap-3 p-4 bg-[#F5E4E6] border border-[rgba(26,10,10,0.10)] rounded-xl">
                   <MapPin size={16} className="text-[#3D0A14] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-[#1A0A0A] text-sm">Biteez Boutique</p>
-                    <p className="text-[#4A3728] text-xs mt-0.5">123 Dessert Lane, Beirut, Lebanon</p>
-                    <p className="text-[#9E7B7B] text-xs flex items-center gap-1 mt-1">
-                      <Clock size={10} /> Open daily · 9:00 AM – 9:00 PM
+                    <p data-i18n="checkout_boutique_name" className="font-semibold text-[#1A0A0A] text-sm">
+                      {t("checkout_boutique_name")}
+                    </p>
+                    <p data-i18n="checkout_address" className="text-[#4A3728] text-xs mt-0.5">
+                      {t("checkout_address")}
+                    </p>
+                    <p data-i18n="checkout_hours" className="text-[#9E7B7B] text-xs flex items-center gap-1 mt-1">
+                      <Clock size={10} /> {t("checkout_hours")}
                     </p>
                   </div>
                 </div>
 
                 {/* Date */}
                 <div>
-                  <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-1.5">
-                    Pickup Date
+                  <label data-i18n="checkout_pickup_date" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-1.5">
+                    {t("checkout_pickup_date")}
                   </label>
                   <input
                     type="date" min={today} max={maxDate}
@@ -179,37 +207,43 @@ export default function CheckoutPage() {
 
                 {/* Time slots */}
                 <div>
-                  <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
-                    Pickup Time
+                  <label data-i18n="checkout_pickup_time" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
+                    {t("checkout_pickup_time")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot} type="button" onClick={() => set("pickupTime", slot)}
-                        className={cn(
-                          "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97]",
-                          form.pickupTime === slot
-                            ? "border-[#3D0A14] bg-[#3D0A14] text-white shadow-warm-sm"
-                            : "border-[rgba(26,10,10,0.10)] text-[#4A3728] hover:border-[#3D0A14]/40 bg-white"
-                        )}
-                      >
-                        {slot}
-                      </button>
-                    ))}
+                    {timeSlotKeys.map((slotKey) => {
+                      const slotLabel = t(slotKey);
+                      return (
+                        <button
+                          key={slotKey}
+                          type="button"
+                          onClick={() => set("pickupTime", slotLabel)}
+                          data-i18n={slotKey}
+                          className={cn(
+                            "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97]",
+                            form.pickupTime === slotLabel
+                              ? "border-[#3D0A14] bg-[#3D0A14] text-white shadow-warm-sm"
+                              : "border-[rgba(26,10,10,0.10)] text-[#4A3728] hover:border-[#3D0A14]/40 bg-white"
+                          )}
+                        >
+                          {slotLabel}
+                        </button>
+                      );
+                    })}
                   </div>
                   {errors.pickupTime && <p className="text-red-500 text-[11px] mt-1">{errors.pickupTime}</p>}
                 </div>
               </Section>
 
-              <Section title="Payment Method">
-                <p className="text-[#9E7B7B] text-xs -mt-1">
-                  Payment is collected at pickup — no online payment required.
+              <Section title={t("checkout_payment_section")}>
+                <p data-i18n="checkout_payment_note" className="text-[#9E7B7B] text-xs -mt-1">
+                  {t("checkout_payment_note")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    { id: "cash", label: "Cash on Pickup", Icon: Banknote },
-                    { id: "card", label: "Card on Pickup", Icon: CreditCard },
-                  ].map(({ id, label, Icon }) => (
+                  {([
+                    { id: "cash", labelKey: "checkout_cash_pickup", Icon: Banknote },
+                    { id: "card", labelKey: "checkout_card_pickup", Icon: CreditCard },
+                  ] as const).map(({ id, labelKey, Icon }) => (
                     <button
                       key={id} type="button" onClick={() => set("payment", id)}
                       className={cn(
@@ -225,24 +259,28 @@ export default function CheckoutPage() {
                       )}>
                         <Icon size={16} />
                       </div>
-                      <span className={cn(
-                        "text-sm font-semibold",
-                        form.payment === id ? "text-[#3D0A14]" : "text-[#4A3728]"
-                      )}>
-                        {label}
+                      <span
+                        data-i18n={labelKey}
+                        className={cn(
+                          "text-sm font-semibold",
+                          form.payment === id ? "text-[#3D0A14]" : "text-[#4A3728]"
+                        )}
+                      >
+                        {t(labelKey)}
                       </span>
                     </button>
                   ))}
                 </div>
               </Section>
 
-              <Section title="Order Notes">
-                <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider -mt-2 mb-1.5">
-                  Special Requests (optional)
+              <Section title={t("checkout_notes_section")}>
+                <label data-i18n="checkout_special_requests" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider -mt-2 mb-1.5">
+                  {t("checkout_special_requests")}
                 </label>
                 <textarea
                   value={form.notes} onChange={(e) => set("notes", e.target.value)}
-                  placeholder="Allergies, special packaging, decoration requests…"
+                  data-i18n="checkout_notes_placeholder"
+                  placeholder={t("checkout_notes_placeholder")}
                   rows={3}
                   className="w-full px-4 py-3 bg-white border border-[rgba(26,10,10,0.10)] focus:border-[#3D0A14] rounded-xl text-sm text-[#1A0A0A] placeholder:text-[#9E7B7B] outline-none transition-colors resize-none"
                 />
@@ -252,8 +290,8 @@ export default function CheckoutPage() {
             {/* ── Order summary ──────────────────────── */}
             <div className="w-full lg:w-80 xl:w-96 shrink-0">
               <div className="bg-white rounded-2xl shadow-warm-sm p-6 sticky top-24">
-                <h2 className="font-playfair text-xl font-bold text-[#1A0A0A] mb-5">
-                  Order Summary
+                <h2 data-i18n="checkout_order_summary" className="font-playfair text-xl font-bold text-[#1A0A0A] mb-5">
+                  {t("checkout_order_summary")}
                 </h2>
 
                 <div className="space-y-2 mb-4 max-h-52 overflow-y-auto pr-1">
@@ -272,15 +310,15 @@ export default function CheckoutPage() {
 
                 <div className="border-t border-[rgba(26,10,10,0.08)] pt-4 space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#9E7B7B]">Subtotal</span>
+                    <span data-i18n="checkout_subtotal" className="text-[#9E7B7B]">{t("checkout_subtotal")}</span>
                     <span className="font-semibold text-[#1A0A0A]">QAR {subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#9E7B7B]">Delivery</span>
-                    <span className="text-emerald-600 font-semibold">Pickup · Free</span>
+                    <span data-i18n="cart_delivery" className="text-[#9E7B7B]">{t("cart_delivery")}</span>
+                    <span data-i18n="checkout_delivery_free" className="text-emerald-600 font-semibold">{t("checkout_delivery_free")}</span>
                   </div>
                   <div className="border-t border-[rgba(26,10,10,0.08)] pt-3 flex justify-between">
-                    <span className="font-bold text-[#1A0A0A]">Total</span>
+                    <span data-i18n="checkout_total" className="font-bold text-[#1A0A0A]">{t("checkout_total")}</span>
                     <span className="font-playfair font-bold text-[#3D0A14] text-xl">QAR {subtotal}</span>
                   </div>
                 </div>
@@ -297,13 +335,15 @@ export default function CheckoutPage() {
                   {placing ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Placing Order…
+                      <span data-i18n="checkout_placing">{t("checkout_placing")}</span>
                     </span>
-                  ) : "Place Order"}
+                  ) : (
+                    <span data-i18n="checkout_place_order">{t("checkout_place_order")}</span>
+                  )}
                 </button>
 
-                <p className="text-center text-[#9E7B7B] text-xs mt-3">
-                  By placing your order you agree to our terms and conditions
+                <p data-i18n="checkout_terms" className="text-center text-[#9E7B7B] text-xs mt-3">
+                  {t("checkout_terms")}
                 </p>
               </div>
             </div>

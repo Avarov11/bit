@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { menuProducts } from "@/data/products";
 import { useCartStore } from "@/store/cartStore";
+import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -23,138 +24,146 @@ import { cn } from "@/lib/utils";
 const shapes = [
   {
     id: "mini",
-    name: "Mini Box",
-    serving: "Good for 2–4 people",
+    nameKey: "shape_name_mini",
+    servingKey: "shape_serving_mini",
     weight: "6 pcs",
     dimensions: "4×4 box",
     price: 55,
-    image:
-      "https://images.unsplash.com/photo-1589375462213-0f5a6a76c2c8?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1589375462213-0f5a6a76c2c8?w=400&h=400&fit=crop&q=80",
   },
   {
     id: "small-standard",
-    name: "Small Box",
-    serving: "Good for 5–8 people",
+    nameKey: "shape_name_small_standard",
+    servingKey: "shape_serving_small_standard",
     weight: "9 pcs",
     dimensions: "6×4 box",
     price: 75,
-    image:
-      "https://images.unsplash.com/photo-1515037893149-de7f840978e2?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1515037893149-de7f840978e2?w=400&h=400&fit=crop&q=80",
   },
   {
     id: "small-heart",
-    name: "Heart Box",
-    serving: "Good for 5–8 people",
+    nameKey: "shape_name_small_heart",
+    servingKey: "shape_serving_small_heart",
     weight: "9 pcs",
     dimensions: "Heart-shaped",
     price: 85,
-    image:
-      "https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=400&h=400&fit=crop&q=80",
   },
   {
     id: "standard",
-    name: "Standard Box",
-    serving: "Good for 12–16 people",
+    nameKey: "shape_name_standard",
+    servingKey: "shape_serving_standard",
     weight: "16 pcs",
     dimensions: "8×6 box",
     price: 110,
-    image:
-      "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=400&h=400&fit=crop&q=80",
   },
   {
     id: "large-box",
-    name: "Large Box",
-    serving: "Good for 20–25 people",
+    nameKey: "shape_name_large_box",
+    servingKey: "shape_serving_large_box",
     weight: "24 pcs",
     dimensions: "10×8 box",
     price: 150,
-    image:
-      "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=400&fit=crop&q=80",
   },
   {
     id: "party-tray",
-    name: "Party Tray",
-    serving: "Good for 30+ people",
+    nameKey: "shape_name_party_tray",
+    servingKey: "shape_serving_party_tray",
     weight: "36 pcs",
     dimensions: "Full tray",
     price: 210,
-    image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=400&fit=crop&q=80",
   },
 ];
 
 const flavors = [
-  { id: "vanilla", name: "Vanilla Blondie", emoji: "🤍", description: "Chewy blondie base with Madagascar vanilla bean", addOn: 0 },
-  { id: "red-velvet", name: "Red Velvet", emoji: "❤️", description: "Velvety cocoa brownie swirled with cream cheese", addOn: 15 },
-  { id: "chocolate", name: "Chocolate Fudge", emoji: "🍫", description: "Double-chocolate brownie with Belgian dark chips", addOn: 10 },
-  { id: "pistachio", name: "Pistachio Rose", emoji: "💚", description: "Blondie with Iranian pistachio cream & rose water", addOn: 20 },
-  { id: "lemon", name: "Lemon Blondie", emoji: "🍋", description: "Zesty blondie with Sicilian lemon curd swirl", addOn: 10 },
-  { id: "caramel", name: "Salted Caramel", emoji: "🧡", description: "Gooey caramel brownie topped with fleur de sel", addOn: 15 },
-  { id: "strawberry", name: "Strawberry Swirl", emoji: "🍓", description: "White chocolate brownie with fresh strawberry jam", addOn: 12 },
-  { id: "matcha", name: "Matcha Blondie", emoji: "🍵", description: "Earthy blondie base with ceremonial matcha swirl", addOn: 18 },
+  { id: "vanilla",    nameKey: "flavor_name_vanilla",    descKey: "flavor_desc_vanilla",    emoji: "🤍", addOn: 0  },
+  { id: "red-velvet", nameKey: "flavor_name_red_velvet", descKey: "flavor_desc_red_velvet", emoji: "❤️", addOn: 15 },
+  { id: "chocolate",  nameKey: "flavor_name_chocolate",  descKey: "flavor_desc_chocolate",  emoji: "🍫", addOn: 10 },
+  { id: "pistachio",  nameKey: "flavor_name_pistachio",  descKey: "flavor_desc_pistachio",  emoji: "💚", addOn: 20 },
+  { id: "lemon",      nameKey: "flavor_name_lemon",      descKey: "flavor_desc_lemon",      emoji: "🍋", addOn: 10 },
+  { id: "caramel",    nameKey: "flavor_name_caramel",    descKey: "flavor_desc_caramel",    emoji: "🧡", addOn: 15 },
+  { id: "strawberry", nameKey: "flavor_name_strawberry", descKey: "flavor_desc_strawberry", emoji: "🍓", addOn: 12 },
+  { id: "matcha",     nameKey: "flavor_name_matcha",     descKey: "flavor_desc_matcha",     emoji: "🍵", addOn: 18 },
 ];
 
 const colors = [
-  { id: "white", name: "White", hex: "#FFFFFF" },
-  { id: "ivory", name: "Ivory", hex: "#FFF8E7" },
-  { id: "cream", name: "Cream", hex: "#FDF0D5" },
-  { id: "blush", name: "Blush Pink", hex: "#FFB5C8" },
-  { id: "rose-gold", name: "Rose Gold", hex: "#E8A598" },
-  { id: "peach", name: "Peach", hex: "#FFCBA4" },
-  { id: "lavender", name: "Lavender", hex: "#C8B2D8" },
-  { id: "sage", name: "Sage Green", hex: "#B2D8C3" },
-  { id: "mint", name: "Mint", hex: "#B2D8D0" },
-  { id: "dusty-blue", name: "Dusty Blue", hex: "#B2C8D8" },
-  { id: "burgundy", name: "Burgundy", hex: "#800020" },
-  { id: "charcoal", name: "Charcoal", hex: "#4A4A4A" },
+  { id: "white",      nameKey: "color_name_white",      hex: "#FFFFFF" },
+  { id: "ivory",      nameKey: "color_name_ivory",      hex: "#FFF8E7" },
+  { id: "cream",      nameKey: "color_name_cream",      hex: "#FDF0D5" },
+  { id: "blush",      nameKey: "color_name_blush",      hex: "#FFB5C8" },
+  { id: "rose-gold",  nameKey: "color_name_rose_gold",  hex: "#E8A598" },
+  { id: "peach",      nameKey: "color_name_peach",      hex: "#FFCBA4" },
+  { id: "lavender",   nameKey: "color_name_lavender",   hex: "#C8B2D8" },
+  { id: "sage",       nameKey: "color_name_sage",       hex: "#B2D8C3" },
+  { id: "mint",       nameKey: "color_name_mint",       hex: "#B2D8D0" },
+  { id: "dusty-blue", nameKey: "color_name_dusty_blue", hex: "#B2C8D8" },
+  { id: "burgundy",   nameKey: "color_name_burgundy",   hex: "#800020" },
+  { id: "charcoal",   nameKey: "color_name_charcoal",   hex: "#4A4A4A" },
 ];
 
 type ToppingCategory = "All" | "Fruits" | "Flowers" | "Chocolate" | "Sprinkles" | "Nuts";
 
+const toppingCatKeyMap: Record<ToppingCategory, string> = {
+  All: "topping_cat_all",
+  Fruits: "topping_cat_fruits",
+  Flowers: "topping_cat_flowers",
+  Chocolate: "topping_cat_chocolate",
+  Sprinkles: "topping_cat_sprinkles",
+  Nuts: "topping_cat_nuts",
+};
+
 const toppings: {
   id: string;
-  name: string;
+  nameKey: string;
   category: Exclude<ToppingCategory, "All">;
   price: number;
   emoji: string;
 }[] = [
-  { id: "strawberry", name: "Strawberries", category: "Fruits", price: 8, emoji: "🍓" },
-  { id: "blueberry", name: "Blueberries", category: "Fruits", price: 6, emoji: "🫐" },
-  { id: "raspberry", name: "Raspberries", category: "Fruits", price: 10, emoji: "🍒" },
-  { id: "fig", name: "Fresh Figs", category: "Fruits", price: 12, emoji: "🍈" },
-  { id: "edible-roses", name: "Edible Roses", category: "Flowers", price: 12, emoji: "🌹" },
-  { id: "lavender", name: "Lavender Sprigs", category: "Flowers", price: 8, emoji: "💜" },
-  { id: "babys-breath", name: "Baby's Breath", category: "Flowers", price: 6, emoji: "🌸" },
-  { id: "jasmine", name: "Jasmine Buds", category: "Flowers", price: 10, emoji: "🌼" },
-  { id: "choc-drizzle", name: "Chocolate Drizzle", category: "Chocolate", price: 5, emoji: "🍫" },
-  { id: "choc-shards", name: "Chocolate Shards", category: "Chocolate", price: 8, emoji: "🔪" },
-  { id: "cocoa-dust", name: "Cocoa Dusting", category: "Chocolate", price: 3, emoji: "✨" },
-  { id: "gold-leaf", name: "Gold Leaf", category: "Chocolate", price: 15, emoji: "🥇" },
-  { id: "rainbow-sprinkles", name: "Rainbow Sprinkles", category: "Sprinkles", price: 4, emoji: "🌈" },
-  { id: "gold-sprinkles", name: "Gold Sprinkles", category: "Sprinkles", price: 6, emoji: "⭐" },
-  { id: "pearl-sprinkles", name: "Pearl Balls", category: "Sprinkles", price: 5, emoji: "⚪" },
-  { id: "pistachio", name: "Pistachio Crumble", category: "Nuts", price: 7, emoji: "💚" },
-  { id: "almond", name: "Almond Flakes", category: "Nuts", price: 6, emoji: "🌰" },
-  { id: "walnut", name: "Walnut Pieces", category: "Nuts", price: 5, emoji: "🟤" },
+  { id: "strawberry",        nameKey: "topping_name_strawberry",        category: "Fruits",     price: 8,  emoji: "🍓" },
+  { id: "blueberry",         nameKey: "topping_name_blueberry",         category: "Fruits",     price: 6,  emoji: "🫐" },
+  { id: "raspberry",         nameKey: "topping_name_raspberry",         category: "Fruits",     price: 10, emoji: "🍒" },
+  { id: "fig",               nameKey: "topping_name_fig",               category: "Fruits",     price: 12, emoji: "🍈" },
+  { id: "edible-roses",      nameKey: "topping_name_edible_roses",      category: "Flowers",    price: 12, emoji: "🌹" },
+  { id: "lavender",          nameKey: "topping_name_lavender",          category: "Flowers",    price: 8,  emoji: "💜" },
+  { id: "babys-breath",      nameKey: "topping_name_babys_breath",      category: "Flowers",    price: 6,  emoji: "🌸" },
+  { id: "jasmine",           nameKey: "topping_name_jasmine",           category: "Flowers",    price: 10, emoji: "🌼" },
+  { id: "choc-drizzle",      nameKey: "topping_name_choc_drizzle",      category: "Chocolate",  price: 5,  emoji: "🍫" },
+  { id: "choc-shards",       nameKey: "topping_name_choc_shards",       category: "Chocolate",  price: 8,  emoji: "🔪" },
+  { id: "cocoa-dust",        nameKey: "topping_name_cocoa_dust",        category: "Chocolate",  price: 3,  emoji: "✨" },
+  { id: "gold-leaf",         nameKey: "topping_name_gold_leaf",         category: "Chocolate",  price: 15, emoji: "🥇" },
+  { id: "rainbow-sprinkles", nameKey: "topping_name_rainbow_sprinkles", category: "Sprinkles",  price: 4,  emoji: "🌈" },
+  { id: "gold-sprinkles",    nameKey: "topping_name_gold_sprinkles",    category: "Sprinkles",  price: 6,  emoji: "⭐" },
+  { id: "pearl-sprinkles",   nameKey: "topping_name_pearl_sprinkles",   category: "Sprinkles",  price: 5,  emoji: "⚪" },
+  { id: "pistachio",         nameKey: "topping_name_pistachio",         category: "Nuts",       price: 7,  emoji: "💚" },
+  { id: "almond",            nameKey: "topping_name_almond",            category: "Nuts",       price: 6,  emoji: "🌰" },
+  { id: "walnut",            nameKey: "topping_name_walnut",            category: "Nuts",       price: 5,  emoji: "🟤" },
 ];
 
 const fontStyles = [
-  { id: "serif", name: "Classic Serif", preview: "Happy Birthday", family: "Georgia, serif" },
-  { id: "script", name: "Modern Script", preview: "Happy Birthday", family: "Brush Script MT, cursive" },
-  { id: "bold", name: "Bold Block", preview: "Happy Birthday", family: "Impact, sans-serif" },
-  { id: "handwritten", name: "Handwritten", preview: "Happy Birthday", family: "Segoe Script, cursive" },
+  { id: "serif",       nameKey: "font_name_serif",       preview: "Happy Birthday", family: "Georgia, serif" },
+  { id: "script",      nameKey: "font_name_script",      preview: "Happy Birthday", family: "Brush Script MT, cursive" },
+  { id: "bold",        nameKey: "font_name_bold",        preview: "Happy Birthday", family: "Impact, sans-serif" },
+  { id: "handwritten", nameKey: "font_name_handwritten", preview: "Happy Birthday", family: "Segoe Script, cursive" },
 ];
 
-const placements = ["Center Top", "Center Middle", "Center Bottom", "Border Frame"];
+const placementKeys = [
+  "placement_center_top",
+  "placement_center_middle",
+  "placement_center_bottom",
+  "placement_border_frame",
+];
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
 const steps = [
-  { id: "shape", label: "Shape", Icon: Layers },
-  { id: "flavor", label: "Flavor", Icon: ChefHat },
-  { id: "color", label: "Color", Icon: Palette },
-  { id: "toppings", label: "Toppings", Icon: Sparkles },
-  { id: "write", label: "Write & Print", Icon: PenLine },
+  { id: "shape",    labelKey: "customize_step_shape",    Icon: Layers      },
+  { id: "flavor",   labelKey: "customize_step_flavor",   Icon: ChefHat     },
+  { id: "color",    labelKey: "customize_step_color",    Icon: Palette     },
+  { id: "toppings", labelKey: "customize_step_toppings", Icon: Sparkles    },
+  { id: "write",    labelKey: "customize_step_write",    Icon: PenLine     },
 ];
 
 interface Selections {
@@ -164,13 +173,14 @@ interface Selections {
   toppingIds: string[];
   message: string;
   fontStyleId: string;
-  placement: string;
+  placementKey: string;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CustomizePage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { t } = useLanguage();
   const product = menuProducts.find((p) => p.id === params.id) ?? menuProducts[0];
   const addToCart = useCartStore((s) => s.addItem);
 
@@ -182,7 +192,7 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
     toppingIds: [],
     message: "",
     fontStyleId: "serif",
-    placement: "Center Middle",
+    placementKey: "placement_center_middle",
   });
 
   const [toppingSearch, setToppingSearch] = useState("");
@@ -192,8 +202,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
     const base = shapes.find((s) => s.id === sel.shapeId)?.price ?? product.price;
     const flavor = flavors.find((f) => f.id === sel.flavorId)?.addOn ?? 0;
     const tops = toppings
-      .filter((t) => sel.toppingIds.includes(t.id))
-      .reduce((sum, t) => sum + t.price, 0);
+      .filter((tp) => sel.toppingIds.includes(tp.id))
+      .reduce((sum, tp) => sum + tp.price, 0);
     const write = sel.message.trim() ? 10 : 0;
     return base + flavor + tops + write;
   }, [sel, product.price]);
@@ -222,15 +232,23 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
         quantity: 1,
         unitPrice: totalPrice,
         customization: {
-          shape: shapes.find((s) => s.id === sel.shapeId)?.name,
-          flavor: flavors.find((f) => f.id === sel.flavorId)?.name,
-          color: colors.find((c) => c.id === sel.colorId)?.name,
+          shape: shapes.find((s) => s.id === sel.shapeId)?.nameKey
+            ? t(shapes.find((s) => s.id === sel.shapeId)!.nameKey)
+            : undefined,
+          flavor: flavors.find((f) => f.id === sel.flavorId)?.nameKey
+            ? t(flavors.find((f) => f.id === sel.flavorId)!.nameKey)
+            : undefined,
+          color: colors.find((c) => c.id === sel.colorId)?.nameKey
+            ? t(colors.find((c) => c.id === sel.colorId)!.nameKey)
+            : undefined,
           toppings: toppings
-            .filter((t) => sel.toppingIds.includes(t.id))
-            .map((t) => t.name),
+            .filter((tp) => sel.toppingIds.includes(tp.id))
+            .map((tp) => t(tp.nameKey)),
           message: sel.message || undefined,
-          fontStyle: fontStyles.find((f) => f.id === sel.fontStyleId)?.name,
-          placement: sel.placement || undefined,
+          fontStyle: fontStyles.find((f) => f.id === sel.fontStyleId)?.nameKey
+            ? t(fontStyles.find((f) => f.id === sel.fontStyleId)!.nameKey)
+            : undefined,
+          placement: sel.placementKey ? t(sel.placementKey) : undefined,
         },
       });
       router.push("/cart");
@@ -241,23 +259,32 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
     setSel((prev) => ({
       ...prev,
       toppingIds: prev.toppingIds.includes(id)
-        ? prev.toppingIds.filter((t) => t !== id)
+        ? prev.toppingIds.filter((tp) => tp !== id)
         : [...prev.toppingIds, id],
     }));
   };
 
-  const filteredToppings = toppings.filter((t) => {
-    const matchCat = toppingCat === "All" || t.category === toppingCat;
-    const matchSearch = t.name.toLowerCase().includes(toppingSearch.toLowerCase());
+  const filteredToppings = toppings.filter((tp) => {
+    const matchCat = toppingCat === "All" || tp.category === toppingCat;
+    const toppingName = t(tp.nameKey).toLowerCase();
+    const matchSearch = toppingName.includes(toppingSearch.toLowerCase());
     return matchCat && matchSearch;
   });
+
+  const toppingCategories: ToppingCategory[] = [
+    "All", "Fruits", "Flowers", "Chocolate", "Sprinkles", "Nuts",
+  ];
 
   // ─── Step content renderers ─────────────────────────────────────────────────
 
   const ShapeStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Choose Size & Style</h2>
-      <p className="text-[#9E7B7B] text-sm mb-5">Select the perfect box size for your occasion</p>
+      <h2 data-i18n="customize_shape_title" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">
+        {t("customize_shape_title")}
+      </h2>
+      <p data-i18n="customize_shape_subtitle" className="text-[#9E7B7B] text-sm mb-5">
+        {t("customize_shape_subtitle")}
+      </p>
       <div className="grid grid-cols-2 gap-3">
         {shapes.map((shape) => {
           const selected = sel.shapeId === shape.id;
@@ -273,16 +300,17 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
               )}
             >
               {selected && (
-                <CheckCircle2
-                  size={18}
-                  className="absolute top-2.5 right-2.5 text-[#3D0A14] fill-[#F5E4E6]"
-                />
+                <CheckCircle2 size={18} className="absolute top-2.5 right-2.5 text-[#3D0A14] fill-[#F5E4E6]" />
               )}
               <div className="relative aspect-square rounded-xl overflow-hidden bg-[#F5E4E6] mb-3">
-                <Image src={shape.image} alt={shape.name} fill sizes="(max-width: 768px) 45vw, 200px" className="object-cover" />
+                <Image src={shape.image} alt={t(shape.nameKey)} fill sizes="(max-width: 768px) 45vw, 200px" className="object-cover" />
               </div>
-              <h3 className="font-semibold text-[#1A0A0A] text-sm mb-0.5">{shape.name}</h3>
-              <p className="text-[#9E7B7B] text-[11px] mb-0.5">{shape.serving}</p>
+              <h3 data-i18n={shape.nameKey} className="font-semibold text-[#1A0A0A] text-sm mb-0.5">
+                {t(shape.nameKey)}
+              </h3>
+              <p data-i18n={shape.servingKey} className="text-[#9E7B7B] text-[11px] mb-0.5">
+                {t(shape.servingKey)}
+              </p>
               <p className="text-[#9E7B7B] text-[11px]">
                 {shape.weight} &nbsp;|&nbsp; {shape.dimensions}
               </p>
@@ -298,8 +326,12 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
 
   const FlavorStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Choose Flavor</h2>
-      <p className="text-[#9E7B7B] text-sm mb-5">Pick the taste that makes every bite count</p>
+      <h2 data-i18n="customize_flavor_title" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">
+        {t("customize_flavor_title")}
+      </h2>
+      <p data-i18n="customize_flavor_subtitle" className="text-[#9E7B7B] text-sm mb-5">
+        {t("customize_flavor_subtitle")}
+      </p>
       <div className="grid grid-cols-2 gap-3">
         {flavors.map((flavor) => {
           const selected = sel.flavorId === flavor.id;
@@ -315,21 +347,17 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
               )}
             >
               {selected && (
-                <CheckCircle2
-                  size={16}
-                  className="absolute top-3 right-3 text-[#3D0A14] fill-[#F5E4E6]"
-                />
+                <CheckCircle2 size={16} className="absolute top-3 right-3 text-[#3D0A14] fill-[#F5E4E6]" />
               )}
               <span className="text-2xl mb-2 block">{flavor.emoji}</span>
-              <h3 className="font-semibold text-[#1A0A0A] text-sm mb-1">{flavor.name}</h3>
-              <p className="text-[#9E7B7B] text-[11px] mb-2 leading-snug">{flavor.description}</p>
-              <span
-                className={cn(
-                  "text-xs font-bold",
-                  flavor.addOn > 0 ? "text-[#3D0A14]" : "text-[#9E7B7B]"
-                )}
-              >
-                {flavor.addOn > 0 ? `+${flavor.addOn} QAR` : "Included"}
+              <h3 data-i18n={flavor.nameKey} className="font-semibold text-[#1A0A0A] text-sm mb-1">
+                {t(flavor.nameKey)}
+              </h3>
+              <p data-i18n={flavor.descKey} className="text-[#9E7B7B] text-[11px] mb-2 leading-snug">
+                {t(flavor.descKey)}
+              </p>
+              <span className={cn("text-xs font-bold", flavor.addOn > 0 ? "text-[#3D0A14]" : "text-[#9E7B7B]")}>
+                {flavor.addOn > 0 ? `+${flavor.addOn} QAR` : t("customize_flavor_included")}
               </span>
             </button>
           );
@@ -340,8 +368,12 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
 
   const ColorStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Choose Color</h2>
-      <p className="text-[#9E7B7B] text-sm mb-5">Select the frosting color for your brownies</p>
+      <h2 data-i18n="customize_color_title" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">
+        {t("customize_color_title")}
+      </h2>
+      <p data-i18n="customize_color_subtitle" className="text-[#9E7B7B] text-sm mb-5">
+        {t("customize_color_subtitle")}
+      </p>
       <div className="grid grid-cols-4 gap-2">
         {colors.map((color) => {
           const selected = sel.colorId === color.id;
@@ -375,8 +407,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-[#4A3728] font-medium text-center leading-tight">
-                {color.name}
+              <span data-i18n={color.nameKey} className="text-[10px] text-[#4A3728] font-medium text-center leading-tight">
+                {t(color.nameKey)}
               </span>
             </button>
           );
@@ -385,15 +417,13 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
     </div>
   );
 
-  const toppingCategories: ToppingCategory[] = [
-    "All", "Fruits", "Flowers", "Chocolate", "Sprinkles", "Nuts",
-  ];
-
   const ToppingsStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Choose Toppings</h2>
-      <p className="text-[#9E7B7B] text-sm mb-4">
-        Select as many as you like — each adds to your total
+      <h2 data-i18n="customize_toppings_title" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">
+        {t("customize_toppings_title")}
+      </h2>
+      <p data-i18n="customize_toppings_subtitle" className="text-[#9E7B7B] text-sm mb-4">
+        {t("customize_toppings_subtitle")}
       </p>
 
       <div className="relative mb-3">
@@ -402,7 +432,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
           type="text"
           value={toppingSearch}
           onChange={(e) => setToppingSearch(e.target.value)}
-          placeholder="Search toppings…"
+          data-i18n="customize_toppings_search_placeholder"
+          placeholder={t("customize_toppings_search_placeholder")}
           className="w-full pl-9 pr-4 py-2.5 bg-white border border-[rgba(26,10,10,0.08)] rounded-xl text-sm text-[#1A0A0A] placeholder:text-[#9E7B7B] outline-none focus:border-[#3D0A14] transition-colors"
         />
       </div>
@@ -412,6 +443,7 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
           <button
             key={cat}
             onClick={() => setToppingCat(cat)}
+            data-i18n={toppingCatKeyMap[cat]}
             className={cn(
               "shrink-0 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-200 active:scale-[0.97]",
               toppingCat === cat
@@ -419,7 +451,7 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                 : "bg-white text-[#4A3728] hover:bg-[#F5E4E6] border border-[rgba(26,10,10,0.07)]"
             )}
           >
-            {cat}
+            {t(toppingCatKeyMap[cat])}
           </button>
         ))}
       </div>
@@ -427,11 +459,11 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
       {sel.toppingIds.length > 0 && (
         <div className="mb-4 p-3 bg-[#F5E4E6] border border-[#3D0A14]/20 rounded-xl">
           <p className="text-xs font-semibold text-[#3D0A14]">
-            {sel.toppingIds.length} topping{sel.toppingIds.length > 1 ? "s" : ""} selected
+            {sel.toppingIds.length} {sel.toppingIds.length > 1 ? "toppings" : "topping"} selected
             {" "}·{" "}
             +{toppings
-              .filter((t) => sel.toppingIds.includes(t.id))
-              .reduce((s, t) => s + t.price, 0)}{" "}
+              .filter((tp) => sel.toppingIds.includes(tp.id))
+              .reduce((s, tp) => s + tp.price, 0)}{" "}
             QAR
           </p>
         </div>
@@ -457,8 +489,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                 </span>
               )}
               <span className="text-xl block mb-1">{topping.emoji}</span>
-              <p className="text-[10px] font-semibold text-[#1A0A0A] leading-tight mb-0.5">
-                {topping.name}
+              <p data-i18n={topping.nameKey} className="text-[10px] font-semibold text-[#1A0A0A] leading-tight mb-0.5">
+                {t(topping.nameKey)}
               </p>
               <p className={cn("text-[10px] font-bold", selected ? "text-[#3D0A14]" : "text-[#9E7B7B]")}>
                 +{topping.price} QAR
@@ -468,8 +500,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
         })}
 
         {filteredToppings.length === 0 && (
-          <div className="col-span-3 text-center py-8 text-[#9E7B7B] text-sm">
-            No toppings match your search
+          <div data-i18n="customize_toppings_no_results" className="col-span-3 text-center py-8 text-[#9E7B7B] text-sm">
+            {t("customize_toppings_no_results")}
           </div>
         )}
       </div>
@@ -478,33 +510,32 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
 
   const WriteStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Write & Print</h2>
-      <p className="text-[#9E7B7B] text-sm mb-5">
-        Add a personalised message · +10 QAR
+      <h2 data-i18n="customize_write_title" className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">
+        {t("customize_write_title")}
+      </h2>
+      <p data-i18n="customize_write_subtitle" className="text-[#9E7B7B] text-sm mb-5">
+        {t("customize_write_subtitle")}
       </p>
 
       <div className="space-y-6">
         <div>
-          <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
-            Your Message
+          <label data-i18n="customize_message_label" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
+            {t("customize_message_label")}
           </label>
           <textarea
             value={sel.message}
-            onChange={(e) =>
-              setSel((p) => ({ ...p, message: e.target.value.slice(0, 50) }))
-            }
-            placeholder="e.g. Happy Birthday Sarah! 🎂"
+            onChange={(e) => setSel((p) => ({ ...p, message: e.target.value.slice(0, 50) }))}
+            data-i18n="customize_message_placeholder"
+            placeholder={t("customize_message_placeholder")}
             rows={3}
             className="w-full px-4 py-3 bg-white border border-[rgba(26,10,10,0.10)] focus:border-[#3D0A14] rounded-xl text-sm text-[#1A0A0A] placeholder:text-[#9E7B7B] outline-none transition-colors resize-none"
           />
-          <p className="text-right text-xs text-[#9E7B7B] mt-1">
-            {sel.message.length}/50
-          </p>
+          <p className="text-right text-xs text-[#9E7B7B] mt-1">{sel.message.length}/50</p>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-3">
-            Font Style
+          <label data-i18n="customize_font_style_label" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-3">
+            {t("customize_font_style_label")}
           </label>
           <div className="grid grid-cols-2 gap-3">
             {fontStyles.map((font) => {
@@ -525,13 +556,12 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                       <Check size={12} className="text-[#3D0A14]" strokeWidth={3} />
                     </span>
                   )}
-                  <p
-                    className="text-[#4A3728] text-sm mb-1"
-                    style={{ fontFamily: font.family }}
-                  >
+                  <p className="text-[#4A3728] text-sm mb-1" style={{ fontFamily: font.family }}>
                     {sel.message.trim() || font.preview}
                   </p>
-                  <p className="text-[10px] text-[#9E7B7B] font-semibold">{font.name}</p>
+                  <p data-i18n={font.nameKey} className="text-[10px] text-[#9E7B7B] font-semibold">
+                    {t(font.nameKey)}
+                  </p>
                 </button>
               );
             })}
@@ -539,16 +569,17 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-3">
-            Message Placement
+          <label data-i18n="customize_placement_label" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-3">
+            {t("customize_placement_label")}
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {placements.map((p) => {
-              const selected = sel.placement === p;
+            {placementKeys.map((key) => {
+              const selected = sel.placementKey === key;
               return (
                 <button
-                  key={p}
-                  onClick={() => setSel((prev) => ({ ...prev, placement: p }))}
+                  key={key}
+                  onClick={() => setSel((prev) => ({ ...prev, placementKey: key }))}
+                  data-i18n={key}
                   className={cn(
                     "rounded-xl border-2 py-3 text-center text-xs font-semibold transition-all duration-200 active:scale-[0.97]",
                     selected
@@ -556,7 +587,7 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                       : "border-[rgba(26,10,10,0.10)] text-[#4A3728] hover:border-[#3D0A14]/40 bg-white"
                   )}
                 >
-                  {p}
+                  {t(key)}
                 </button>
               );
             })}
@@ -591,8 +622,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
           {product.name}
         </h1>
         <div className="text-right">
-          <p className="text-[10px] text-[#9E7B7B] uppercase tracking-wider leading-none mb-0.5">
-            Total
+          <p data-i18n="customize_total_label" className="text-[10px] text-[#9E7B7B] uppercase tracking-wider leading-none mb-0.5">
+            {t("customize_total_label")}
           </p>
           <p className="font-playfair text-lg font-bold text-[#3D0A14] leading-none">
             QAR {totalPrice}
@@ -627,12 +658,13 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                   )}
                 </span>
                 <span
+                  data-i18n={s.labelKey}
                   className={cn(
                     "relative z-10 text-[10px] font-bold leading-tight text-center",
                     active ? "text-white" : completed ? "text-[#3D0A14]" : "text-[#9E7B7B]"
                   )}
                 >
-                  {s.label.split(" ").map((w, wi) => (
+                  {t(s.labelKey).split(" ").map((w, wi) => (
                     <span key={wi} className="block">{w}</span>
                   ))}
                 </span>
@@ -662,7 +694,9 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                   )}
                 >
                   {completed ? <CheckCircle2 size={16} /> : <s.Icon size={16} />}
-                  <span className="text-[10px] font-bold">{s.label.split(" ")[0]}</span>
+                  <span data-i18n={s.labelKey} className="text-[10px] font-bold">
+                    {t(s.labelKey).split(" ")[0]}
+                  </span>
                 </button>
               );
             })}
@@ -672,7 +706,8 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
           <div className="relative h-56 md:h-72 bg-[#1A0A0A] overflow-hidden">
             <Image
               src={previewImage}
-              alt="Brownie preview"
+              data-i18n="customize_preview_alt"
+              alt={t("customize_preview_alt")}
               fill
               sizes="100vw"
               className="object-cover opacity-80 transition-opacity duration-500"
@@ -690,10 +725,12 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
 
             <div className="absolute bottom-4 left-4">
               <span className="text-white/60 text-xs font-semibold uppercase tracking-widest">
-                Step {step + 1} of {steps.length}
+                {t("customize_step_shape") !== "customize_step_shape"
+                  ? `${step + 1} / ${steps.length}`
+                  : `Step ${step + 1} of ${steps.length}`}
               </span>
-              <h2 className="font-playfair text-white text-2xl font-bold leading-tight">
-                {steps[step].label}
+              <h2 data-i18n={steps[step].labelKey} className="font-playfair text-white text-2xl font-bold leading-tight">
+                {t(steps[step].labelKey)}
               </h2>
             </div>
 
@@ -704,7 +741,7 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
                   style={{ backgroundColor: colors.find((c) => c.id === sel.colorId)?.hex }}
                 />
                 <span className="text-white text-xs font-medium">
-                  {colors.find((c) => c.id === sel.colorId)?.name}
+                  {t(colors.find((c) => c.id === sel.colorId)?.nameKey ?? "")}
                 </span>
               </div>
             )}
@@ -721,7 +758,9 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
           onClick={handleNext}
           className="w-full bg-[#3D0A14] hover:bg-[#2D0810] text-white font-bold py-4 rounded-2xl transition-all duration-300 hover:shadow-warm-lg shadow-warm-sm active:scale-[0.97] font-playfair text-base tracking-wide"
         >
-          {step === steps.length - 1 ? "Confirm Order" : `Next  →`}
+          <span data-i18n={step === steps.length - 1 ? "customize_confirm" : "customize_next"}>
+            {step === steps.length - 1 ? t("customize_confirm") : t("customize_next")}
+          </span>
         </button>
       </footer>
     </div>

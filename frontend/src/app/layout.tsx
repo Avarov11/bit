@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Cairo } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,6 +15,13 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
+  display: "swap",
+});
+
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  variable: "--font-cairo",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -31,10 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-[#C896A0]`}
+        className={`${inter.variable} ${playfair.variable} ${cairo.variable} font-sans antialiased bg-[#C896A0]`}
       >
-        <Navbar />
-        {children}
+        <LanguageProvider>
+          <Navbar />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

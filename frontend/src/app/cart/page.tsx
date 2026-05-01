@@ -6,17 +6,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, Plus, Minus, ShoppingBag, ArrowRight, Trash2, ChevronLeft } from "lucide-react";
 import { useCartStore, type CartItem } from "@/store/cartStore";
+import { useLanguage } from "@/context/LanguageContext";
 
-function CartCard({ item, onRemove, onQty }: {
+function CartCard({ item, onRemove, onQty, t }: {
   item: CartItem;
   onRemove: () => void;
   onQty: (q: number) => void;
+  t: (key: string) => string;
 }) {
   const { customization: c } = item;
   const summaryParts = [
-    c.shape && `Shape: ${c.shape}`,
-    c.flavor && `Flavor: ${c.flavor}`,
-    c.color && `Color: ${c.color}`,
+    c.shape && `${t("cart_customization_shape")}: ${c.shape}`,
+    c.flavor && `${t("cart_customization_flavor")}: ${c.flavor}`,
+    c.color && `${t("cart_customization_color")}: ${c.color}`,
   ].filter(Boolean) as string[];
 
   return (
@@ -89,6 +91,7 @@ function CartCard({ item, onRemove, onQty }: {
 export default function CartPage() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -110,18 +113,18 @@ export default function CartPage() {
           <div className="w-24 h-24 rounded-full bg-[#F5E4E6] flex items-center justify-center mx-auto mb-6">
             <ShoppingBag size={34} className="text-[#3D0A14]" />
           </div>
-          <h1 className="font-playfair text-3xl font-bold text-[#1A0A0A] mb-3">
-            Your cart is empty
+          <h1 data-i18n="cart_empty_title" className="font-playfair text-3xl font-bold text-[#1A0A0A] mb-3">
+            {t("cart_empty_title")}
           </h1>
-          <p className="text-[#3D0A14]/60 text-sm mb-8">
-            Looks like you haven&apos;t added anything yet. Explore our menu
-            and build your perfect order.
+          <p data-i18n="cart_empty_desc" className="text-[#3D0A14]/60 text-sm mb-8">
+            {t("cart_empty_desc")}
           </p>
           <Link
             href="/menu"
             className="inline-flex items-center gap-2 bg-[#3D0A14] hover:bg-[#2D0810] text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:-translate-y-0.5 shadow-warm-sm hover:shadow-warm-md active:scale-[0.97]"
           >
-            Browse Menu <ArrowRight size={16} />
+            <span data-i18n="cart_browse_menu">{t("cart_browse_menu")}</span>
+            <ArrowRight size={16} />
           </Link>
         </div>
       </main>
@@ -137,11 +140,11 @@ export default function CartPage() {
             <ChevronLeft size={22} />
           </button>
           <div>
-            <h1 className="font-playfair text-2xl md:text-3xl font-bold text-[#1A0A0A]">
-              My Cart
+            <h1 data-i18n="cart_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#1A0A0A]">
+              {t("cart_title")}
             </h1>
             <p className="text-[#3D0A14]/60 text-sm">
-              {itemCount} item{itemCount !== 1 ? "s" : ""}
+              {itemCount} {itemCount !== 1 ? "items" : "item"}
             </p>
           </div>
         </div>
@@ -152,14 +155,15 @@ export default function CartPage() {
           {/* Cart items */}
           <div className="flex-1 w-full space-y-3">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-[#3D0A14]/60 font-medium uppercase tracking-wider">
-                Your Items
+              <p data-i18n="cart_your_items" className="text-xs text-[#3D0A14]/60 font-medium uppercase tracking-wider">
+                {t("cart_your_items")}
               </p>
               <button
                 onClick={clearCart}
                 className="flex items-center gap-1.5 text-xs font-semibold text-[#9E7B7B] hover:text-red-400 transition-colors"
               >
-                <Trash2 size={12} /> Clear all
+                <Trash2 size={12} />
+                <span data-i18n="cart_clear_all">{t("cart_clear_all")}</span>
               </button>
             </div>
 
@@ -167,6 +171,7 @@ export default function CartPage() {
               <CartCard
                 key={item.cartId}
                 item={item}
+                t={t}
                 onRemove={() => removeItem(item.cartId)}
                 onQty={(q) => updateQuantity(item.cartId, q)}
               />
@@ -176,15 +181,16 @@ export default function CartPage() {
               href="/menu"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3D0A14] hover:text-[#2D0810] transition-colors mt-2"
             >
-              <ChevronLeft size={14} /> Continue Shopping
+              <ChevronLeft size={14} />
+              <span data-i18n="cart_continue_shopping">{t("cart_continue_shopping")}</span>
             </Link>
           </div>
 
           {/* Order summary */}
           <div className="w-full lg:w-80 xl:w-96 shrink-0">
             <div className="bg-white rounded-2xl shadow-warm-sm p-6 sticky top-24">
-              <h2 className="font-playfair text-xl font-bold text-[#1A0A0A] mb-5">
-                Order Summary
+              <h2 data-i18n="cart_order_summary" className="font-playfair text-xl font-bold text-[#1A0A0A] mb-5">
+                {t("cart_order_summary")}
               </h2>
 
               <div className="space-y-2 mb-4">
@@ -205,15 +211,17 @@ export default function CartPage() {
 
               <div className="border-t border-[rgba(26,10,10,0.08)] pt-4 space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#9E7B7B]">Subtotal</span>
+                  <span data-i18n="cart_subtotal" className="text-[#9E7B7B]">{t("cart_subtotal")}</span>
                   <span className="font-semibold text-[#1A0A0A]">QAR {subtotal}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#9E7B7B]">Delivery</span>
-                  <span className="text-emerald-600 font-semibold">Pickup only</span>
+                  <span data-i18n="cart_delivery" className="text-[#9E7B7B]">{t("cart_delivery")}</span>
+                  <span data-i18n="cart_pickup_only" className="text-emerald-600 font-semibold">
+                    {t("cart_pickup_only")}
+                  </span>
                 </div>
                 <div className="border-t border-[rgba(26,10,10,0.08)] pt-3 flex justify-between">
-                  <span className="font-bold text-[#1A0A0A]">Total</span>
+                  <span data-i18n="cart_total" className="font-bold text-[#1A0A0A]">{t("cart_total")}</span>
                   <span className="font-playfair font-bold text-[#3D0A14] text-xl">
                     QAR {subtotal}
                   </span>
@@ -221,14 +229,15 @@ export default function CartPage() {
               </div>
 
               <div className="bg-[#F5E4E6] rounded-xl px-4 py-3 mb-5 text-xs text-[#4A3728] leading-relaxed">
-                🍫 &nbsp;All brownies are baked fresh and ready for pickup at our boutique within 24–48 hours.
+                🍫 &nbsp;<span data-i18n="cart_freshness_note">{t("cart_freshness_note")}</span>
               </div>
 
               <button
                 onClick={() => router.push("/checkout")}
                 className="w-full bg-[#3D0A14] hover:bg-[#2D0810] text-white font-bold py-4 rounded-2xl transition-all duration-300 hover:shadow-warm-lg shadow-warm-sm font-playfair tracking-wide flex items-center justify-center gap-2 active:scale-[0.97]"
               >
-                Proceed to Checkout <ArrowRight size={16} />
+                <span data-i18n="cart_checkout_btn">{t("cart_checkout_btn")}</span>
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>

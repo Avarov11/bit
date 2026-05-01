@@ -29,31 +29,10 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on Netlify
 
-This repository contains the app in the `frontend` folder, so configure Vercel to deploy that folder as the project root.
+This repository is already configured for Netlify using `netlify.toml` in the repo root.
 
-### Option 1: Vercel Dashboard (recommended)
-
-1. Import the GitHub repo in Vercel.
-2. In project settings, set **Root Directory** to `frontend`.
-3. Keep defaults:
-   - Framework Preset: `Next.js`
-   - Install Command: `npm install`
-   - Build Command: `npm run build`
-4. Click **Deploy**.
-
-### Option 2: Vercel CLI
-
-From the repository root:
-
-```bash
-npm i -g vercel
-vercel --cwd frontend
-```
-
-For production deployments:
-
-```bash
-vercel --prod --cwd frontend
-```
+1. Import the GitHub repo in Netlify.
+2. Netlify will automatically use the configured build settings.
+3. Deploy.

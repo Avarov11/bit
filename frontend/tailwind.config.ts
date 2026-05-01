@@ -31,6 +31,7 @@ const config: Config = {
       fontFamily: {
         playfair: ["var(--font-playfair)", "Georgia", "serif"],
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        arabic: ["var(--font-cairo)", "Cairo", "sans-serif"],
       },
       boxShadow: {
         "warm-xs": "0 1px 4px 0 rgba(26, 10, 10, 0.06)",
