@@ -42,7 +42,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCartStore();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -82,11 +82,61 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
+  const sendOrderToWhatsApp = (orderNumber: string) => {
+    const phone = "201019383610";
+    const paymentLabel = form.payment === "cash" ? t("checkout_cash_pickup") : t("checkout_card_pickup");
+
+    const message = lang === "ar"
+      ? `🛒 *طلب جديد — #${orderNumber}*
+━━━━━━━━━━━━━━
+👤 *بيانات العميل*
+• الاسم: ${form.name}
+• الهاتف: ${form.phone}
+• البريد: ${form.email}
+
+📦 *المنتجات*
+${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
+
+📍 *موعد الاستلام*
+• التاريخ: ${form.pickupDate}
+• الوقت: ${form.pickupTime}
+
+💳 *طريقة الدفع:* ${paymentLabel}
+${form.notes ? `\n📝 *ملاحظات:* ${form.notes}` : ""}
+💰 *الإجمالي: QAR ${subtotal}*
+
+🕐 *وقت الطلب:* ${new Date().toLocaleString("ar-EG")}
+━━━━━━━━━━━━━━`.trim()
+      : `🛒 *NEW ORDER — #${orderNumber}*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Customer Info*
+• Name: ${form.name}
+• Phone: ${form.phone}
+• Email: ${form.email}
+
+📦 *Order Items*
+${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
+
+📍 *Pickup Details*
+• Date: ${form.pickupDate}
+• Time: ${form.pickupTime}
+
+💳 *Payment:* ${paymentLabel}
+${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
+💰 *TOTAL: QAR ${subtotal}*
+
+🕐 *Order Time:* ${new Date().toLocaleString("en-EG")}
+━━━━━━━━━━━━━━━━━━━━`.trim();
+
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    setPlacing(true);
     const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
+    sendOrderToWhatsApp(orderNumber);
+    setPlacing(true);
     setTimeout(() => {
       clearCart();
       router.push(
