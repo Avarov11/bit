@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, Plus, Minus, ShoppingBag, ArrowRight, Trash2, ChevronLeft } from "lucide-react";
 import { useCartStore, type CartItem } from "@/store/cartStore";
-import { cn } from "@/lib/utils";
 
 function CartCard({ item, onRemove, onQty }: {
   item: CartItem;

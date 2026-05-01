@@ -1,10 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, MapPin, Mail, Phone } from "lucide-react";
-import AddToCartButton from "@/components/AddToCartButton";
-import { menuProducts } from "@/data/products";
-
-const featuredProducts = menuProducts.slice(0, 6);
+import { MapPin, Mail, Phone } from "lucide-react";
 
 export default function HomePage() {
   return (
