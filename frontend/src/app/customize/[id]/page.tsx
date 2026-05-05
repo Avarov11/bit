@@ -331,44 +331,6 @@ export default function CustomizePage({ params }: { params: { id: string } }) {
     </div>
   );
 
-  const WriteStep = () => (
-    <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1A0A0A] mb-1">Write Message</h2>
-      <p className="text-[#9E7B7B] text-sm mb-5">Add a custom message on top (optional)</p>
-      <button
-        onClick={() => toggleTopping("writing")}
-        className={cn(
-          "w-full rounded-2xl border-2 p-4 text-left mb-4 transition-all duration-200 bg-white",
-          sel.toppingIds.includes("writing")
-            ? "border-[#3D0A14] bg-[#F5E4E6] shadow-warm-sm"
-            : "border-[rgba(26,10,10,0.10)]"
-        )}
-      >
-        <p className="font-semibold text-[#1A0A0A]">Include writing</p>
-        <p className="text-xs text-[#9E7B7B] mt-0.5">Toggle to add a short text message</p>
-      </button>
-      {sel.toppingIds.includes("writing") && (
-        <div>
-          <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
-            Your Message
-          </label>
-          <textarea
-            value={sel.writingText}
-            onChange={(e) =>
-              setSel((p) => ({ ...p, writingText: e.target.value.slice(0, 50) }))
-            }
-            placeholder="e.g. Happy Birthday Sarah!"
-            rows={3}
-            className="w-full px-4 py-3 bg-white border border-[rgba(26,10,10,0.10)] focus:border-[#3D0A14] rounded-xl text-sm text-[#1A0A0A] placeholder:text-[#9E7B7B] outline-none transition-colors resize-none"
-          />
-          <p className="text-right text-xs text-[#9E7B7B] mt-1">
-            {sel.writingText.length}/50
-          </p>
-        </div>
-      )}
-    </div>
-  );
-
   const stepContent = [
     <ShapeStep key="shape" />,
     <FlavorStep key="flavor" />,
