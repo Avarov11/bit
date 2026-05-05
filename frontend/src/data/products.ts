@@ -1,5 +1,9 @@
 export type Category =
   | "All"
+  | "Accessories"
+  | "Candles"
+  | "Balloons"
+  | "Boxes"
   | "Customized"
   | "Birthday"
   | "Congrats"
@@ -96,5 +100,32 @@ export const menuProducts: MenuProduct[] = [
     image:
       "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=600&h=700&fit=crop&q=80",
     tag: "New",
+  },
+  {
+    id: "birthday-candle-set",
+    name: "Birthday Candle Set",
+    category: "Candles",
+    price: 25,
+    description: "A set of elegant hand-poured scented candles, perfect for adding a warm glow to any celebration.",
+    image:
+      "https://images.unsplash.com/photo-1602523961358-f9f03dd557db?w=600&h=700&fit=crop&q=80",
+  },
+  {
+    id: "celebration-balloon-bunch",
+    name: "Celebration Balloon Bunch",
+    category: "Balloons",
+    price: 30,
+    description: "A vibrant bunch of premium helium balloons in assorted colours, ready to brighten up any special occasion.",
+    image:
+      "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&h=700&fit=crop&q=80",
+  },
+  {
+    id: "gift-box",
+    name: "Gift Box",
+    category: "Boxes",
+    price: 15,
+    description: "A beautifully crafted gift box with a satin ribbon — the perfect packaging to make any treat feel extra special.",
+    image:
+      "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&h=700&fit=crop&q=80",
   },
 ];

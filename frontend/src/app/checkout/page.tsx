@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MapPin, Clock, CreditCard, Banknote } from "lucide-react";
+import { ChevronLeft, MapPin, Clock, CreditCard, Banknote, Truck } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,8 @@ export default function CheckoutPage() {
 
   const [form, setForm] = useState({
     name: "", phone: "", email: "",
+    deliveryMethod: "pickup",
+    address: "",
     pickupDate: "", pickupTime: "",
     payment: "cash", notes: "",
   });
@@ -76,6 +78,7 @@ export default function CheckoutPage() {
     if (!form.name.trim()) e.name = t("checkout_error_name");
     if (!form.phone.trim()) e.phone = t("checkout_error_phone");
     if (!form.email.trim() || !form.email.includes("@")) e.email = t("checkout_error_email");
+    if (form.deliveryMethod === "delivery" && !form.address.trim()) e.address = "Please enter your delivery address";
     if (!form.pickupDate) e.pickupDate = t("checkout_error_pickup_date");
     if (!form.pickupTime) e.pickupTime = t("checkout_error_pickup_time");
     setErrors(e);
@@ -85,6 +88,8 @@ export default function CheckoutPage() {
   const sendOrderToWhatsApp = (orderNumber: string) => {
     const phone = "201019383610";
     const paymentLabel = form.payment === "cash" ? t("checkout_cash_pickup") : t("checkout_card_pickup");
+
+    const isDelivery = form.deliveryMethod === "delivery";
 
     const message = lang === "ar"
       ? `🛒 *طلب جديد — #${orderNumber}*
@@ -97,9 +102,9 @@ export default function CheckoutPage() {
 📦 *المنتجات*
 ${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
 
-📍 *موعد الاستلام*
-• التاريخ: ${form.pickupDate}
-• الوقت: ${form.pickupTime}
+${isDelivery
+  ? `🚚 *التوصيل*\n• العنوان: ${form.address}\n• التاريخ: ${form.pickupDate}\n• الوقت: ${form.pickupTime}`
+  : `📍 *موعد الاستلام*\n• التاريخ: ${form.pickupDate}\n• الوقت: ${form.pickupTime}`}
 
 💳 *طريقة الدفع:* ${paymentLabel}
 ${form.notes ? `\n📝 *ملاحظات:* ${form.notes}` : ""}
@@ -117,9 +122,9 @@ ${form.notes ? `\n📝 *ملاحظات:* ${form.notes}` : ""}
 📦 *Order Items*
 ${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
 
-📍 *Pickup Details*
-• Date: ${form.pickupDate}
-• Time: ${form.pickupTime}
+${isDelivery
+  ? `🚚 *Delivery*\n• Address: ${form.address}\n• Date: ${form.pickupDate}\n• Time: ${form.pickupTime}`
+  : `📍 *Pickup Details*\n• Date: ${form.pickupDate}\n• Time: ${form.pickupTime}`}
 
 💳 *Payment:* ${paymentLabel}
 ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
@@ -223,26 +228,79 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
               </Section>
 
               <Section title={t("checkout_pickup_section")}>
-                {/* Store card */}
-                <div className="flex items-start gap-3 p-4 bg-[#F5E4E6] border border-[rgba(26,10,10,0.10)] rounded-xl">
-                  <MapPin size={16} className="text-[#3D0A14] shrink-0 mt-0.5" />
-                  <div>
-                    <p data-i18n="checkout_boutique_name" className="font-semibold text-[#1A0A0A] text-sm">
-                      {t("checkout_boutique_name")}
-                    </p>
-                    <p data-i18n="checkout_address" className="text-[#4A3728] text-xs mt-0.5">
-                      {t("checkout_address")}
-                    </p>
-                    <p data-i18n="checkout_hours" className="text-[#9E7B7B] text-xs flex items-center gap-1 mt-1">
-                      <Clock size={10} /> {t("checkout_hours")}
-                    </p>
-                  </div>
+                {/* Pickup / Delivery toggle */}
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    { id: "pickup",   label: "Pickup",   Icon: MapPin },
+                    { id: "delivery", label: "Delivery", Icon: Truck  },
+                  ] as const).map(({ id, label, Icon }) => (
+                    <button
+                      key={id} type="button" onClick={() => set("deliveryMethod", id)}
+                      className={cn(
+                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
+                        form.deliveryMethod === id
+                          ? "border-[#3D0A14] bg-[#F5E4E6] shadow-warm-xs"
+                          : "border-[rgba(26,10,10,0.10)] hover:border-[#3D0A14]/30 bg-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                        form.deliveryMethod === id ? "bg-[#3D0A14] text-white" : "bg-[#F5E4E6] text-[#9E7B7B]"
+                      )}>
+                        <Icon size={16} />
+                      </div>
+                      <span className={cn(
+                        "text-sm font-semibold",
+                        form.deliveryMethod === id ? "text-[#3D0A14]" : "text-[#4A3728]"
+                      )}>
+                        {label}
+                      </span>
+                    </button>
+                  ))}
                 </div>
+
+                {/* Store card — pickup only */}
+                {form.deliveryMethod === "pickup" && (
+                  <div className="flex items-start gap-3 p-4 bg-[#F5E4E6] border border-[rgba(26,10,10,0.10)] rounded-xl">
+                    <MapPin size={16} className="text-[#3D0A14] shrink-0 mt-0.5" />
+                    <div>
+                      <p data-i18n="checkout_boutique_name" className="font-semibold text-[#1A0A0A] text-sm">
+                        {t("checkout_boutique_name")}
+                      </p>
+                      <p data-i18n="checkout_address" className="text-[#4A3728] text-xs mt-0.5">
+                        {t("checkout_address")}
+                      </p>
+                      <p data-i18n="checkout_hours" className="text-[#9E7B7B] text-xs flex items-center gap-1 mt-1">
+                        <Clock size={10} /> {t("checkout_hours")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Address field — delivery only */}
+                {form.deliveryMethod === "delivery" && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-1.5">
+                      Delivery Address
+                    </label>
+                    <textarea
+                      value={form.address}
+                      onChange={(e) => set("address", e.target.value)}
+                      placeholder="Enter your full delivery address..."
+                      rows={3}
+                      className={cn(
+                        "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#1A0A0A] placeholder:text-[#9E7B7B] outline-none transition-colors resize-none",
+                        errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(26,10,10,0.10)] focus:border-[#3D0A14]"
+                      )}
+                    />
+                    {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
+                  </div>
+                )}
 
                 {/* Date */}
                 <div>
-                  <label data-i18n="checkout_pickup_date" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-1.5">
-                    {t("checkout_pickup_date")}
+                  <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-1.5">
+                    {form.deliveryMethod === "delivery" ? "Delivery Date" : t("checkout_pickup_date")}
                   </label>
                   <input
                     type="date" min={today} max={maxDate}
@@ -257,8 +315,8 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
                 {/* Time slots */}
                 <div>
-                  <label data-i18n="checkout_pickup_time" className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
-                    {t("checkout_pickup_time")}
+                  <label className="block text-xs font-bold text-[#9E7B7B] uppercase tracking-wider mb-2">
+                    {form.deliveryMethod === "delivery" ? "Delivery Time" : t("checkout_pickup_time")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {timeSlotKeys.map((slotKey) => {
