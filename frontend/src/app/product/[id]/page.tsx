@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProductContent from "./ProductContent";
 import type { DbProduct } from "@/lib/types";

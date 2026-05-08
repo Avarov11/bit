@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus, Minus, ShoppingBag } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
