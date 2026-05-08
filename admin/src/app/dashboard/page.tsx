@@ -1,14 +1,24 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
+
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 async function getStats() {
   const today = new Date().toISOString().split("T")[0];
+  const admin = getAdmin();
 
   const [{ count: totalOrders }, { count: todayOrders }, { count: pendingOrders }, { data: revenue }] =
     await Promise.all([
-      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("pickup_date", today),
-      supabaseAdmin.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
-      supabaseAdmin.from("orders").select("total"),
+      admin.from("orders").select("*", { count: "exact", head: true }),
+      admin.from("orders").select("*", { count: "exact", head: true }).eq("pickup_date", today),
+      admin.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      admin.from("orders").select("total"),
     ]);
 
   const totalRevenue = revenue?.reduce((sum, o) => sum + Number(o.total), 0) ?? 0;
@@ -20,10 +30,10 @@ export default async function DashboardPage() {
   const { totalOrders, todayOrders, pendingOrders, totalRevenue } = await getStats();
 
   const stats = [
-    { label: "Total Orders",    value: totalOrders   ?? 0                    },
-    { label: "Today's Pickups", value: todayOrders   ?? 0                    },
-    { label: "Pending",         value: pendingOrders ?? 0                    },
-    { label: "Revenue (QAR)",   value: `${totalRevenue.toFixed(0)} QAR`      },
+    { label: "Total Orders",    value: totalOrders   ?? 0               },
+    { label: "Today's Pickups", value: todayOrders   ?? 0               },
+    { label: "Pending",         value: pendingOrders ?? 0               },
+    { label: "Revenue (QAR)",   value: `${totalRevenue.toFixed(0)} QAR` },
   ];
 
   return (
