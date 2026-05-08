@@ -136,18 +136,51 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
-    sendOrderToWhatsApp(orderNumber);
     setPlacing(true);
-    setTimeout(() => {
-      clearCart();
-      router.push(
-        `/checkout/success?order=${orderNumber}&date=${form.pickupDate}&time=${encodeURIComponent(form.pickupTime)}&name=${encodeURIComponent(form.name)}`
-      );
-    }, 900);
+
+    const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const payload = {
+      order_number:     orderNumber,
+      customer_name:    form.name,
+      customer_phone:   form.phone,
+      customer_email:   form.email || null,
+      delivery_method:  form.deliveryMethod,
+      delivery_address: form.deliveryMethod === "delivery" ? form.address : null,
+      pickup_date:      form.pickupDate,
+      pickup_time:      form.pickupTime,
+      payment_method:   form.payment,
+      items: items.map((i) => ({
+        productId:     i.productId,
+        productName:   i.productName,
+        productImage:  i.productImage,
+        quantity:      i.quantity,
+        unitPrice:     i.unitPrice,
+        subtotal:      i.unitPrice * i.quantity,
+        customization: i.customization,
+      })),
+      subtotal,
+      delivery_fee: 0,
+      total:        subtotal,
+      notes:        form.notes || null,
+      language:     lang,
+      status:       "pending",
+    };
+
+    await fetch("/api/orders", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload),
+    });
+
+    sendOrderToWhatsApp(orderNumber);
+    clearCart();
+    router.push(
+      `/checkout/success?order=${orderNumber}&date=${form.pickupDate}&time=${encodeURIComponent(form.pickupTime)}&name=${encodeURIComponent(form.name)}`
+    );
   };
 
   if (!mounted) {

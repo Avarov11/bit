@@ -1,0 +1,16 @@
+node_modules/
+/.next/
+/out/
+/build
+
+# env — never commit secrets
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+Thumbs.db
+*.pem
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
