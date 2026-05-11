@@ -122,7 +122,7 @@ export default function HomePage() {
       unitPrice: p.price,
       customization: {},
     });
-    setAddedIds((prev) => new Set([...prev, p.id]));
+    setAddedIds((prev) => new Set(Array.from(prev).concat(p.id)));
     setTimeout(() => {
       setAddedIds((prev) => {
         const n = new Set(prev);
