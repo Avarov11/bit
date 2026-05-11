@@ -11,21 +11,29 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        chocolate: {
+          DEFAULT: "#7A8099",
+          dark: "#4C5372",
+          medium: "#949AB1",
+          light: "#E2D4E0",
+        },
         burgundy: {
-          DEFAULT: "#800020",
-          dark: "#5C0016",
-          medium: "#A0002A",
-          light: "#F2D9DE",
+          DEFAULT: "#7A8099",
+          dark: "#4C5372",
+          medium: "#949AB1",
+          light: "#E2D4E0",
         },
-        blush: "#E8B4BC",
+        blush: "#FB7185",
         gold: {
-          DEFAULT: "#C9A84C",
-          light: "#E8D5A3",
-          dark: "#A07C2E",
+          DEFAULT: "#FB7185",
+          light: "#FDDDE2",
+          dark: "#E11D48",
         },
+        caramel: "#949AB1",
+        mint: "#A8E6CF",
         cream: {
-          DEFAULT: "#FDF6F0",
-          dark: "#F5EDE4",
+          DEFAULT: "#FFFDF6",
+          dark: "#E2D4E0",
         },
       },
       fontFamily: {
@@ -34,12 +42,12 @@ const config: Config = {
         arabic: ["var(--font-cairo)", "Cairo", "sans-serif"],
       },
       boxShadow: {
-        "warm-xs": "0 1px 4px 0 rgba(26, 10, 10, 0.06)",
-        "warm-sm": "0 2px 8px 0 rgba(26, 10, 10, 0.08)",
-        warm: "0 4px 16px 0 rgba(26, 10, 10, 0.10)",
-        "warm-md": "0 8px 24px 0 rgba(26, 10, 10, 0.14)",
-        "warm-lg": "0 16px 40px 0 rgba(26, 10, 10, 0.18)",
-        "warm-xl": "0 24px 64px 0 rgba(26, 10, 10, 0.22)",
+        "warm-xs": "0 1px 4px 0 rgba(76, 83, 114, 0.06)",
+        "warm-sm": "0 2px 8px 0 rgba(76, 83, 114, 0.08)",
+        warm: "0 4px 16px 0 rgba(76, 83, 114, 0.10)",
+        "warm-md": "0 8px 24px 0 rgba(76, 83, 114, 0.14)",
+        "warm-lg": "0 16px 40px 0 rgba(76, 83, 114, 0.18)",
+        "warm-xl": "0 24px 64px 0 rgba(76, 83, 114, 0.22)",
       },
       keyframes: {
         fadeUp: {

@@ -24,12 +24,12 @@ function CartCard({ item, onRemove, onQty, t }: {
   return (
     <div className="bg-white rounded-2xl shadow-warm-xs hover:shadow-warm p-4 flex gap-4 transition-shadow duration-300">
       {/* Thumbnail */}
-      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-[#F5E4E6] shrink-0">
+      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden bg-[#E2D4E0] shrink-0">
         {item.productImage ? (
           <Image src={item.productImage} alt={item.productName} fill sizes="96px" className="object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag size={22} className="text-[#9E7B7B]" />
+            <ShoppingBag size={22} className="text-[#949AB1]" />
           </div>
         )}
       </div>
@@ -37,49 +37,49 @@ function CartCard({ item, onRemove, onQty, t }: {
       {/* Details */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-playfair font-bold text-[#1A0A0A] text-base leading-tight">
+          <h3 className="font-playfair font-bold text-[#1E2235] text-base leading-tight">
             {item.productName}
           </h3>
           <button
             onClick={onRemove}
-            className="text-[#9E7B7B]/60 hover:text-red-400 transition-colors shrink-0 p-0.5"
+            className="text-[#949AB1]/60 hover:text-red-400 transition-colors shrink-0 p-0.5"
           >
             <X size={15} />
           </button>
         </div>
 
         {summaryParts.length > 0 && (
-          <p className="text-[#9E7B7B] text-xs mb-0.5 line-clamp-1">{summaryParts.join(" · ")}</p>
+          <p className="text-[#949AB1] text-xs mb-0.5 line-clamp-1">{summaryParts.join(" · ")}</p>
         )}
         {c.toppings && c.toppings.length > 0 && (
-          <p className="text-[#9E7B7B] text-xs mb-0.5">
+          <p className="text-[#949AB1] text-xs mb-0.5">
             + {c.toppings.slice(0, 3).join(", ")}
             {c.toppings.length > 3 && ` & ${c.toppings.length - 3} more`}
           </p>
         )}
         {c.message && (
-          <p className="text-[#9E7B7B] text-xs italic mb-1">&ldquo;{c.message}&rdquo;</p>
+          <p className="text-[#949AB1] text-xs italic mb-1">&ldquo;{c.message}&rdquo;</p>
         )}
 
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => onQty(item.quantity - 1)}
-              className="w-7 h-7 rounded-full border border-[rgba(26,10,10,0.12)] flex items-center justify-center text-[#4A3728] hover:border-[#3D0A14] hover:text-[#3D0A14] transition-colors"
+              className="w-7 h-7 rounded-full border border-[rgba(76,83,114,0.12)] flex items-center justify-center text-[#4C5372] hover:border-[#4C5372] hover:text-[#4C5372] transition-colors"
             >
               <Minus size={11} />
             </button>
-            <span className="w-5 text-center text-sm font-bold text-[#1A0A0A]">
+            <span className="w-5 text-center text-sm font-bold text-[#1E2235]">
               {item.quantity}
             </span>
             <button
               onClick={() => onQty(item.quantity + 1)}
-              className="w-7 h-7 rounded-full border border-[rgba(26,10,10,0.12)] flex items-center justify-center text-[#4A3728] hover:border-[#3D0A14] hover:text-[#3D0A14] transition-colors"
+              className="w-7 h-7 rounded-full border border-[rgba(76,83,114,0.12)] flex items-center justify-center text-[#4C5372] hover:border-[#4C5372] hover:text-[#4C5372] transition-colors"
             >
               <Plus size={11} />
             </button>
           </div>
-          <span className="font-playfair font-bold text-[#3D0A14] text-lg">
+          <span className="font-playfair font-bold text-[#4C5372] text-lg">
             QAR {item.unitPrice * item.quantity}
           </span>
         </div>
@@ -97,8 +97,8 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#C896A0" }}>
-        <div className="w-8 h-8 rounded-full border-2 border-[#3D0A14] border-t-transparent animate-spin" />
+      <main className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#E2D4E0" }}>
+        <div className="w-8 h-8 rounded-full border-2 border-[#4C5372] border-t-transparent animate-spin" />
       </main>
     );
   }
@@ -108,20 +108,20 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen pt-20 flex flex-col items-center justify-center px-4" style={{ backgroundColor: "#C896A0" }}>
+      <main className="min-h-screen pt-20 flex flex-col items-center justify-center px-4" style={{ backgroundColor: "#E2D4E0" }}>
         <div className="text-center max-w-sm">
-          <div className="w-24 h-24 rounded-full bg-[#F5E4E6] flex items-center justify-center mx-auto mb-6">
-            <ShoppingBag size={34} className="text-[#3D0A14]" />
+          <div className="w-24 h-24 rounded-full bg-[#E2D4E0] flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag size={34} className="text-[#4C5372]" />
           </div>
-          <h1 data-i18n="cart_empty_title" className="font-playfair text-3xl font-bold text-[#1A0A0A] mb-3">
+          <h1 data-i18n="cart_empty_title" className="font-playfair text-3xl font-bold text-[#1E2235] mb-3">
             {t("cart_empty_title")}
           </h1>
-          <p data-i18n="cart_empty_desc" className="text-[#3D0A14]/60 text-sm mb-8">
+          <p data-i18n="cart_empty_desc" className="text-[#4C5372]/60 text-sm mb-8">
             {t("cart_empty_desc")}
           </p>
           <Link
             href="/menu"
-            className="inline-flex items-center gap-2 bg-[#3D0A14] hover:bg-[#2D0810] text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:-translate-y-0.5 shadow-warm-sm hover:shadow-warm-md active:scale-[0.97]"
+            className="inline-flex items-center gap-2 bg-[#FB7185] hover:bg-[#E11D48] text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:-translate-y-0.5 shadow-warm-sm hover:shadow-warm-md active:scale-[0.97]"
           >
             <span data-i18n="cart_browse_menu">{t("cart_browse_menu")}</span>
             <ArrowRight size={16} />
@@ -132,18 +132,18 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen pt-16 md:pt-20 pb-10" style={{ backgroundColor: "#C896A0" }}>
+    <main className="min-h-screen pt-16 md:pt-20 pb-10" style={{ backgroundColor: "#E2D4E0" }}>
       {/* Header */}
-      <div className="border-b border-[rgba(26,10,10,0.10)] px-6 md:px-12 py-6">
+      <div className="border-b border-[rgba(76,83,114,0.10)] px-6 md:px-12 py-6">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-[#9E7B7B] hover:text-[#3D0A14] transition-colors">
+          <button onClick={() => router.back()} className="text-[#949AB1] hover:text-[#4C5372] transition-colors">
             <ChevronLeft size={22} />
           </button>
           <div>
-            <h1 data-i18n="cart_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#1A0A0A]">
+            <h1 data-i18n="cart_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#1E2235]">
               {t("cart_title")}
             </h1>
-            <p className="text-[#3D0A14]/60 text-sm">
+            <p className="text-[#4C5372]/60 text-sm">
               {itemCount} {itemCount !== 1 ? "items" : "item"}
             </p>
           </div>
@@ -155,12 +155,12 @@ export default function CartPage() {
           {/* Cart items */}
           <div className="flex-1 w-full space-y-3">
             <div className="flex items-center justify-between mb-1">
-              <p data-i18n="cart_your_items" className="text-xs text-[#3D0A14]/60 font-medium uppercase tracking-wider">
+              <p data-i18n="cart_your_items" className="text-xs text-[#4C5372]/60 font-medium uppercase tracking-wider">
                 {t("cart_your_items")}
               </p>
               <button
                 onClick={clearCart}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#9E7B7B] hover:text-red-400 transition-colors"
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#949AB1] hover:text-red-400 transition-colors"
               >
                 <Trash2 size={12} />
                 <span data-i18n="cart_clear_all">{t("cart_clear_all")}</span>
@@ -179,7 +179,7 @@ export default function CartPage() {
 
             <Link
               href="/menu"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3D0A14] hover:text-[#2D0810] transition-colors mt-2"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4C5372] hover:text-[#4C5372] transition-colors mt-2"
             >
               <ChevronLeft size={14} />
               <span data-i18n="cart_continue_shopping">{t("cart_continue_shopping")}</span>
@@ -189,52 +189,52 @@ export default function CartPage() {
           {/* Order summary */}
           <div className="w-full lg:w-80 xl:w-96 shrink-0">
             <div className="bg-white rounded-2xl shadow-warm-sm p-6 sticky top-24">
-              <h2 data-i18n="cart_order_summary" className="font-playfair text-xl font-bold text-[#1A0A0A] mb-5">
+              <h2 data-i18n="cart_order_summary" className="font-playfair text-xl font-bold text-[#1E2235] mb-5">
                 {t("cart_order_summary")}
               </h2>
 
               <div className="space-y-2 mb-4">
                 {items.map((item) => (
                   <div key={item.cartId} className="flex justify-between text-sm">
-                    <span className="text-[#4A3728] truncate pr-2">
+                    <span className="text-[#4C5372] truncate pr-2">
                       {item.productName}
                       {item.quantity > 1 && (
-                        <span className="text-[#9E7B7B] ml-1">×{item.quantity}</span>
+                        <span className="text-[#949AB1] ml-1">×{item.quantity}</span>
                       )}
                     </span>
-                    <span className="font-semibold text-[#1A0A0A] shrink-0">
+                    <span className="font-semibold text-[#1E2235] shrink-0">
                       QAR {item.unitPrice * item.quantity}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-[rgba(26,10,10,0.08)] pt-4 space-y-2 mb-6">
+              <div className="border-t border-[rgba(76,83,114,0.08)] pt-4 space-y-2 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span data-i18n="cart_subtotal" className="text-[#9E7B7B]">{t("cart_subtotal")}</span>
-                  <span className="font-semibold text-[#1A0A0A]">QAR {subtotal}</span>
+                  <span data-i18n="cart_subtotal" className="text-[#949AB1]">{t("cart_subtotal")}</span>
+                  <span className="font-semibold text-[#1E2235]">QAR {subtotal}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span data-i18n="cart_delivery" className="text-[#9E7B7B]">{t("cart_delivery")}</span>
+                  <span data-i18n="cart_delivery" className="text-[#949AB1]">{t("cart_delivery")}</span>
                   <span data-i18n="cart_pickup_only" className="text-emerald-600 font-semibold">
                     {t("cart_pickup_only")}
                   </span>
                 </div>
-                <div className="border-t border-[rgba(26,10,10,0.08)] pt-3 flex justify-between">
-                  <span data-i18n="cart_total" className="font-bold text-[#1A0A0A]">{t("cart_total")}</span>
-                  <span className="font-playfair font-bold text-[#3D0A14] text-xl">
+                <div className="border-t border-[rgba(76,83,114,0.08)] pt-3 flex justify-between">
+                  <span data-i18n="cart_total" className="font-bold text-[#1E2235]">{t("cart_total")}</span>
+                  <span className="font-playfair font-bold text-[#4C5372] text-xl">
                     QAR {subtotal}
                   </span>
                 </div>
               </div>
 
-              <div className="bg-[#F5E4E6] rounded-xl px-4 py-3 mb-5 text-xs text-[#4A3728] leading-relaxed">
+              <div className="bg-[#E2D4E0] rounded-xl px-4 py-3 mb-5 text-xs text-[#4C5372] leading-relaxed">
                 🍫 &nbsp;<span data-i18n="cart_freshness_note">{t("cart_freshness_note")}</span>
               </div>
 
               <button
                 onClick={() => router.push("/checkout")}
-                className="w-full bg-[#3D0A14] hover:bg-[#2D0810] text-white font-bold py-4 rounded-2xl transition-all duration-300 hover:shadow-warm-lg shadow-warm-sm font-playfair tracking-wide flex items-center justify-center gap-2 active:scale-[0.97]"
+                className="w-full bg-[#FB7185] hover:bg-[#E11D48] text-white font-bold py-4 rounded-2xl transition-all duration-300 hover:shadow-warm-lg shadow-warm-sm font-playfair tracking-wide flex items-center justify-center gap-2 active:scale-[0.97]"
               >
                 <span data-i18n="cart_checkout_btn">{t("cart_checkout_btn")}</span>
                 <ArrowRight size={16} />

@@ -45,7 +45,7 @@ export default function AddToCartButton({
           "flex items-center gap-1.5 border rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide transition-all duration-300",
           added
             ? "bg-emerald-500 border-emerald-500 text-white"
-            : "border-white text-white hover:bg-white hover:text-stone-900"
+            : "border-[#FB7185] bg-[#FB7185]/20 text-[#4C5372] hover:bg-[#FB7185] hover:border-[#FB7185] hover:text-white"
         )}
       >
         {added ? <Check size={12} /> : <ShoppingBag size={12} />}
@@ -61,7 +61,7 @@ export default function AddToCartButton({
         "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300",
         added
           ? "bg-emerald-600 text-white scale-95"
-          : "bg-burgundy hover:bg-burgundy-dark text-white hover:shadow-md hover:shadow-burgundy/20"
+          : "bg-gold hover:bg-gold-dark text-white hover:shadow-md"
       )}
     >
       {added ? <Check size={14} /> : <ShoppingBag size={14} />}

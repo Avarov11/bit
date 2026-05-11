@@ -43,10 +43,10 @@ function SectionTag({ children, light = false }: { children: React.ReactNode; li
         "inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.28em] uppercase px-3 py-1.5 rounded-full mb-5",
         light
           ? "bg-white/12 text-white/70 border border-white/15"
-          : "bg-[#3D0A14]/10 text-[#3D0A14] border border-[#3D0A14]/15"
+          : "bg-[#4C5372]/10 text-[#4C5372] border border-[#4C5372]/15"
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", light ? "bg-gold" : "bg-[#C9A84C]")} />
+      <span className={cn("w-1.5 h-1.5 rounded-full", light ? "bg-gold" : "bg-[#FB7185]")} />
       {children}
     </span>
   );
@@ -76,8 +76,8 @@ function ValueCard({
         )}
       >
         {/* Icon container */}
-        <div className="w-14 h-14 rounded-2xl bg-[#C9A84C]/15 border border-[#C9A84C]/25 flex items-center justify-center shrink-0">
-          <Icon size={24} className="text-[#C9A84C]" strokeWidth={1.5} />
+        <div className="w-14 h-14 rounded-2xl bg-[#FB7185]/15 border border-[#FB7185]/25 flex items-center justify-center shrink-0">
+          <Icon size={24} className="text-[#FB7185]" strokeWidth={1.5} />
         </div>
         <div>
           <h3 className="font-playfair text-xl font-bold text-white mb-3 leading-snug">
@@ -108,13 +108,13 @@ function StatBox({
       <div
         className={cn(
           "flex flex-col items-center text-center py-10 px-6",
-          bordered && "border-s border-[rgba(26,10,10,0.12)]"
+          bordered && "border-s border-[rgba(76,83,114,0.12)]"
         )}
       >
-        <span className="font-playfair text-4xl md:text-5xl font-bold text-[#3D0A14] mb-2 leading-none">
+        <span className="font-playfair text-4xl md:text-5xl font-bold text-[#4C5372] mb-2 leading-none">
           {num}
         </span>
-        <span className="text-xs font-semibold text-[#1A0A0A]/55 uppercase tracking-widest">
+        <span className="text-xs font-semibold text-[#1E2235]/55 uppercase tracking-widest">
           {label}
         </span>
       </div>
@@ -148,7 +148,7 @@ export default function AboutPage() {
       ═══════════════════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden flex flex-col items-center pt-32 md:pt-40 pb-20 md:pb-28 px-6 text-center"
-        style={{ backgroundColor: "#C896A0" }}
+        style={{ backgroundColor: "#E2D4E0" }}
       >
         {/* Grain overlay — inherits from body */}
         <div className="absolute inset-0 pointer-events-none opacity-40"
@@ -161,7 +161,7 @@ export default function AboutPage() {
 
         {/* Soft radial vignette */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(61,10,20,0.18) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(76,83,114,0.18) 0%, transparent 70%)" }}
         />
 
         <div className="relative max-w-3xl mx-auto">
@@ -170,19 +170,19 @@ export default function AboutPage() {
           </div>
 
           <h1
-            className="font-playfair text-[2.6rem] md:text-[4rem] lg:text-[5rem] font-bold text-[#1A0A0A] leading-[1.06] mb-6 animate-fade-up-d1"
+            className="font-playfair text-[2.6rem] md:text-[4rem] lg:text-[5rem] font-bold text-[#1E2235] leading-[1.06] mb-6 animate-fade-up-d1"
             data-i18n="about_hero_title"
           >
             {t("about_hero_title_line1")}
             <br />
-            <em className="not-italic" style={{ color: "#3D0A14" }}>
+            <em className="not-italic" style={{ color: "#4C5372" }}>
               {t("about_hero_title_line2")}
             </em>
           </h1>
 
           <p
             data-i18n="about_hero_subtitle"
-            className="text-[#1A0A0A]/65 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10 animate-fade-up-d2"
+            className="text-[#1E2235]/65 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10 animate-fade-up-d2"
           >
             {t("about_hero_subtitle")}
           </p>
@@ -191,7 +191,7 @@ export default function AboutPage() {
             <Link
               href="/menu"
               className={cn(
-                "inline-flex items-center gap-2.5 bg-[#3D0A14] hover:bg-[#2D0810]",
+                "inline-flex items-center gap-2.5 bg-[#FB7185] hover:bg-[#E11D48]",
                 "text-white font-semibold text-sm px-8 py-4 rounded-full",
                 "transition-all duration-200 hover:-translate-y-0.5 shadow-warm-md hover:shadow-warm-lg",
                 "active:scale-[0.97]"
@@ -214,12 +214,12 @@ export default function AboutPage() {
               priority
             />
             {/* Subtle gradient overlay at bottom */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#3D0A14]/30 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#4C5372]/20 via-transparent to-transparent" />
           </div>
           {/* Floating label */}
           <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-5 py-3 shadow-warm-lg flex items-center gap-3 whitespace-nowrap">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
-            <span className="text-xs font-bold text-[#1A0A0A] tracking-wide">
+            <span className="text-xs font-bold text-[#1E2235] tracking-wide">
               Handcrafted in Beirut
             </span>
           </div>
@@ -229,7 +229,7 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════════════════════
           STORY
       ═══════════════════════════════════════════════════════════ */}
-      <section className="bg-[#FDF6F0] py-20 md:py-28">
+      <section className="bg-[#FFFDF6] py-20 md:py-28">
         <div className="max-w-6xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Image */}
@@ -244,7 +244,7 @@ export default function AboutPage() {
                   />
                 </div>
                 {/* Decorative accent card */}
-                <div className="absolute -end-4 -bottom-6 bg-[#1A0A0A] rounded-2xl px-5 py-4 shadow-warm-xl max-w-[180px]">
+                <div className="absolute -end-4 -bottom-6 bg-[#1E2235] rounded-2xl px-5 py-4 shadow-warm-xl max-w-[180px]">
                   <p className="font-playfair text-gold text-lg font-bold leading-none mb-0.5">2021</p>
                   <p className="text-white/55 text-[11px] font-semibold tracking-wide">Est. in Beirut</p>
                 </div>
@@ -259,13 +259,13 @@ export default function AboutPage() {
               <Reveal delay={80}>
                 <h2
                   data-i18n="about_story_title"
-                  className="font-playfair text-3xl md:text-4xl font-bold text-[#1A0A0A] leading-tight"
+                  className="font-playfair text-3xl md:text-4xl font-bold text-[#1E2235] leading-tight"
                 >
                   {t("about_story_title")}
                 </h2>
               </Reveal>
               <Reveal delay={160}>
-                <div className="w-12 h-0.5 bg-[#C9A84C] rounded-full" />
+                <div className="w-12 h-0.5 bg-[#FB7185] rounded-full" />
               </Reveal>
               <Reveal delay={200}>
                 <p data-i18n="about_story_body1" className="text-[#4A3728]/80 leading-relaxed text-sm md:text-base">
@@ -285,19 +285,19 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════════════════════
           VALUES  —  dark section with glassmorphism cards
       ═══════════════════════════════════════════════════════════ */}
-      <section className="bg-[#1A0A0A] py-20 md:py-28 relative overflow-hidden">
+      <section className="bg-[#1E2235] py-20 md:py-28 relative overflow-hidden">
         {/* Subtle dot grid */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.04]"
           style={{
-            backgroundImage: "radial-gradient(circle, #C9A84C 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, #FB7185 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
         {/* Radial glow */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at center top, rgba(200,150,160,0.08) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse at center top, rgba(148,154,177,0.10) 0%, transparent 70%)" }}
         />
 
         <div className="relative max-w-6xl mx-auto px-6 md:px-12">
@@ -332,7 +332,7 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════════════════════
           STATS
       ═══════════════════════════════════════════════════════════ */}
-      <section className="py-20 md:py-24" style={{ backgroundColor: "#C896A0" }}>
+      <section className="py-20 md:py-24" style={{ backgroundColor: "#E2D4E0" }}>
         <div className="max-w-5xl mx-auto px-6 md:px-12">
           <div className="text-center mb-10">
             <Reveal>
@@ -341,7 +341,7 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-white/70 backdrop-blur-sm border border-white/60 rounded-3xl shadow-warm-lg overflow-hidden">
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-[rgba(26,10,10,0.08)]">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x-0 md:divide-x divide-[rgba(76,83,114,0.08)]">
               {stats.map(({ num, label, delay }, i) => (
                 <StatBox key={label} num={num} label={label} delay={delay} bordered={i > 0} />
               ))}

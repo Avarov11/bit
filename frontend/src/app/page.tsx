@@ -17,9 +17,9 @@ export default function HomePage() {
       {/* ─── Hero ───────────────────────────────────────────── */}
       <section
         className="flex flex-col items-center pt-24 md:pt-28 pb-14 px-6"
-        style={{ backgroundColor: "#C896A0" }}
+        style={{ backgroundColor: "#E2D4E0" }}
       >
-        <h1 className="font-playfair text-[2.75rem] md:text-[4.5rem] font-bold text-[#1A0A0A] text-center leading-[1.08] mb-8">
+        <h1 className="font-playfair text-[2.75rem] md:text-[4.5rem] font-bold text-[#1E2235] text-center leading-[1.08] mb-8">
           <span data-i18n="hero_title_line1">{t("hero_title_line1")}</span>
           <br />
           <span data-i18n="hero_title_line2">{t("hero_title_line2")}</span>
@@ -40,10 +40,10 @@ export default function HomePage() {
             href="/menu"
             className="bg-white rounded-2xl px-4 py-4 shadow-warm-sm hover:shadow-warm-md transition-shadow"
           >
-            <p data-i18n="hero_card1_title" className="font-semibold text-[#1A0A0A] text-sm leading-tight">
+            <p data-i18n="hero_card1_title" className="font-semibold text-[#1E2235] text-sm leading-tight">
               {t("hero_card1_title")}
             </p>
-            <p data-i18n="hero_card1_subtitle" className="text-[#9E7B7B] text-xs mt-1.5">
+            <p data-i18n="hero_card1_subtitle" className="text-[#949AB1] text-xs mt-1.5">
               {t("hero_card1_subtitle")}
             </p>
           </Link>
@@ -51,10 +51,10 @@ export default function HomePage() {
             href="/menu"
             className="bg-white rounded-2xl px-4 py-4 shadow-warm-sm hover:shadow-warm-md transition-shadow"
           >
-            <p data-i18n="hero_card2_title" className="font-semibold text-[#1A0A0A] text-sm leading-tight">
+            <p data-i18n="hero_card2_title" className="font-semibold text-[#1E2235] text-sm leading-tight">
               {t("hero_card2_title")}
             </p>
-            <p data-i18n="hero_card2_subtitle" className="text-[#9E7B7B] text-xs mt-1.5">
+            <p data-i18n="hero_card2_subtitle" className="text-[#949AB1] text-xs mt-1.5">
               {t("hero_card2_subtitle")}
             </p>
           </Link>
@@ -62,7 +62,7 @@ export default function HomePage() {
 
         <Link
           href="/menu"
-          className="w-full max-w-[360px] bg-[#3D0A14] hover:bg-[#2D0810] text-white font-semibold text-sm text-center py-4 rounded-full transition-colors duration-200 active:scale-[0.97]"
+          className="w-full max-w-[360px] bg-[#FB7185] hover:bg-[#E11D48] text-white font-semibold text-sm text-center py-4 rounded-full transition-colors duration-200 active:scale-[0.97] shadow-warm-sm"
         >
           <span data-i18n="hero_cta">{t("hero_cta")}</span>
         </Link>
@@ -70,7 +70,7 @@ export default function HomePage() {
 
 
       {/* ─── Footer ─────────────────────────────────────────── */}
-      <footer className="bg-[#1A0A0A] text-white">
+      <footer className="bg-[#1E2235] text-white">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-20">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-14">
             <div className="md:col-span-5">

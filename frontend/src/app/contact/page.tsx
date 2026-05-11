@@ -42,10 +42,10 @@ function SectionTag({ children, light = false }: { children: React.ReactNode; li
         "inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.28em] uppercase px-3 py-1.5 rounded-full mb-5",
         light
           ? "bg-white/12 text-white/70 border border-white/15"
-          : "bg-[#3D0A14]/10 text-[#3D0A14] border border-[#3D0A14]/15"
+          : "bg-[#4C5372]/10 text-[#4C5372] border border-[#4C5372]/15"
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", light ? "bg-[#C9A84C]" : "bg-[#C9A84C]")} />
+      <span className={cn("w-1.5 h-1.5 rounded-full", light ? "bg-[#FB7185]" : "bg-[#FB7185]")} />
       {children}
     </span>
   );
@@ -64,8 +64,8 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start gap-4">
-      <div className="w-10 h-10 rounded-xl bg-[#C9A84C]/12 border border-[#C9A84C]/20 flex items-center justify-center shrink-0 mt-0.5">
-        <Icon size={17} className="text-[#C9A84C]" strokeWidth={1.6} />
+      <div className="w-10 h-10 rounded-xl bg-[#FB7185]/12 border border-[#FB7185]/20 flex items-center justify-center shrink-0 mt-0.5">
+        <Icon size={17} className="text-[#FB7185]" strokeWidth={1.6} />
       </div>
       <div>
         <p className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-0.5">{label}</p>
@@ -84,26 +84,26 @@ function LocationCard({ title }: { title: string }) {
       <div
         className="absolute inset-0 opacity-[0.07]"
         style={{
-          backgroundImage: "radial-gradient(circle, #C9A84C 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, #FB7185 1px, transparent 1px)",
           backgroundSize: "20px 20px",
         }}
       />
       {/* Street lines */}
       <div className="absolute inset-0 opacity-[0.06]">
-        <div className="absolute top-1/3 left-0 right-0 h-px bg-[#C9A84C]" />
-        <div className="absolute top-2/3 left-0 right-0 h-px bg-[#C9A84C]" />
-        <div className="absolute top-0 bottom-0 left-1/3 w-px bg-[#C9A84C]" />
-        <div className="absolute top-0 bottom-0 left-2/3 w-px bg-[#C9A84C]" />
+        <div className="absolute top-1/3 left-0 right-0 h-px bg-[#FB7185]" />
+        <div className="absolute top-2/3 left-0 right-0 h-px bg-[#FB7185]" />
+        <div className="absolute top-0 bottom-0 left-1/3 w-px bg-[#FB7185]" />
+        <div className="absolute top-0 bottom-0 left-2/3 w-px bg-[#FB7185]" />
       </div>
       {/* Radial glow at centre */}
       <div
         className="absolute inset-0"
-        style={{ background: "radial-gradient(ellipse 55% 55% at 50% 50%, rgba(200,150,160,0.12) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(ellipse 55% 55% at 50% 50%, rgba(148,154,177,0.12) 0%, transparent 70%)" }}
       />
       {/* Pin */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-        <div className="w-10 h-10 rounded-full bg-[#3D0A14] border-2 border-[#C9A84C]/60 flex items-center justify-center shadow-lg">
-          <MapPin size={18} className="text-[#C9A84C]" strokeWidth={1.8} />
+        <div className="w-10 h-10 rounded-full bg-[#4C5372] border-2 border-[#FB7185]/60 flex items-center justify-center shadow-lg">
+          <MapPin size={18} className="text-[#FB7185]" strokeWidth={1.8} />
         </div>
         <span className="text-[11px] font-bold text-white/70 tracking-wide">{title}</span>
       </div>
@@ -198,7 +198,7 @@ export default function ContactPage() {
       ═══════════════════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden flex flex-col items-center pt-32 md:pt-40 pb-16 md:pb-20 px-6 text-center"
-        style={{ backgroundColor: "#C896A0" }}
+        style={{ backgroundColor: "#E2D4E0" }}
       >
         {/* Grain */}
         <div
@@ -212,7 +212,7 @@ export default function ContactPage() {
         {/* Vignette */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(61,10,20,0.18) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(76,83,114,0.18) 0%, transparent 70%)" }}
         />
 
         <div className="relative max-w-2xl mx-auto">
@@ -220,13 +220,13 @@ export default function ContactPage() {
             <SectionTag>{t("contact_hero_tag")}</SectionTag>
           </div>
           <h1
-            className="font-playfair text-[2.6rem] md:text-[4rem] font-bold text-[#1A0A0A] leading-[1.06] mb-5 animate-fade-up-d1"
+            className="font-playfair text-[2.6rem] md:text-[4rem] font-bold text-[#1E2235] leading-[1.06] mb-5 animate-fade-up-d1"
             data-i18n="contact_hero_title"
           >
             {t("contact_hero_title")}
           </h1>
           <p
-            className="text-[#1A0A0A]/65 text-base md:text-lg leading-relaxed max-w-lg mx-auto animate-fade-up-d2"
+            className="text-[#1E2235]/65 text-base md:text-lg leading-relaxed max-w-lg mx-auto animate-fade-up-d2"
             data-i18n="contact_hero_subtitle"
           >
             {t("contact_hero_subtitle")}
@@ -237,19 +237,19 @@ export default function ContactPage() {
       {/* ═══════════════════════════════════════════════════════════
           TWO-COLUMN: INFO  +  FORM
       ═══════════════════════════════════════════════════════════ */}
-      <section className="bg-[#1A0A0A] py-20 md:py-28 relative overflow-hidden">
+      <section className="bg-[#1E2235] py-20 md:py-28 relative overflow-hidden">
         {/* Dot grid */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.035]"
           style={{
-            backgroundImage: "radial-gradient(circle, #C9A84C 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, #FB7185 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
         {/* Top glow */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at center top, rgba(200,150,160,0.07) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse at center top, rgba(148,154,177,0.07) 0%, transparent 70%)" }}
         />
 
         <div className="relative max-w-6xl mx-auto px-6 md:px-12">
@@ -266,7 +266,7 @@ export default function ContactPage() {
                 </h2>
               </Reveal>
               <Reveal delay={140}>
-                <div className="w-10 h-0.5 bg-[#C9A84C] rounded-full" />
+                <div className="w-10 h-0.5 bg-[#FB7185] rounded-full" />
               </Reveal>
 
               {/* Contact details */}
@@ -349,7 +349,7 @@ export default function ContactPage() {
                     </div>
                     <button
                       onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "", message: "" }); }}
-                      className="mt-2 text-[#C9A84C] text-sm font-semibold hover:underline"
+                      className="mt-2 text-[#FB7185] text-sm font-semibold hover:underline"
                     >
                       {t("contact_submit_btn")} →
                     </button>
@@ -361,7 +361,7 @@ export default function ContactPage() {
                       <h2 className="font-playfair text-2xl font-bold text-white mb-1">
                         {t("contact_form_title")}
                       </h2>
-                      <div className="w-8 h-0.5 bg-[#C9A84C] rounded-full mt-3" />
+                      <div className="w-8 h-0.5 bg-[#FB7185] rounded-full mt-3" />
                     </div>
 
                     <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -421,7 +421,7 @@ export default function ContactPage() {
                         disabled={submitting}
                         className={cn(
                           "w-full flex items-center justify-center gap-2.5 rounded-xl py-4",
-                          "bg-[#3D0A14] hover:bg-[#2D0810] text-white font-semibold text-sm",
+                          "bg-[#FB7185] hover:bg-[#E11D48] text-white font-semibold text-sm",
                           "transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]",
                           "disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
                         )}
