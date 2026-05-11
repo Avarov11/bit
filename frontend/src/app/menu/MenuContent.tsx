@@ -891,7 +891,7 @@ export default function MenuContent() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen pt-16 md:pt-20" style={{ backgroundColor: "#E2D4E0" }}>
+    <main className="min-h-screen pt-16 md:pt-20" style={{ backgroundColor: "#FFFDF6" }}>
 
       {/* ══ MOBILE layout ══════════════════════════════════════════════════════ */}
       <div className="md:hidden">
