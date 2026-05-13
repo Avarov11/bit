@@ -186,7 +186,7 @@ const EMPTY_SEL: CustSel = {
 };
 
 // ─── 3-D Cake preview ──────────────────────────────────────────────────────────
-function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
+function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: string; text?: string }) {
   const pal: Record<string, { top: string; mid: string; dark: string; shadow: string }> = {
     "":    { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" },
     brown: { top: "#D4A272", mid: "#A06840", dark: "#6C4018", shadow: "#4A2C0A" },
@@ -241,6 +241,11 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
       <ellipse cx="130" cy="104" rx="86" ry="22" fill="url(#cp-tg)" />
       {/* Shimmer */}
       <ellipse cx="106" cy="92" rx="38" ry="10" fill="white" opacity="0.17" />
+      {/* Written text on top face */}
+      {text && <>
+        <text x="131" y="105" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+        <text x="130" y="104" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+      </>}
     </svg>
   );
 
@@ -282,6 +287,11 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
           <circle key={x} cx={x} cy={144} r={3} fill="white" opacity="0.75" />
         ))}
         <circle cx="130" cy="156" r={3} fill="white" opacity="0.75" />
+        {/* Written text centered on heart face */}
+        {text && <>
+          <text x="131" y="121" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="120" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+        </>}
       </svg>
     );
   }
@@ -340,7 +350,11 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
 
       {/* Left edge highlight */}
       <line x1="36" y1="114" x2="36" y2="176" stroke="white" strokeWidth="2.5" opacity="0.25" />
-
+      {/* Written text on front face */}
+      {text && <>
+        <text x="119" y="149" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
+        <text x="118" y="148" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
+      </>}
     </svg>
   );
 }
@@ -1025,7 +1039,7 @@ export default function MenuContent() {
                   </p>
                 </div>
                 <div className="w-40 h-28 shrink-0 flex items-center justify-center">
-                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} />
+                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={custSel.topping === "write" ? custSel.toppingText : ""} />
                 </div>
                 <button onClick={closeCustomizer} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors">
                   <X size={15} />
@@ -1084,7 +1098,7 @@ export default function MenuContent() {
               <h3 className="font-playfair font-bold text-[#2D000A] text-lg leading-tight mb-4 line-clamp-2">{custProduct.name}</h3>
 
               <div className="w-full aspect-square bg-white/60 rounded-2xl flex items-center justify-center p-3 mb-5 shrink-0">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} />
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={custSel.topping === "write" ? custSel.toppingText : ""} />
               </div>
 
               <div className="flex-1 space-y-0.5 overflow-y-auto">
