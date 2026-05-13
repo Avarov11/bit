@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, X, Check, ChefHat, Sparkles, PenLine, Box, Palette } from "lucide-react";
+import { Search, X, Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
@@ -156,14 +156,13 @@ const CAKE_COLORS = [
 
 const STICKERS = ["🎂","🎉","🎀","🌸","💝","⭐","🎁","🎈","🌟","🦋","💐","🍰","🎊","🌺","💫","🧁"];
 
-const STEP_LABELS = ["Shape", "Flavour", "Cake Color", "Sprinkles", "Topping"];
+const STEP_LABELS = ["Shape", "Flavour", "Sprinkles", "Topping"];
 
 const STEPS = [
-  { label: "Shape",      Icon: Box      },
-  { label: "Flavour",    Icon: ChefHat  },
-  { label: "Cake Color", Icon: Palette  },
-  { label: "Sprinkles",  Icon: Sparkles },
-  { label: "Topping",    Icon: PenLine  },
+  { label: "Shape",     Icon: Box      },
+  { label: "Flavour",   Icon: ChefHat  },
+  { label: "Sprinkles", Icon: Sparkles },
+  { label: "Topping",   Icon: PenLine  },
 ];
 
 interface CustSel {
@@ -187,6 +186,8 @@ const EMPTY_SEL: CustSel = {
 
 // ─── 3-D Cake preview ──────────────────────────────────────────────────────────
 function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: string; text?: string }) {
+  const [view, setView] = useState<"side"|"top">("side");
+
   const pal: Record<string, { top: string; mid: string; dark: string; shadow: string }> = {
     "":    { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" },
     brown: { top: "#D4A272", mid: "#A06840", dark: "#6C4018", shadow: "#4A2C0A" },
@@ -198,62 +199,75 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
   const plate = "#800020";
   const plateLip = "#5C1422";
 
-  // ── Round / Full Cake — single tier, top face prominent ──────────────────
-  if (!shape || shape === "cake") return (
-    <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cp-sg" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={c.shadow} />
-          <stop offset="14%"  stopColor={c.dark}   />
-          <stop offset="50%"  stopColor={c.mid}    />
-          <stop offset="86%"  stopColor={c.dark}   />
-          <stop offset="100%" stopColor={c.shadow} />
-        </linearGradient>
-        <radialGradient id="cp-tg" cx="35%" cy="32%" r="64%">
-          <stop offset="0%"   stopColor={c.top} />
-          <stop offset="100%" stopColor={c.mid} />
-        </radialGradient>
-      </defs>
+  let sideContent: JSX.Element;
+  let topContent: JSX.Element;
 
-      {/* Ground shadow */}
-      <ellipse cx="130" cy="192" rx="92" ry="6" fill="rgba(128,0,32,0.13)" />
-      {/* Plate */}
-      <ellipse cx="130" cy="183" rx="92" ry="11" fill={plate} />
-      <ellipse cx="130" cy="180" rx="92" ry="11" fill={plateLip} />
-
-      {/* Body */}
-      <rect x="38" y="104" width="184" height="70" fill="url(#cp-sg)" />
-      {/* Bottom rim */}
-      <ellipse cx="130" cy="174" rx="92" ry="13" fill={c.shadow} />
-
-      {/* White frosting collar */}
-      <ellipse cx="130" cy="104" rx="94" ry="20" fill="white" />
-      {/* Drip drops hanging from collar */}
-      {([54,74,94,113,130,147,166,186,206] as const).map((x, i) => (
-        <ellipse key={x} cx={x} cy={118+(i%3)*3} rx={5} ry={6+(i%3)*4} fill="white" />
-      ))}
-      {/* Pearl row on body */}
-      {[56,86,116,144,174,204].map(x => (
-        <circle key={x} cx={x} cy={152} r={3.5} fill="white" opacity="0.62" />
-      ))}
-
-      {/* Top face — drawn last, sits on top of collar */}
-      <ellipse cx="130" cy="104" rx="86" ry="22" fill="url(#cp-tg)" />
-      {/* Shimmer */}
-      <ellipse cx="106" cy="92" rx="38" ry="10" fill="white" opacity="0.17" />
-      {/* Written text on top face */}
-      {text && <>
-        <text x="131" y="105" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
-        <text x="130" y="104" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
-      </>}
-    </svg>
-  );
-
-  // ── Heart Cake ─────────────────────────────────────────────────────────────
-  if (shape === "heart") {
-    // Clean symmetric bezier heart — no L commands, smooth curves all the way
-    const HP = "M130,176 C104,158 58,128 58,95 C58,68 76,54 100,54 C114,54 124,63 130,75 C136,63 146,54 160,54 C184,54 202,68 202,95 C202,128 156,158 130,176Z";
-    return (
+  if (!shape || shape === "cake") {
+    sideContent = (
+      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cp-sg" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor={c.shadow} />
+            <stop offset="14%"  stopColor={c.dark}   />
+            <stop offset="50%"  stopColor={c.mid}    />
+            <stop offset="86%"  stopColor={c.dark}   />
+            <stop offset="100%" stopColor={c.shadow} />
+          </linearGradient>
+          <radialGradient id="cp-tg" cx="35%" cy="32%" r="64%">
+            <stop offset="0%"   stopColor={c.top} />
+            <stop offset="100%" stopColor={c.mid} />
+          </radialGradient>
+        </defs>
+        <ellipse cx="130" cy="192" rx="92" ry="6" fill="rgba(128,0,32,0.13)" />
+        <ellipse cx="130" cy="183" rx="92" ry="11" fill={plate} />
+        <ellipse cx="130" cy="180" rx="92" ry="11" fill={plateLip} />
+        <rect x="38" y="104" width="184" height="70" fill="url(#cp-sg)" />
+        <ellipse cx="130" cy="174" rx="92" ry="13" fill={c.shadow} />
+        <ellipse cx="130" cy="104" rx="94" ry="20" fill="white" />
+        {([54,74,94,113,130,147,166,186,206] as const).map((x, i) => (
+          <ellipse key={x} cx={x} cy={118+(i%3)*3} rx={5} ry={6+(i%3)*4} fill="white" />
+        ))}
+        {[56,86,116,144,174,204].map(x => (
+          <circle key={x} cx={x} cy={152} r={3.5} fill="white" opacity="0.62" />
+        ))}
+        <ellipse cx="130" cy="104" rx="86" ry="22" fill="url(#cp-tg)" />
+        <ellipse cx="106" cy="92" rx="38" ry="10" fill="white" opacity="0.17" />
+        {text && <>
+          <text x="131" y="105" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="104" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+        </>}
+      </svg>
+    );
+    topContent = (
+      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ct-cg" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stopColor={c.top} />
+            <stop offset="100%" stopColor={c.mid} />
+          </radialGradient>
+        </defs>
+        <circle cx="130" cy="100" r="93" fill={plate} />
+        <circle cx="130" cy="100" r="88" fill="white" />
+        <circle cx="130" cy="100" r="78" fill="url(#ct-cg)" />
+        {[0,40,80,120,160,200,240,280,320].map((deg, i) => {
+          const rad = deg * Math.PI / 180;
+          return <ellipse key={deg} cx={130 + 83*Math.cos(rad)} cy={100 + 83*Math.sin(rad)} rx={5} ry={4+(i%3)*2} fill="white" opacity="0.9" />;
+        })}
+        {[0,45,90,135,180,225,270,315].map(deg => {
+          const rad = deg * Math.PI / 180;
+          return <circle key={deg} cx={130 + 62*Math.cos(rad)} cy={100 + 62*Math.sin(rad)} r={3} fill="white" opacity="0.62" />;
+        })}
+        <ellipse cx="108" cy="78" rx="28" ry="14" fill="white" opacity="0.17" transform="rotate(-25,108,78)" />
+        {text && <>
+          <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
+        </>}
+      </svg>
+    );
+  } else if (shape === "heart") {
+    const HP  = "M130,176 C104,158 58,128 58,95 C58,68 76,54 100,54 C114,54 124,63 130,75 C136,63 146,54 160,54 C184,54 202,68 202,95 C202,128 156,158 130,176Z";
+    const HTP = "M130,161 C104,143 58,113 58,80 C58,53 76,39 100,39 C114,39 124,48 130,60 C136,48 146,39 160,39 C184,39 202,53 202,80 C202,113 156,143 130,161Z";
+    sideContent = (
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="cp-hg" cx="34%" cy="28%" r="66%">
@@ -261,101 +275,129 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
             <stop offset="100%" stopColor={c.mid} />
           </radialGradient>
         </defs>
-
-        {/* Ground shadow */}
         <ellipse cx="130" cy="192" rx="74" ry="6" fill="rgba(128,0,32,0.12)" />
-
-        {/* Depth layers — heart shifted down */}
         <path d={HP} fill={c.shadow} transform="translate(0,22)" />
         <path d={HP} fill={c.dark}   transform="translate(0,14)" />
-
-        {/* White frosting ring */}
         <path d={HP} fill="white"         transform="translate(0,8)" />
         <path d={HP} fill="url(#cp-hg)"   transform="translate(0,6)" />
         <path d={HP} fill="white"         transform="translate(0,2)" />
-
-        {/* Top face — inset scaled */}
-        <path d={HP} fill="url(#cp-hg)"
-          transform="translate(130,115) scale(0.88) translate(-130,-115)" />
-
-        {/* Shimmer highlight */}
-        <ellipse cx="96" cy="75" rx="22" ry="10" fill="white" opacity="0.18"
-          transform="rotate(-30,96,75)" />
-
-        {/* Pearl row */}
+        <path d={HP} fill="url(#cp-hg)" transform="translate(130,115) scale(0.88) translate(-130,-115)" />
+        <ellipse cx="96" cy="75" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,75)" />
         {[106,118,130,142,154].map(x => (
           <circle key={x} cx={x} cy={144} r={3} fill="white" opacity="0.75" />
         ))}
         <circle cx="130" cy="156" r={3} fill="white" opacity="0.75" />
-        {/* Written text centered on heart face */}
         {text && <>
           <text x="131" y="121" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-          <text x="130" y="120" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="120" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+        </>}
+      </svg>
+    );
+    topContent = (
+      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ct-hg" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stopColor={c.top} />
+            <stop offset="100%" stopColor={c.mid} />
+          </radialGradient>
+        </defs>
+        <path d={HTP} fill="rgba(128,0,32,0.12)" transform="translate(4,5)" />
+        <path d={HTP} fill="none" stroke="white" strokeWidth="14" />
+        <path d={HTP} fill="url(#ct-hg)" />
+        <ellipse cx="96" cy="68" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,68)" />
+        {[106,118,130,142,154].map(x => (
+          <circle key={x} cx={x} cy={132} r={3} fill="white" opacity="0.75" />
+        ))}
+        <circle cx="130" cy="148" r={3} fill="white" opacity="0.75" />
+        {text && <>
+          <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
+        </>}
+      </svg>
+    );
+  } else {
+    sideContent = (
+      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cp-sqf" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor={c.dark}   />
+            <stop offset="45%"  stopColor={c.mid}    />
+            <stop offset="100%" stopColor={c.dark}   />
+          </linearGradient>
+          <linearGradient id="cp-sqr" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor={c.dark}   />
+            <stop offset="100%" stopColor={c.shadow} />
+          </linearGradient>
+          <linearGradient id="cp-sqt" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor={c.mid}  />
+            <stop offset="100%" stopColor={c.top}  />
+          </linearGradient>
+        </defs>
+        <ellipse cx="128" cy="193" rx="86" ry="6" fill="rgba(128,0,32,0.13)" />
+        <polygon points="36,183 204,183 228,163 60,163" fill={plate} />
+        <polygon points="36,179 204,179 228,159 60,159" fill={plateLip} />
+        <rect x="36" y="114" width="168" height="62" fill="url(#cp-sqf)" />
+        <polygon points="204,114 228,92 228,158 204,176" fill="url(#cp-sqr)" />
+        <polygon points="36,114 204,114 228,92 60,92" fill="url(#cp-sqt)" />
+        <rect x="36" y="106" width="168" height="14" fill="white" />
+        <rect x="36" y="110" width="168" height="10" fill="white" opacity="0.95" />
+        <polygon points="204,106 228,84 228,98 204,120" fill="white" />
+        <polygon points="36,106 204,106 228,84 60,84" fill="white" opacity="0.88" />
+        <polygon points="46,108 204,108 226,87 68,87" fill="url(#cp-sqt)" />
+        {([52,74,96,118,140,162,186] as const).map((x, i) => (
+          <rect key={x} x={x-4} y={118} width={8} height={7+(i%3)*5} rx={4} fill="white" opacity="0.92" />
+        ))}
+        {[58,90,122,154,186].map(x => (
+          <circle key={x} cx={x} cy={150} r={3.5} fill="white" opacity="0.62" />
+        ))}
+        <line x1="36" y1="114" x2="36" y2="176" stroke="white" strokeWidth="2.5" opacity="0.25" />
+        {text && <>
+          <text x="137" y="98" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
+          <text x="136" y="97" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
+        </>}
+      </svg>
+    );
+    topContent = (
+      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ct-sqg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={c.top} />
+            <stop offset="100%" stopColor={c.mid} />
+          </linearGradient>
+        </defs>
+        <rect x="50" y="52" width="168" height="108" rx="4" fill="rgba(128,0,32,0.12)" />
+        <rect x="44" y="46" width="172" height="110" rx="4" fill="white" />
+        <rect x="56" y="58" width="148" height="88" rx="2" fill="url(#ct-sqg)" />
+        <ellipse cx="95" cy="78" rx="28" ry="12" fill="white" opacity="0.17" transform="rotate(-20,95,78)" />
+        {[60,82,104,126,148,170,192].map((x, i) => (
+          <rect key={x} x={x-3} y={58} width={6} height={6+(i%3)*3} rx={3} fill="white" opacity="0.85" />
+        ))}
+        {[80,108,130,152,180].map(x => (
+          <circle key={x} cx={x} cy={136} r={3.5} fill="white" opacity="0.62" />
+        ))}
+        {text && <>
+          <text x="131" y="103" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
+          <text x="130" y="102" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
         </>}
       </svg>
     );
   }
 
-  // ── Square Cake ────────────────────────────────────────────────────────────
   return (
-    <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="cp-sqf" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={c.dark}   />
-          <stop offset="45%"  stopColor={c.mid}    />
-          <stop offset="100%" stopColor={c.dark}   />
-        </linearGradient>
-        <linearGradient id="cp-sqr" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={c.dark}   />
-          <stop offset="100%" stopColor={c.shadow} />
-        </linearGradient>
-        <linearGradient id="cp-sqt" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor={c.mid}  />
-          <stop offset="100%" stopColor={c.top}  />
-        </linearGradient>
-      </defs>
-
-      {/* Ground shadow */}
-      <ellipse cx="128" cy="193" rx="86" ry="6" fill="rgba(128,0,32,0.13)" />
-
-      {/* Plate */}
-      <polygon points="36,183 204,183 228,163 60,163" fill={plate} />
-      <polygon points="36,179 204,179 228,159 60,159" fill={plateLip} />
-
-      {/* Front face */}
-      <rect x="36" y="114" width="168" height="62" fill="url(#cp-sqf)" />
-      {/* Right side */}
-      <polygon points="204,114 228,92 228,158 204,176" fill="url(#cp-sqr)" />
-      {/* Top face */}
-      <polygon points="36,114 204,114 228,92 60,92" fill="url(#cp-sqt)" />
-
-      {/* Frosting: front top band */}
-      <rect x="36" y="106" width="168" height="14" fill="white" />
-      <rect x="36" y="110" width="168" height="10" fill="white" opacity="0.95" />
-      {/* Frosting: right side band */}
-      <polygon points="204,106 228,84 228,98 204,120" fill="white" />
-      {/* Frosting: top face highlight */}
-      <polygon points="36,106 204,106 228,84 60,84" fill="white" opacity="0.88" />
-      <polygon points="46,108 204,108 226,87 68,87" fill="url(#cp-sqt)" />
-
-      {/* Frosting drips on front */}
-      {([52,74,96,118,140,162,186] as const).map((x, i) => (
-        <rect key={x} x={x-4} y={118} width={8} height={7+(i%3)*5} rx={4} fill="white" opacity="0.92" />
-      ))}
-
-      {/* Pearl row on front */}
-      {[58,90,122,154,186].map(x => (
-        <circle key={x} cx={x} cy={150} r={3.5} fill="white" opacity="0.62" />
-      ))}
-
-      {/* Left edge highlight */}
-      <line x1="36" y1="114" x2="36" y2="176" stroke="white" strokeWidth="2.5" opacity="0.25" />
-      {/* Written text on front face */}
-      {text && <>
-        <text x="119" y="149" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
-        <text x="118" y="148" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF"              fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
-      </>}
-    </svg>
+    <div className="relative w-full h-full">
+      {view === "side" ? sideContent : topContent}
+      <button
+        onClick={() => setView(v => v === "side" ? "top" : "side")}
+        aria-label={view === "side" ? "View from top" : "View from side"}
+        className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1 shadow-sm text-[#800020] transition-colors"
+      >
+        {view === "side" ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
+      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5">
+        <button onClick={() => setView("side")} className={`w-1.5 h-1.5 rounded-full transition-colors ${view === "side" ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
+        <button onClick={() => setView("top")} className={`w-1.5 h-1.5 rounded-full transition-colors ${view === "top" ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
+      </div>
+    </div>
   );
 }
 
@@ -444,9 +486,8 @@ export default function MenuContent() {
       if (custSel.flavorType === "white") return !!custSel.colour;
       return false;
     }
-    if (custStep === 2) return !!custSel.cakeColor;
-    if (custStep === 3) return !!custSel.sprinkles;
-    if (custStep === 4) {
+    if (custStep === 2) return !!custSel.sprinkles;
+    if (custStep === 3) {
       const s = custSel.shape;
       if (s === "heart")  return custSel.topping === "write";
       if (s === "square") return custSel.topping === "write" || (custSel.topping === "sticker" && !!custSel.stickerId);
@@ -455,7 +496,7 @@ export default function MenuContent() {
     return true;
   };
 
-  const handleNext = () => { if (custStep < 5) setCustStep((s) => s + 1); };
+  const handleNext = () => { if (custStep < 4) setCustStep((s) => s + 1); };
   const handleBack = () => {
     if (custStep > 0) setCustStep((s) => s - 1);
     else closeCustomizer();
@@ -490,13 +531,12 @@ export default function MenuContent() {
 
   // ── Step content ────────────────────────────────────────────────────────────
   const renderStep = () => {
-    if (custStep === 5) {
+    if (custStep === 4) {
       const shapeName  = SHAPES.find((s) => s.id === custSel.shape)?.label ?? "—";
       const flavorName = custSel.flavorType === "chocolate"
         ? CHOC_FLAVORS.find((f) => f.id === custSel.flavor)?.label ?? "—"
         : "White Chocolate";
-      const colourData    = COLOURS.find((c) => c.id === custSel.colour);
-      const cakeColorData = CAKE_COLORS.find((c) => c.id === custSel.cakeColor);
+      const colourData = COLOURS.find((c) => c.id === custSel.colour);
       return (
         <div>
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Your Order Summary</h2>
@@ -507,9 +547,6 @@ export default function MenuContent() {
             <SummaryRow label="Flavour"    value={flavorName} />
             {custSel.flavorType === "white" && colourData && (
               <SummaryRow label="Colour" value={colourData.label} dot={colourData.hex} />
-            )}
-            {cakeColorData && (
-              <SummaryRow label="Cake Color" value={cakeColorData.label} dot={cakeColorData.hex} />
             )}
             <SummaryRow label="Sprinkles"  value={custSel.sprinkles === "yes" ? "Yes ✨" : "None"} />
             <SummaryRow
@@ -595,7 +632,7 @@ export default function MenuContent() {
               <OptionCard
                 key={f.id} id={f.id} emoji={f.emoji} label={f.label} sub={f.sub}
                 selected={custSel.flavorType === f.id}
-                onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "" }))}
+                onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "", cakeColor: f.id === "chocolate" ? "brown" : "" }))}
               />
             ))}
           </div>
@@ -638,7 +675,7 @@ export default function MenuContent() {
                 {COLOURS.map((col) => {
                   const sel = custSel.colour === col.id;
                   return (
-                    <button key={col.id} onClick={() => setCustSel((p) => ({ ...p, colour: col.id }))} className="flex flex-col items-center gap-3">
+                    <button key={col.id} onClick={() => setCustSel((p) => ({ ...p, colour: col.id, cakeColor: col.id }))} className="flex flex-col items-center gap-3">
                       <div
                         className={cn(
                           "w-20 h-20 rounded-full border-[5px] transition-all duration-200 flex items-center justify-center shadow-warm-sm",
@@ -661,52 +698,6 @@ export default function MenuContent() {
 
     if (custStep === 2) return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Cake Color</h2>
-        <p className="text-[#A05068] text-sm mb-5">Choose the color of your cake</p>
-        <div className="space-y-2.5">
-          {CAKE_COLORS.map((color) => {
-            const sel = custSel.cakeColor === color.id;
-            return (
-              <button
-                key={color.id}
-                onClick={() => setCustSel((p) => ({ ...p, cakeColor: color.id }))}
-                className={cn(
-                  "w-full flex items-center gap-4 p-3.5 rounded-2xl bg-white text-left transition-all duration-200 active:scale-[0.98]",
-                  sel ? "ring-2 ring-[#800020] shadow-warm-md" : "shadow-warm-sm hover:shadow-warm-md"
-                )}
-              >
-                {/* Color swatch */}
-                <div
-                  className="shrink-0 w-14 h-14 rounded-xl relative overflow-hidden shadow-sm"
-                  style={{ backgroundColor: color.hex }}
-                >
-                  <div className="absolute inset-0" style={{
-                    background: "radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.45) 0%, transparent 65%)"
-                  }} />
-                </div>
-                {/* Label */}
-                <div className="flex-1 min-w-0">
-                  <p className={cn("font-playfair font-bold text-base leading-tight", sel ? "text-[#800020]" : "text-[#2D000A]")}>
-                    {color.label}
-                  </p>
-                  <p className="text-[#A05068] text-xs mt-0.5">{color.sub}</p>
-                </div>
-                {/* Radio dot */}
-                <div className={cn(
-                  "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
-                  sel ? "bg-[#800020] border-[#800020] scale-110" : "border-[rgba(128,0,32,0.18)]"
-                )}>
-                  {sel && <Check size={11} className="text-white" strokeWidth={3.5} />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-
-    if (custStep === 3) return (
-      <div>
         <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Sprinkles?</h2>
         <p className="text-[#A05068] text-sm mb-5">Would you like sprinkles on top?</p>
         <div className="grid grid-cols-2 gap-3">
@@ -724,7 +715,7 @@ export default function MenuContent() {
       </div>
     );
 
-    if (custStep === 4) {
+    if (custStep === 3) {
       const shape         = custSel.shape;
       const showSticker   = shape === "square" || shape === "cake";
       const showUpload    = shape === "cake";
@@ -1035,7 +1026,7 @@ export default function MenuContent() {
                   </div>
                   <p className="font-playfair text-2xl font-bold text-[#2D000A] leading-tight">{STEPS[custStep].label}</p>
                   <p className="text-[#A05068] text-xs mt-1 font-medium">
-                    {["Pick your shape","Pick your flavour","Pick a color","Add sprinkles?","Personalise it"][custStep]}
+                    {["Pick your shape","Pick your flavour","Add sprinkles?","Personalise it"][custStep]}
                   </p>
                 </div>
                 <div className="w-40 h-28 shrink-0 flex items-center justify-center">

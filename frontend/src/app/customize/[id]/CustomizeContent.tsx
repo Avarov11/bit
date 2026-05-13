@@ -35,10 +35,9 @@ const toppingOptions = [
 ];
 
 const steps = [
-  { id: "shape",     label: "Shape",      Icon: Layers   },
-  { id: "chocolate", label: "Chocolate",  Icon: ChefHat  },
-  { id: "color",     label: "Cake Color", Icon: Palette  },
-  { id: "toppings",  label: "Toppings",   Icon: Sparkles },
+  { id: "shape",     label: "Shape",     Icon: Layers   },
+  { id: "chocolate", label: "Chocolate", Icon: ChefHat  },
+  { id: "toppings",  label: "Toppings",  Icon: Sparkles },
 ];
 
 interface Selections {
@@ -200,7 +199,7 @@ function SquareSide({ colorId, textLines }: { colorId: string; textLines: string
       <polygon points="155,70 180,50 180,60 155,79" fill="white" opacity="0.50" />
       <line x1="22" y1="75" x2="22" y2="179" stroke="white" strokeWidth="2.5" opacity="0.25" />
       {[50,88,126].map(x => <circle key={x} cx={x} cy={140} r={2.5} fill="white" opacity="0.65" />)}
-      {textLines.length > 0 && <SvgText lines={textLines} cx={85} cy={128} fontSize={10} />}
+      {textLines.length > 0 && <SvgText lines={textLines} cx={101} cy={62} fontSize={9} />}
     </svg>
   );
 }
@@ -340,15 +339,13 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
 
   const isStepCompleted = (i: number) => {
     if (i === 0) return !!sel.shapeId;
-    if (i === 1) return !!sel.chocolateId;
-    if (i === 2) return !!sel.cakeColor;
+    if (i === 1) return !!sel.chocolateId && (sel.chocolateId !== "white" || !!sel.cakeColor);
     return false;
   };
 
   const canProceed =
     step === 0 ? !!sel.shapeId :
-    step === 1 ? !!sel.chocolateId :
-    step === 2 ? !!sel.cakeColor : true;
+    step === 1 ? (!!sel.chocolateId && (sel.chocolateId !== "white" || !!sel.cakeColor)) : true;
 
   const toggleTopping = (id: string) =>
     setSel(prev => ({
@@ -418,11 +415,12 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
     <div>
       <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Flavor</h2>
       <p className="text-[#A05068] text-sm mb-5">Select your chocolate base</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {chocolates.map(choc => {
           const selected = sel.chocolateId === choc.id;
           return (
-            <button key={choc.id} onClick={() => setSel(p => ({ ...p, chocolateId: choc.id }))}
+            <button key={choc.id}
+              onClick={() => setSel(p => ({ ...p, chocolateId: choc.id, cakeColor: choc.id !== "white" ? "brown" : "" }))}
               className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-300 bg-white active:scale-[0.97]",
                 selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
               {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#800020] fill-[#F5D0D8]" />}
@@ -432,6 +430,26 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
           );
         })}
       </div>
+      {sel.chocolateId === "white" && (
+        <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
+          <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">Choose Cake Color</p>
+          <div className="grid grid-cols-3 gap-3">
+            {CAKE_COLORS.filter(c => c.id !== "brown").map(color => {
+              const selected = sel.cakeColor === color.id;
+              return (
+                <button key={color.id} onClick={() => setSel(p => ({ ...p, cakeColor: color.id }))}
+                  className={cn("relative rounded-2xl border-2 p-3 text-center transition-all duration-300 bg-white active:scale-[0.97]",
+                    selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40")}>
+                  {selected && <CheckCircle2 size={14} className="absolute top-2 right-2 text-[#800020] fill-[#F5D0D8]" />}
+                  <div className="w-10 h-10 rounded-full mx-auto mb-2 border border-[rgba(128,0,32,0.12)]"
+                    style={{ background: `radial-gradient(circle at 35% 35%, ${color.top}, ${color.main} 55%, ${color.dark})` }} />
+                  <p className="font-semibold text-[#2D000A] text-xs">{color.name}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -524,7 +542,6 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
   const stepContent = [
     <ShapeStep    key="shape" />,
     <FlavorStep   key="flavor" />,
-    <ColorStep    key="color" />,
     <ToppingsStep key="toppings" />,
   ];
 

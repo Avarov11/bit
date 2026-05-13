@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { MapPin, Mail, Phone, ArrowRight, ShoppingBag, Check } from "lucide-react";
+import { MapPin, Mail, Phone, ArrowRight, ShoppingBag, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
 import type { DbProduct } from "@/lib/types";
@@ -20,6 +20,25 @@ const DOTS = [
   { x: "87%", y: "76%", r: 9,  color: "#FF6B9D", opacity: 0.30 },
   { x: "21%", y: "86%", r: 5,  color: "#A05068", opacity: 0.38 },
   { x: "74%", y: "91%", r: 4,  color: "#FF6B9D", opacity: 0.45 },
+];
+
+const HERO_SLIDES = [
+  {
+    image: "https://images.unsplash.com/photo-1607920592519-bab2a80efd81?w=800&q=85",
+    label: "Artisan Brownies",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=800&q=85",
+    label: "Fully Customizable",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=85",
+    label: "For Every Occasion",
+  },
+  {
+    image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=85",
+    label: "Made with Love",
+  },
 ];
 
 function ProductCard({
@@ -103,6 +122,14 @@ export default function HomePage() {
   const addItem = useCartStore((s) => s.addItem);
   const [products, setProducts] = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
+
+  useEffect(() => {
+    if (heroPaused) return;
+    const id = setInterval(() => setHeroSlide(s => (s + 1) % HERO_SLIDES.length), 4500);
+    return () => clearInterval(id);
+  }, [heroPaused]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -271,44 +298,87 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── RIGHT: Image ── */}
+          {/* ── RIGHT: Slideshow ── */}
           <div className="flex-1 relative flex items-center justify-center md:justify-end">
-            {/* Lavender blob */}
+            {/* Blob */}
             <div
-              className="absolute rounded-full pointer-events-none"
+              className="absolute rounded-full pointer-events-none transition-colors duration-700"
               style={{
                 width: "min(450px, 90vw)",
                 height: "min(450px, 90vw)",
-                background:
-                  "radial-gradient(circle, #D8CCD8 0%, #F5D0D8 58%, transparent 100%)",
+                background: "radial-gradient(circle, #D8CCD8 0%, #F5D0D8 58%, transparent 100%)",
                 opacity: 0.88,
               }}
             />
 
-            {/* Image */}
+            {/* Slide container */}
             <div
               className="relative z-10"
-              style={{
-                width: "min(400px, 82vw)",
-                height: "min(400px, 82vw)",
-              }}
+              style={{ width: "min(400px, 82vw)", height: "min(400px, 82vw)" }}
+              onMouseEnter={() => setHeroPaused(true)}
+              onMouseLeave={() => setHeroPaused(false)}
             >
               <div
                 className="relative w-full h-full rounded-[2.5rem] overflow-hidden"
                 style={{ boxShadow: "0 32px 80px rgba(128,0,32,0.24)" }}
               >
-                <Image
-                  src="https://images.unsplash.com/photo-1607920592519-bab2a80efd81?w=800&q=85"
-                  alt="Biteez artisan brownies"
-                  fill
-                  className="object-cover"
-                  priority
-                />
+                {HERO_SLIDES.map((slide, i) => (
+                  <Image
+                    key={i}
+                    src={slide.image}
+                    alt={slide.label}
+                    fill
+                    className={cn(
+                      "object-cover transition-opacity duration-700",
+                      i === heroSlide ? "opacity-100" : "opacity-0"
+                    )}
+                    priority={i === 0}
+                  />
+                ))}
               </div>
 
+              {/* Slide label pill */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                <span className="bg-white/80 backdrop-blur-sm text-[#800020] text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full shadow-sm">
+                  {HERO_SLIDES[heroSlide].label}
+                </span>
+              </div>
+
+              {/* Prev arrow */}
+              <button
+                onClick={() => setHeroSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/75 hover:bg-white rounded-full p-2 shadow-md text-[#800020] transition-all duration-200 hover:scale-110"
+                aria-label="Previous"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              {/* Next arrow */}
+              <button
+                onClick={() => setHeroSlide(s => (s + 1) % HERO_SLIDES.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/75 hover:bg-white rounded-full p-2 shadow-md text-[#800020] transition-all duration-200 hover:scale-110"
+                aria-label="Next"
+              >
+                <ChevronRight size={18} />
+              </button>
+
+              {/* Dot indicators */}
+              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {HERO_SLIDES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setHeroSlide(i)}
+                    className={cn(
+                      "rounded-full transition-all duration-300",
+                      i === heroSlide ? "w-5 h-2 bg-[#800020]" : "w-2 h-2 bg-[#800020]/30 hover:bg-[#800020]/60"
+                    )}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Extra decorative dots near image */}
+            {/* Decorative dots */}
             <div className="absolute top-6 right-6 w-3 h-3 rounded-full bg-[#FF6B9D] opacity-55 z-20" />
             <div className="absolute bottom-14 right-1 w-2 h-2 rounded-full bg-[#A05068] opacity-45 z-20" />
             <div className="absolute top-1/2 -left-2 w-4 h-4 rounded-full border-2 border-[#A05068] opacity-45 z-20" />
