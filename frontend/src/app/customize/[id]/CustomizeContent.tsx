@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Layers, ChefHat, Sparkles, Palette, CheckCircle2, Check } from "lucide-react";
+import { ChevronLeft, Layers, ChefHat, Sparkles, CheckCircle2, Check } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -450,30 +450,6 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
           </div>
         </div>
       )}
-    </div>
-  );
-
-  const ColorStep = () => (
-    <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Cake Color</h2>
-      <p className="text-[#A05068] text-sm mb-5">Pick your cake color — see both previews update live</p>
-      <div className="grid grid-cols-2 gap-3">
-        {CAKE_COLORS.map(color => {
-          const selected = sel.cakeColor === color.id;
-          return (
-            <button key={color.id} onClick={() => setSel(p => ({ ...p, cakeColor: color.id }))}
-              className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-300 bg-white active:scale-[0.97]",
-                selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
-              {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#800020] fill-[#F5D0D8]" />}
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 border border-[rgba(128,0,32,0.12)]"
-                style={{ background: `radial-gradient(circle at 35% 35%, ${color.top}, ${color.main} 55%, ${color.dark})` }}
-              />
-              <h3 className="font-semibold text-[#2D000A] text-sm">{color.name}</h3>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 
