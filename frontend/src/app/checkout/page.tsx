@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MapPin, Clock, CreditCard, Banknote, Truck } from "lucide-react";
+import { ChevronLeft, MapPin, Clock, CreditCard, Truck } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
     deliveryMethod: "pickup",
     address: "",
     pickupDate: "", pickupTime: "",
-    payment: "cash", notes: "",
+    payment: "card", notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placing, setPlacing] = useState(false);
@@ -87,7 +87,7 @@ export default function CheckoutPage() {
 
   const sendOrderToWhatsApp = (orderNumber: string) => {
     const phone = "201019383610";
-    const paymentLabel = form.payment === "cash" ? t("checkout_cash_pickup") : t("checkout_card_pickup");
+    const paymentLabel = t("checkout_card_pickup");
 
     const isDelivery = form.deliveryMethod === "delivery";
 
@@ -377,40 +377,14 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
               </Section>
 
               <Section title={t("checkout_payment_section")}>
-                <p data-i18n="checkout_payment_note" className="text-[#A05068] text-xs -mt-1">
-                  {t("checkout_payment_note")}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {([
-                    { id: "cash", labelKey: "checkout_cash_pickup", Icon: Banknote },
-                    { id: "card", labelKey: "checkout_card_pickup", Icon: CreditCard },
-                  ] as const).map(({ id, labelKey, Icon }) => (
-                    <button
-                      key={id} type="button" onClick={() => set("payment", id)}
-                      className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
-                        form.payment === id
-                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
-                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                        form.payment === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
-                      )}>
-                        <Icon size={16} />
-                      </div>
-                      <span
-                        data-i18n={labelKey}
-                        className={cn(
-                          "text-sm font-semibold",
-                          form.payment === id ? "text-[#800020]" : "text-[#800020]"
-                        )}
-                      >
-                        {t(labelKey)}
-                      </span>
-                    </button>
-                  ))}
+                <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-[#800020] bg-[#F5D0D8] shadow-warm-xs">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-[#800020] text-white">
+                    <CreditCard size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#800020]">{t("checkout_card_pickup")}</p>
+                    <p className="text-xs text-[#A05068] mt-0.5">Visa · Mastercard · AMEX</p>
+                  </div>
                 </div>
               </Section>
 
