@@ -49,7 +49,7 @@ interface Selections {
   writingText: string;
 }
 
-// ─── Color palette ────────────────────────────────────────────────────────────
+// ─── Color palette ─────────────────────────────────────────────────────────────
 type CP = { main: string; dark: string; top: string };
 const PALETTE: Record<string, CP> = {
   brown: { main: "#8B5E3C", dark: "#5C3C22", top: "#B07850" },
@@ -59,7 +59,7 @@ const PALETTE: Record<string, CP> = {
 };
 const getC = (id: string): CP => PALETTE[id] ?? PALETTE.brown;
 
-// ─── Text line wrapping ───────────────────────────────────────────────────────
+// ─── Text helpers ──────────────────────────────────────────────────────────────
 function computeLines(text: string, shapeId: string): string[] {
   const t = text.trim();
   if (!t) return [];
@@ -68,9 +68,9 @@ function computeLines(text: string, shapeId: string): string[] {
     const lines: string[] = [];
     let cur = "";
     for (const w of words) {
-      const candidate = cur ? `${cur} ${w}` : w;
-      if (candidate.length > 13 && cur) { lines.push(cur); cur = w; }
-      else cur = candidate;
+      const cand = cur ? `${cur} ${w}` : w;
+      if (cand.length > 13 && cur) { lines.push(cur); cur = w; }
+      else cur = cand;
     }
     if (cur) lines.push(cur);
     return lines;
@@ -90,16 +90,18 @@ function cakeFontSize(lines: string[]): number {
   return 11;
 }
 
-// ─── SVG text helper ──────────────────────────────────────────────────────────
-function SvgText({ lines, cx, cy, fontSize = 10 }: { lines: string[]; cx: number; cy: number; fontSize?: number }) {
+// ─── SVG text renderer ─────────────────────────────────────────────────────────
+function SvgText({ lines, cx, cy, fontSize = 10 }: {
+  lines: string[]; cx: number; cy: number; fontSize?: number;
+}) {
   if (!lines.length) return null;
   const lh = fontSize + 3;
   const startY = cy - ((lines.length - 1) * lh) / 2;
   return (
     <>
-      <text x={cx + 1} y={startY + 1} textAnchor="middle" fill="rgba(45,0,10,0.40)"
+      <text x={cx+1} y={startY+1} textAnchor="middle" fill="rgba(45,0,10,0.40)"
         fontWeight="bold" fontSize={fontSize} fontFamily="Georgia, serif">
-        {lines.map((l, i) => <tspan key={i} x={cx + 1} dy={i === 0 ? 0 : lh}>{l}</tspan>)}
+        {lines.map((l, i) => <tspan key={i} x={cx+1} dy={i === 0 ? 0 : lh}>{l}</tspan>)}
       </text>
       <text x={cx} y={startY} textAnchor="middle" fill="#FFFFFF"
         fontWeight="bold" fontSize={fontSize} fontFamily="Georgia, serif">
@@ -109,7 +111,9 @@ function SvgText({ lines, cx, cy, fontSize = 10 }: { lines: string[]; cx: number
   );
 }
 
-// ─── Side view SVGs ───────────────────────────────────────────────────────────
+// ─── LEFT PANEL: existing side-view SVG ───────────────────────────────────────
+// Uses unique gradient IDs prefixed with "sv-" to avoid clashing with top-view SVGs.
+
 function FullCakeSide({ colorId, textLines }: { colorId: string; textLines: string[] }) {
   const c = getC(colorId);
   const fs = cakeFontSize(textLines);
@@ -117,7 +121,7 @@ function FullCakeSide({ colorId, textLines }: { colorId: string; textLines: stri
   return (
     <svg viewBox="0 0 200 210" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="cg-side" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id="sv-cg" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%"   stopColor={c.dark} />
           <stop offset="18%"  stopColor={c.main} />
           <stop offset="82%"  stopColor={c.main} />
@@ -125,29 +129,24 @@ function FullCakeSide({ colorId, textLines }: { colorId: string; textLines: stri
         </linearGradient>
       </defs>
       <ellipse cx="100" cy="200" rx="76" ry="8" fill="#2D000A" opacity="0.08" />
-      {/* Bottom tier */}
-      <rect x="20" y="128" width="160" height="62" fill="url(#cg-side)" />
+      <rect x="20" y="128" width="160" height="62" fill="url(#sv-cg)" />
       <ellipse cx="100" cy="190" rx="80" ry="12" fill={c.dark} />
       <ellipse cx="100" cy="128" rx="80" ry="12" fill={c.top} />
-      {/* Frosting between tiers */}
       <ellipse cx="100" cy="122" rx="80" ry="12" fill="#FFFFFF" />
       <rect x="20" y="122" width="160" height="9" fill="#FFFFFF" />
       <ellipse cx="100" cy="131" rx="80" ry="12" fill="#FFFFFF" />
-      {/* Top tier */}
-      <rect x="48" y="74" width="104" height="52" fill="url(#cg-side)" />
+      <rect x="48" y="74" width="104" height="52" fill="url(#sv-cg)" />
       <ellipse cx="100" cy="126" rx="52" ry="9" fill={c.dark} opacity="0.25" />
       <ellipse cx="100" cy="74" rx="52" ry="9" fill={c.top} />
-      {/* Frosting on top tier */}
       <ellipse cx="100" cy="68" rx="52" ry="9" fill="#FFFFFF" />
       <rect x="48" y="68" width="104" height="8" fill="#FFFFFF" />
       <ellipse cx="100" cy="76" rx="52" ry="9" fill="#FFFFFF" />
-      {/* Candles */}
-      {showCandles && ([75, 100, 125] as const).map((x, i) => {
+      {showCandles && ([75,100,125] as const).map((x, i) => {
         const body = ["#FFB3BA","#B3D4FF","#FFE4B3"][i];
         const cap  = ["#FF8095","#80B0E8","#FFD070"][i];
         return (
           <g key={x}>
-            <rect x={x - 3.5} y={44} width={7} height={24} rx={2.5} fill={body} />
+            <rect x={x-3.5} y={44} width={7} height={24} rx={2.5} fill={body} />
             <ellipse cx={x} cy={44} rx={3.5} ry={2} fill={cap} />
             <ellipse cx={x} cy={38} rx={4}   ry={7} fill="#FFA040" opacity="0.9" />
             <ellipse cx={x} cy={39} rx={2.2} ry={4.5} fill="#FFE050" />
@@ -184,7 +183,7 @@ function SquareSide({ colorId, textLines }: { colorId: string; textLines: string
   return (
     <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="sq-side" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id="sv-sq" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%"   stopColor={c.dark} />
           <stop offset="20%"  stopColor={c.main} />
           <stop offset="80%"  stopColor={c.main} />
@@ -193,7 +192,7 @@ function SquareSide({ colorId, textLines }: { colorId: string; textLines: string
       </defs>
       <ellipse cx="98" cy="188" rx="68" ry="8" fill="#2D000A" opacity="0.08" />
       <polygon points="155,72 180,52 180,162 155,175" fill={c.dark} />
-      <rect x="22" y="75" width="133" height="100" fill="url(#sq-side)" />
+      <rect x="22" y="75" width="133" height="100" fill="url(#sv-sq)" />
       <rect x="22" y="173" width="133" height="4" fill={c.dark} opacity="0.6" />
       <rect x="22" y="70" width="133" height="9" fill="white" />
       <polygon points="22,70 155,70 180,50 47,50" fill={c.top} />
@@ -206,44 +205,45 @@ function SquareSide({ colorId, textLines }: { colorId: string; textLines: string
   );
 }
 
-// ─── Top view SVGs ────────────────────────────────────────────────────────────
+function SideView({ shapeId, colorId, textLines }: { shapeId: string; colorId: string; textLines: string[] }) {
+  if (shapeId === "heart")  return <HeartSide  colorId={colorId} textLines={textLines} />;
+  if (shapeId === "square") return <SquareSide colorId={colorId} textLines={textLines} />;
+  return <FullCakeSide colorId={colorId} textLines={textLines} />;
+}
+
+// ─── RIGHT PANEL: top-view SVG (shows written text from above) ────────────────
+// Uses unique gradient IDs prefixed with "tv-" to avoid clashing with side-view SVGs.
+
 function FullCakeTop({ colorId, textLines }: { colorId: string; textLines: string[] }) {
   const c = getC(colorId);
   const fs = cakeFontSize(textLines);
-  const bumpAngles = [0,30,60,90,120,150,180,210,240,270,300,330];
+  const bumpAngles = [0,30,60,90,120,150,180];
   return (
     <svg viewBox="0 0 200 175" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="cg-top-side" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id="tv-cg" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%"   stopColor={c.main} />
           <stop offset="100%" stopColor={c.dark} />
         </linearGradient>
       </defs>
-      {/* Near rim */}
       <ellipse cx="100" cy="128" rx="75" ry="20" fill={c.dark} />
-      {/* Side band */}
-      <rect x="25" y="90" width="150" height="38" fill="url(#cg-top-side)" />
-      {/* Top surface */}
+      <rect x="25" y="90" width="150" height="38" fill="url(#tv-cg)" />
       <ellipse cx="100" cy="90" rx="75" ry="20" fill={c.top} />
-      {/* Frosting ring */}
       <ellipse cx="100" cy="86" rx="75" ry="20" fill="none" stroke="white" strokeWidth="7" opacity="0.9" />
-      {/* Drip bumps (front half only) */}
-      {bumpAngles.filter(a => a <= 180).map(a => {
+      {bumpAngles.map(a => {
         const rad = (a * Math.PI) / 180;
-        return <ellipse key={a} cx={100 + 75 * Math.cos(rad)} cy={90 + 20 * Math.sin(rad) + 4} rx={5} ry={3} fill="white" opacity="0.85" />;
+        return <ellipse key={a} cx={100 + 75*Math.cos(rad)} cy={90 + 20*Math.sin(rad) + 4} rx={5} ry={3} fill="white" opacity="0.85" />;
       })}
-      {/* Inner highlight */}
       <ellipse cx="100" cy="90" rx="68" ry="16" fill={c.top} opacity="0.7" />
-      {/* Candle dots — hidden when text shown */}
       {textLines.length === 0 && [
-        { cx: 78,  cy: 84, body: "#FFB3BA" },
-        { cx: 100, cy: 82, body: "#B3D4FF" },
-        { cx: 122, cy: 84, body: "#FFE4B3" },
+        { cx:78,  cy:84, body:"#FFB3BA" },
+        { cx:100, cy:82, body:"#B3D4FF" },
+        { cx:122, cy:84, body:"#FFE4B3" },
       ].map(cd => (
         <g key={cd.cx}>
           <circle cx={cd.cx} cy={cd.cy} r={5} fill={cd.body} />
-          <ellipse cx={cd.cx} cy={cd.cy - 4} rx={4} ry={6} fill="#FFA040" opacity="0.85" />
-          <ellipse cx={cd.cx} cy={cd.cy - 5} rx={2} ry={4} fill="#FFE050" />
+          <ellipse cx={cd.cx} cy={cd.cy-4} rx={4} ry={6} fill="#FFA040" opacity="0.85" />
+          <ellipse cx={cd.cx} cy={cd.cy-5} rx={2} ry={4} fill="#FFE050" />
         </g>
       ))}
       <ellipse cx="100" cy="163" rx="68" ry="8" fill="#2D000A" opacity="0.08" />
@@ -254,7 +254,6 @@ function FullCakeTop({ colorId, textLines }: { colorId: string; textLines: strin
 
 function HeartTop({ colorId, textLines }: { colorId: string; textLines: string[] }) {
   const c = getC(colorId);
-  // Vertically compressed heart for top-down perspective
   const P = "M100,135 C60,118 35,96 35,76 C35,58 48,46 65,46 C76,46 88,54 100,65 C112,54 124,46 135,46 C152,46 165,58 165,76 C165,96 140,118 100,135Z";
   return (
     <svg viewBox="0 0 200 190" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
@@ -275,18 +274,13 @@ function SquareTop({ colorId, textLines }: { colorId: string; textLines: string[
   return (
     <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="105" cy="190" rx="72" ry="8" fill="#2D000A" opacity="0.08" />
-      {/* Front face */}
       <polygon points="45,87 185,87 185,168 45,168" fill={c.main} />
-      {/* Left side face */}
       <polygon points="25,64 45,87 45,168 25,145" fill={c.dark} />
-      {/* Top face */}
       <polygon points="25,64 165,64 185,87 45,87" fill={c.top} />
       <polygon points="25,64 165,64 185,87 45,87" fill="white" opacity="0.38" />
-      {/* Top-face edges */}
       <line x1="25"  y1="64" x2="45"  y2="87" stroke="white" strokeWidth="2.5" opacity="0.6" />
       <line x1="25"  y1="64" x2="165" y2="64" stroke="white" strokeWidth="2.5" opacity="0.6" />
       <line x1="165" y1="64" x2="185" y2="87" stroke="white" strokeWidth="2.5" opacity="0.6" />
-      {/* Frosting lip on front top */}
       <rect x="45" y="83" width="140" height="8" fill="white" opacity="0.55" />
       <line x1="25" y1="64" x2="25" y2="145" stroke="white" strokeWidth="2" opacity="0.28" />
       {[70,115,160].map(x => <circle key={x} cx={x} cy={135} r={2.5} fill="white" opacity="0.65" />)}
@@ -295,35 +289,26 @@ function SquareTop({ colorId, textLines }: { colorId: string; textLines: string[
   );
 }
 
-// ─── Preview dispatcher ───────────────────────────────────────────────────────
-function CakePreview({ shapeId, colorId, view, textLines }: {
-  shapeId: string; colorId: string; view: "side" | "top"; textLines: string[];
-}) {
-  if (view === "top") {
-    if (shapeId === "heart")  return <HeartTop  colorId={colorId} textLines={textLines} />;
-    if (shapeId === "square") return <SquareTop colorId={colorId} textLines={textLines} />;
-    return <FullCakeTop colorId={colorId} textLines={textLines} />;
-  }
-  if (shapeId === "heart")  return <HeartSide  colorId={colorId} textLines={textLines} />;
-  if (shapeId === "square") return <SquareSide colorId={colorId} textLines={textLines} />;
-  return <FullCakeSide colorId={colorId} textLines={textLines} />;
+function TopView({ shapeId, colorId, textLines }: { shapeId: string; colorId: string; textLines: string[] }) {
+  if (shapeId === "heart")  return <HeartTop  colorId={colorId} textLines={textLines} />;
+  if (shapeId === "square") return <SquareTop colorId={colorId} textLines={textLines} />;
+  return <FullCakeTop colorId={colorId} textLines={textLines} />;
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main component ────────────────────────────────────────────────────────────
 export default function CustomizeContent({ product }: { product: DbProduct }) {
   const router    = useRouter();
   const addToCart = useCartStore((s) => s.addItem);
 
   const [step, setStep]               = useState(0);
-  const [previewView, setPreviewView] = useState<"side" | "top">("side");
   const [wordWarning, setWordWarning] = useState(false);
   const [sel, setSel] = useState<Selections>({
     shapeId: "", chocolateId: "", cakeColor: "", toppingIds: [], writingText: "",
   });
 
-  const maxWords   = sel.shapeId === "full-cake" ? Infinity : 3;
-  const wordCount  = sel.writingText.trim().split(/\s+/).filter(Boolean).length;
-  const textLines  = useMemo(
+  const maxWords  = sel.shapeId === "full-cake" ? Infinity : 3;
+  const wordCount = sel.writingText.trim().split(/\s+/).filter(Boolean).length;
+  const textLines = useMemo(
     () => sel.toppingIds.includes("writing") ? computeLines(sel.writingText, sel.shapeId) : [],
     [sel.writingText, sel.shapeId, sel.toppingIds]
   );
@@ -399,7 +384,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
     router.push("/cart");
   };
 
-  // ── Step panels ──────────────────────────────────────────────────────────────
+  // ── Step panels ───────────────────────────────────────────────────────────────
   const ShapeStep = () => (
     <div>
       <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Size & Style</h2>
@@ -433,7 +418,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
     <div>
       <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Flavor</h2>
       <p className="text-[#A05068] text-sm mb-5">Select your chocolate base</p>
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3">
         {chocolates.map(choc => {
           const selected = sel.chocolateId === choc.id;
           return (
@@ -453,7 +438,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
   const ColorStep = () => (
     <div>
       <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Cake Color</h2>
-      <p className="text-[#A05068] text-sm mb-5">Pick your cake color — see the preview update live</p>
+      <p className="text-[#A05068] text-sm mb-5">Pick your cake color — see both previews update live</p>
       <div className="grid grid-cols-2 gap-3">
         {CAKE_COLORS.map(color => {
           const selected = sel.cakeColor === color.id;
@@ -512,7 +497,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
               onChange={handleWritingChange}
               placeholder={
                 sel.shapeId === "full-cake"
-                  ? "Type anything — text wraps automatically…"
+                  ? "Type anything — wraps automatically on the top view…"
                   : `Max 3 words (e.g. "Happy Birthday Sara")`
               }
               rows={sel.shapeId === "full-cake" ? 3 : 2}
@@ -537,13 +522,13 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
   };
 
   const stepContent = [
-    <ShapeStep   key="shape" />,
-    <FlavorStep  key="flavor" />,
-    <ColorStep   key="color" />,
+    <ShapeStep    key="shape" />,
+    <FlavorStep   key="flavor" />,
+    <ColorStep    key="color" />,
     <ToppingsStep key="toppings" />,
   ];
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F5D0D8" }}>
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-b border-[rgba(128,0,32,0.10)] shadow-warm-xs h-14 flex items-center px-4 md:px-6">
@@ -592,37 +577,41 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
             })}
           </div>
 
-          {/* Preview panel */}
-          <div className="relative h-56 md:h-72 bg-[#FFF0F3] flex items-center justify-center overflow-hidden border-b border-[rgba(128,0,32,0.06)]">
+          {/* ── Dual preview panel ─────────────────────────────────────────── */}
+          <div className="flex h-56 md:h-72 bg-[#FFF0F3] border-b border-[rgba(128,0,32,0.06)] overflow-hidden">
 
-            {/* Side / Top toggle */}
-            <div className="absolute top-3 right-3 z-10 flex rounded-full overflow-hidden border border-[#F5D0D8] shadow-warm-xs">
-              {(["side","top"] as const).map(v => (
-                <button key={v} onClick={() => setPreviewView(v)}
-                  className={cn(
-                    "px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all duration-200",
-                    previewView === v
-                      ? "bg-[#800020] text-white"
-                      : "bg-[#F5D0D8] text-[#800020] hover:bg-[#F5D0D8]/70"
-                  )}>
-                  {v === "side" ? "Side" : "Top"}
-                </button>
-              ))}
+            {/* Left — side view (existing look) */}
+            <div className="flex-1 flex flex-col border-r border-[rgba(128,0,32,0.08)]">
+              <div className="flex items-center justify-center px-2 py-1 border-b border-[rgba(128,0,32,0.06)]">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[#A05068]">Side View</span>
+              </div>
+              <div className="flex-1 flex items-center justify-center p-3 md:p-5">
+                <div className="w-full h-full" style={{ maxWidth: 160, maxHeight: 200 }}>
+                  <SideView shapeId={sel.shapeId} colorId={sel.cakeColor} textLines={textLines} />
+                </div>
+              </div>
             </div>
 
-            <div className="h-full flex items-center justify-center p-4 md:p-6" style={{ width: "min(100%, 260px)" }}>
-              <CakePreview
-                shapeId={sel.shapeId}
-                colorId={sel.cakeColor}
-                view={previewView}
-                textLines={textLines}
-              />
+            {/* Right — top view (shows written text) */}
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-center justify-center px-2 py-1 border-b border-[rgba(128,0,32,0.06)]">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[#800020]">Top View · Text</span>
+              </div>
+              <div className="flex-1 flex items-center justify-center p-3 md:p-5">
+                <div className="w-full h-full" style={{ maxWidth: 160, maxHeight: 200 }}>
+                  <TopView shapeId={sel.shapeId} colorId={sel.cakeColor} textLines={textLines} />
+                </div>
+              </div>
             </div>
 
-            <div className="absolute bottom-4 left-4">
-              <span className="text-[#A05068] text-xs font-semibold uppercase tracking-widest">Step {step + 1} of {steps.length}</span>
-              <h2 className="font-playfair text-[#2D000A] text-2xl font-bold leading-tight">{steps[step].label}</h2>
-            </div>
+          </div>
+
+          {/* Step label below preview */}
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-[#A05068] text-xs font-semibold uppercase tracking-widest">
+              Step {step + 1} of {steps.length} —
+            </span>
+            <span className="font-playfair text-[#2D000A] text-base font-bold">{steps[step].label}</span>
           </div>
 
           <div className="flex-1 p-4 md:p-6">{stepContent[step]}</div>
