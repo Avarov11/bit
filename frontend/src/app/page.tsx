@@ -8,6 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
 import type { DbProduct } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import CakeCustomizerModal from "@/components/CakeCustomizerModal";
 
 const footerNavKeys = ["nav_home", "nav_menu", "nav_about", "nav_contact"];
 const footerNavHrefs = ["/", "/menu", "/about", "/contact"];
@@ -45,13 +46,15 @@ function ProductCard({
   product,
   added,
   onAdd,
+  onCustomize,
 }: {
   product: DbProduct;
   added: boolean;
   onAdd: () => void;
+  onCustomize: () => void;
 }) {
   const isCustomizable = product.category === "Customized";
-  const href = isCustomizable ? `/customize/${product.id}` : `/product/${product.id}`;
+  const href = `/product/${product.id}`;
 
   return (
     <div className="shrink-0 w-56 group">
@@ -62,8 +65,8 @@ function ProductCard({
           boxShadow: "0 4px 20px rgba(128,0,32,0.10)",
         }}
       >
-        <Link href={href}>
-          <div className="relative w-full aspect-square overflow-hidden">
+        {isCustomizable ? (
+          <div className="relative w-full aspect-square overflow-hidden cursor-pointer" onClick={onCustomize}>
             <Image
               src={
                 product.image_url ||
@@ -75,21 +78,34 @@ function ProductCard({
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </div>
-        </Link>
-        <div className="p-4">
+        ) : (
           <Link href={href}>
-            <h3 className="font-playfair font-bold text-[#2D000A] text-sm leading-tight mb-1 line-clamp-1">
-              {product.name}
-            </h3>
+            <div className="relative w-full aspect-square overflow-hidden">
+              <Image
+                src={
+                  product.image_url ||
+                  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80"
+                }
+                alt={product.name}
+                fill
+                sizes="224px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
           </Link>
+        )}
+        <div className="p-4">
+          <h3 className="font-playfair font-bold text-[#2D000A] text-sm leading-tight mb-1 line-clamp-1">
+            {product.name}
+          </h3>
           <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {product.price}</p>
           {isCustomizable ? (
-            <Link
-              href={href}
+            <button
+              onClick={onCustomize}
               className="w-full block text-center bg-[#FF6B9D] hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-full transition-all duration-200"
             >
               Customise
-            </Link>
+            </button>
           ) : (
             <button
               onClick={onAdd}
@@ -120,10 +136,11 @@ function ProductCard({
 export default function HomePage() {
   const { t } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
-  const [products, setProducts] = useState<DbProduct[]>([]);
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  const [heroSlide, setHeroSlide] = useState(0);
-  const [heroPaused, setHeroPaused] = useState(false);
+  const [products, setProducts]       = useState<DbProduct[]>([]);
+  const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
+  const [heroSlide, setHeroSlide]     = useState(0);
+  const [heroPaused, setHeroPaused]   = useState(false);
+  const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
 
   useEffect(() => {
     if (heroPaused) return;
@@ -426,6 +443,7 @@ export default function HomePage() {
                     product={p}
                     added={addedIds.has(p.id)}
                     onAdd={() => handleAdd(p)}
+                    onCustomize={() => setCustProduct(p)}
                   />
                 ))}
           </div>
@@ -589,6 +607,8 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      <CakeCustomizerModal product={custProduct} onClose={() => setCustProduct(null)} />
 
     </main>
   );
