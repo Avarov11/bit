@@ -1010,14 +1010,14 @@ export default function MenuContent() {
                 );
               })}
               <button className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
-                custStep === 5 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
-                <Check size={16} strokeWidth={custStep === 5 ? 2.5 : 2} />
+                custStep === 4 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
+                <Check size={16} strokeWidth={custStep === 4 ? 2.5 : 2} />
                 <span className="text-[10px] font-bold tracking-wide">Summary</span>
               </button>
             </div>
           </div>
 
-          {custStep < 5 && (
+          {custStep < 4 && (
             <div className="w-full shrink-0 bg-[#F5D0D8] overflow-hidden">
               <div className="relative max-w-lg mx-auto flex items-center gap-4 px-5 py-5">
                 <div className="flex-1 min-w-0">
@@ -1040,7 +1040,7 @@ export default function MenuContent() {
           )}
 
           <div className="flex-1 overflow-y-auto">
-            {custStep === 5 && (
+            {custStep === 4 && (
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(128,0,32,0.12)]">
                 <div>
                   <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">Review your order</p>
@@ -1053,7 +1053,7 @@ export default function MenuContent() {
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 py-4">
-            {custStep < 5 ? (
+            {custStep < 4 ? (
               <div className="max-w-lg mx-auto flex gap-3">
                 <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
                   {custStep === 0 ? "Cancel" : "← Back"}
@@ -1108,8 +1108,8 @@ export default function MenuContent() {
                   );
                 })}
                 <button className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left",
-                  custStep === 5 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
-                  <Check size={13} strokeWidth={custStep === 5 ? 2.5 : 2} />
+                  custStep === 4 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
+                  <Check size={13} strokeWidth={custStep === 4 ? 2.5 : 2} />
                   <span className="flex-1">Summary</span>
                 </button>
               </div>
@@ -1126,7 +1126,7 @@ export default function MenuContent() {
                 {renderStep()}
               </div>
               <div className="shrink-0 px-8 py-5 border-t border-[rgba(128,0,32,0.08)] bg-[#FDFAF8]">
-                {custStep < 5 ? (
+                {custStep < 4 ? (
                   <div className="flex gap-3">
                     <button onClick={handleBack}
                       className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
