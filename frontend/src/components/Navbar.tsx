@@ -41,7 +41,7 @@ export default function Navbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-[#FFFDF6]/97 backdrop-blur-md shadow-warm-sm"
+          ? "bg-[#FFFFFF]/97 backdrop-blur-md shadow-warm-sm"
           : "bg-transparent"
       )}
     >
@@ -72,7 +72,7 @@ export default function Navbar() {
                     "after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-px after:bg-gold after:transition-all after:duration-300 hover:after:w-full",
                     scrolled
                       ? "text-stone-700 hover:text-burgundy"
-                      : "text-[#1E2235]/80 hover:text-[#1E2235]"
+                      : "text-[#2D000A]/80 hover:text-[#2D000A]"
                   )}
                 >
                   {t(link.key)}
@@ -91,7 +91,7 @@ export default function Navbar() {
                   "hidden md:flex items-center gap-1.5 text-[11px] font-bold tracking-widest border rounded-full px-3 py-1.5 transition-all duration-200",
                   scrolled
                     ? "border-stone-300 text-stone-600 hover:border-burgundy hover:text-burgundy"
-                    : "border-[#1E2235]/30 text-[#1E2235]/70 hover:border-[#1E2235] hover:text-[#1E2235]"
+                    : "border-[#2D000A]/30 text-[#2D000A]/70 hover:border-[#2D000A] hover:text-[#2D000A]"
                 )}
               >
                 <Globe size={12} />
@@ -105,7 +105,7 @@ export default function Navbar() {
                   "relative p-1.5 transition-colors rounded-full",
                   scrolled
                     ? "text-stone-700 hover:text-burgundy"
-                    : "text-[#1E2235]/80 hover:text-burgundy"
+                    : "text-[#2D000A]/80 hover:text-burgundy"
                 )}
                 aria-label="Cart"
               >
@@ -122,7 +122,7 @@ export default function Navbar() {
                 onClick={() => setMobileOpen(!mobileOpen)}
                 className={cn(
                   "md:hidden p-1.5 transition-colors rounded-full",
-                  scrolled ? "text-stone-700" : "text-[#1E2235]/80"
+                  scrolled ? "text-stone-700" : "text-[#2D000A]/80"
                 )}
                 aria-label="Toggle menu"
               >

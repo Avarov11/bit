@@ -4,9 +4,9 @@
 
 /* ─── Design tokens ──────────────────────────────────────── */
 :root {
-  --background: #FFFDF6;
-  --foreground: #1E2235;
-  --shadow-warm: rgba(76, 83, 114, 0.10);
+  --background: #FFFFFF;
+  --foreground: #2D000A;
+  --shadow-warm: rgba(128, 0, 32, 0.10);
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
@@ -16,7 +16,7 @@ html {
 
 body {
   color: var(--foreground);
-  background-color: #FFFDF6;
+  background-color: #FFFFFF;
   /* Subtle grain texture */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   background-repeat: repeat;
@@ -26,12 +26,12 @@ body {
 
 /* ─── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #FFFDF6; }
-::-webkit-scrollbar-thumb { background: #949AB1; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #4C5372; }
+::-webkit-scrollbar-track { background: #FFFFFF; }
+::-webkit-scrollbar-thumb { background: #A05068; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #800020; }
 
 /* ─── Selection ──────────────────────────────────────────── */
-::selection { background: #E2D4E0; color: #4C5372; }
+::selection { background: #F5D0D8; color: #800020; }
 
 /* ─── Scrollbar hide utility ─────────────────────────────── */
 @layer utilities {
@@ -43,11 +43,11 @@ body {
   /* Warm card surface */
   .card-warm {
     background: #fff;
-    box-shadow: 0 2px 8px 0 rgba(76, 83, 114, 0.07);
+    box-shadow: 0 2px 8px 0 rgba(128, 0, 32, 0.07);
     transition: box-shadow 0.25s ease, transform 0.25s ease;
   }
   .card-warm:hover {
-    box-shadow: 0 8px 28px 0 rgba(76, 83, 114, 0.13);
+    box-shadow: 0 8px 28px 0 rgba(128, 0, 32, 0.13);
     transform: translateY(-3px);
   }
 
@@ -77,8 +77,8 @@ body.font-arabic {
   transition: border-color 200ms ease-in-out, box-shadow 200ms ease-in-out;
 }
 .field-focus:focus {
-  border-color: #FB7185;
-  box-shadow: 0 0 0 4px rgba(251, 113, 133, 0.15);
+  border-color: #FF6B9D;
+  box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.15);
   outline: none;
 }
 .field-focus.field-error:focus {

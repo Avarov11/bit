@@ -45,7 +45,7 @@ export default function AddToCartButton({
           "flex items-center gap-1.5 border rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide transition-all duration-300",
           added
             ? "bg-emerald-500 border-emerald-500 text-white"
-            : "border-[#FB7185] bg-[#FB7185]/20 text-[#4C5372] hover:bg-[#FB7185] hover:border-[#FB7185] hover:text-white"
+            : "border-[#FF6B9D] bg-[#FF6B9D]/20 text-[#800020] hover:bg-[#FF6B9D] hover:border-[#FF6B9D] hover:text-white"
         )}
       >
         {added ? <Check size={12} /> : <ShoppingBag size={12} />}

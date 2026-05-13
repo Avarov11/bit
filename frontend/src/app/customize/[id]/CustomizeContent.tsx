@@ -23,7 +23,7 @@ const chocolates = [
 
 const CAKE_COLORS = [
   { id: "brown", name: "Brown", main: "#8B5E3C", dark: "#5C3C22", top: "#B07850" },
-  { id: "white", name: "White", main: "#FFFDF6", dark: "#C8BEB8", top: "#FFFFFF" },
+  { id: "white", name: "White", main: "#FFFFFF", dark: "#C8BEB8", top: "#FFFFFF" },
   { id: "pink",  name: "Pink",  main: "#FF6B9D", dark: "#C04070", top: "#FFB0C8" },
   { id: "blue",  name: "Blue",  main: "#B2C8D8", dark: "#7898AE", top: "#CCDCE8" },
 ];
@@ -52,7 +52,7 @@ interface Selections {
 function CakeSVGPreview({ colorId }: { colorId: string }) {
   const palette: Record<string, { main: string; dark: string; top: string }> = {
     brown: { main: "#8B5E3C", dark: "#5C3C22", top: "#B07850" },
-    white: { main: "#FFFDF6", dark: "#C8BEB8", top: "#FFFFFF" },
+    white: { main: "#FFFFFF", dark: "#C8BEB8", top: "#FFFFFF" },
     pink:  { main: "#FF6B9D", dark: "#C04070", top: "#FFB0C8" },
     blue:  { main: "#B2C8D8", dark: "#7898AE", top: "#CCDCE8" },
   };
@@ -71,7 +71,7 @@ function CakeSVGPreview({ colorId }: { colorId: string }) {
       </defs>
 
       {/* Ground shadow */}
-      <ellipse cx="100" cy="200" rx="76" ry="8" fill="#1E2235" opacity="0.08" />
+      <ellipse cx="100" cy="200" rx="76" ry="8" fill="#2D000A" opacity="0.08" />
 
       {/* ── BOTTOM TIER ── */}
       <rect x="20" y="128" width="160" height="62" fill="url(#cg)" />
@@ -180,23 +180,23 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
 
   const ShapeStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-1">Choose Size & Style</h2>
-      <p className="text-[#949AB1] text-sm mb-5">Select the perfect box size for your occasion</p>
+      <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Size & Style</h2>
+      <p className="text-[#A05068] text-sm mb-5">Select the perfect box size for your occasion</p>
       <div className="grid grid-cols-2 gap-3">
         {shapes.map((shape) => {
           const selected = sel.shapeId === shape.id;
           return (
             <button key={shape.id} onClick={() => setSel((p) => ({ ...p, shapeId: shape.id }))}
               className={cn("relative rounded-2xl border-2 p-3 text-left transition-all duration-300 bg-white active:scale-[0.97] shadow-warm-sm",
-                selected ? "border-[#4C5372] shadow-warm-md" : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/40 hover:shadow-warm-sm")}>
-              {selected && <CheckCircle2 size={18} className="absolute top-3 right-3 text-[#4C5372] fill-[#E2D4E0]" />}
-              <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[#E2D4E0] shrink-0 mb-3">
+                selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
+              {selected && <CheckCircle2 size={18} className="absolute top-3 right-3 text-[#800020] fill-[#F5D0D8]" />}
+              <div className="relative w-full h-32 rounded-xl overflow-hidden bg-[#F5D0D8] shrink-0 mb-3">
                 <Image src={shape.image} alt={shape.name} fill sizes="(max-width: 768px) 50vw, 200px" className="object-cover" />
               </div>
               <div className="pb-1">
-                <h3 className="font-semibold text-[#1E2235] text-base">{shape.name}</h3>
-                <p className="text-[#949AB1] text-xs mt-0.5 mb-1.5">Good for any celebration</p>
-                <p className={cn("font-bold text-xl leading-none", selected ? "text-[#4C5372]" : "text-[#4C5372]")}>{shape.price} QAR</p>
+                <h3 className="font-semibold text-[#2D000A] text-base">{shape.name}</h3>
+                <p className="text-[#A05068] text-xs mt-0.5 mb-1.5">Good for any celebration</p>
+                <p className={cn("font-bold text-xl leading-none", selected ? "text-[#800020]" : "text-[#800020]")}>{shape.price} QAR</p>
               </div>
             </button>
           );
@@ -207,18 +207,18 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
 
   const FlavorStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-1">Choose Flavor</h2>
-      <p className="text-[#949AB1] text-sm mb-5">Select your chocolate base</p>
+      <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Flavor</h2>
+      <p className="text-[#A05068] text-sm mb-5">Select your chocolate base</p>
       <div className="grid grid-cols-2 gap-3 mb-6">
         {chocolates.map((choc) => {
           const selected = sel.chocolateId === choc.id;
           return (
             <button key={choc.id} onClick={() => setSel((p) => ({ ...p, chocolateId: choc.id }))}
               className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-300 bg-white active:scale-[0.97]",
-                selected ? "border-[#4C5372] shadow-warm-md" : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/40 hover:shadow-warm-sm")}>
-              {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#4C5372] fill-[#E2D4E0]" />}
+                selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
+              {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#800020] fill-[#F5D0D8]" />}
               <span className="text-3xl block mb-2">{choc.emoji}</span>
-              <h3 className="font-semibold text-[#1E2235] text-sm">{choc.name}</h3>
+              <h3 className="font-semibold text-[#2D000A] text-sm">{choc.name}</h3>
             </button>
           );
         })}
@@ -228,21 +228,21 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
 
   const ColorStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-1">Choose Cake Color</h2>
-      <p className="text-[#949AB1] text-sm mb-5">Pick your cake color — see the preview above update live</p>
+      <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Choose Cake Color</h2>
+      <p className="text-[#A05068] text-sm mb-5">Pick your cake color — see the preview above update live</p>
       <div className="grid grid-cols-2 gap-3">
         {CAKE_COLORS.map((color) => {
           const selected = sel.cakeColor === color.id;
           return (
             <button key={color.id} onClick={() => setSel((p) => ({ ...p, cakeColor: color.id }))}
               className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-300 bg-white active:scale-[0.97]",
-                selected ? "border-[#4C5372] shadow-warm-md" : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/40 hover:shadow-warm-sm")}>
-              {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#4C5372] fill-[#E2D4E0]" />}
+                selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
+              {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#800020] fill-[#F5D0D8]" />}
               <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 border border-[rgba(76,83,114,0.12)]"
+                className="w-12 h-12 rounded-full mx-auto mb-3 border border-[rgba(128,0,32,0.12)]"
                 style={{ background: `radial-gradient(circle at 35% 35%, ${color.top}, ${color.main} 55%, ${color.dark})` }}
               />
-              <h3 className="font-semibold text-[#1E2235] text-sm">{color.name}</h3>
+              <h3 className="font-semibold text-[#2D000A] text-sm">{color.name}</h3>
             </button>
           );
         })}
@@ -252,18 +252,18 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
 
   const ToppingsStep = () => (
     <div>
-      <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-1">Toppings</h2>
-      <p className="text-[#949AB1] text-sm mb-5">Add the finishing touches — all optional</p>
+      <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Toppings</h2>
+      <p className="text-[#A05068] text-sm mb-5">Add the finishing touches — all optional</p>
       <div className="grid grid-cols-2 gap-3 mb-5">
         {toppingOptions.filter((t) => t.id !== "writing").map((topping) => {
           const selected = sel.toppingIds.includes(topping.id);
           return (
             <button key={topping.id} onClick={() => toggleTopping(topping.id)}
               className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-200 bg-white active:scale-[0.97]",
-                selected ? "border-[#4C5372] bg-[#E2D4E0] shadow-warm-sm" : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/40")}>
-              {selected && <span className="absolute top-2 right-2"><Check size={12} className="text-[#4C5372]" strokeWidth={3} /></span>}
+                selected ? "border-[#800020] bg-[#F5D0D8] shadow-warm-sm" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40")}>
+              {selected && <span className="absolute top-2 right-2"><Check size={12} className="text-[#800020]" strokeWidth={3} /></span>}
               <span className="text-2xl block mb-2">{topping.emoji}</span>
-              <p className="text-xs font-semibold text-[#1E2235]">{topping.name}</p>
+              <p className="text-xs font-semibold text-[#2D000A]">{topping.name}</p>
             </button>
           );
         })}
@@ -274,28 +274,28 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
   const stepContent = [<ShapeStep key="shape" />, <FlavorStep key="flavor" />, <ColorStep key="color" />, <ToppingsStep key="toppings" />];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#E2D4E0" }}>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#E2D4E0]/97 backdrop-blur-md border-b border-[rgba(76,83,114,0.10)] shadow-warm-xs h-14 flex items-center px-4 md:px-6">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-[#949AB1] hover:text-[#4C5372] transition-colors mr-3">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F5D0D8" }}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-b border-[rgba(128,0,32,0.10)] shadow-warm-xs h-14 flex items-center px-4 md:px-6">
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-[#A05068] hover:text-[#800020] transition-colors mr-3">
           <ChevronLeft size={22} />
         </button>
-        <h1 className="font-playfair font-semibold text-[#1E2235] text-lg flex-1 truncate">{product.name}</h1>
+        <h1 className="font-playfair font-semibold text-[#2D000A] text-lg flex-1 truncate">{product.name}</h1>
         <div className="text-right">
-          <p className="text-[10px] text-[#949AB1] uppercase tracking-wider leading-none mb-0.5">Total</p>
-          <p className="font-playfair text-lg font-bold text-[#4C5372] leading-none">QAR {totalPrice}</p>
+          <p className="text-[10px] text-[#A05068] uppercase tracking-wider leading-none mb-0.5">Total</p>
+          <p className="font-playfair text-lg font-bold text-[#800020] leading-none">QAR {totalPrice}</p>
         </div>
       </header>
 
-      <div className="flex flex-1 pt-14 pb-20 bg-[#FFFDF6]">
-        <aside className="hidden md:flex flex-col w-20 shrink-0 fixed left-0 top-14 bottom-20 bg-white border-r border-[rgba(76,83,114,0.06)] shadow-warm-xs py-4 overflow-y-auto">
+      <div className="flex flex-1 pt-14 pb-20 bg-[#FFFFFF]">
+        <aside className="hidden md:flex flex-col w-20 shrink-0 fixed left-0 top-14 bottom-20 bg-white border-r border-[rgba(128,0,32,0.06)] shadow-warm-xs py-4 overflow-y-auto">
           {steps.map((s, i) => {
             const active    = i === step;
             const completed = isStepCompleted(i) && i !== step;
             return (
               <button key={s.id} onClick={() => setStep(i)}
-                className={cn("flex flex-col items-center gap-1.5 py-4 px-2 transition-all duration-300 relative", active ? "text-white" : completed ? "text-[#4C5372]" : "text-[#949AB1]")}>
-                {active && <span className="absolute inset-x-2 inset-y-1 bg-[#4C5372] rounded-xl shadow-warm-sm" />}
-                <span className="relative z-10">{completed ? <CheckCircle2 size={20} className="fill-[#E2D4E0]" /> : <s.Icon size={20} />}</span>
+                className={cn("flex flex-col items-center gap-1.5 py-4 px-2 transition-all duration-300 relative", active ? "text-white" : completed ? "text-[#800020]" : "text-[#A05068]")}>
+                {active && <span className="absolute inset-x-2 inset-y-1 bg-[#800020] rounded-xl shadow-warm-sm" />}
+                <span className="relative z-10">{completed ? <CheckCircle2 size={20} className="fill-[#F5D0D8]" /> : <s.Icon size={20} />}</span>
                 <span className="relative z-10 text-[10px] font-bold leading-tight text-center">{s.label}</span>
               </button>
             );
@@ -303,14 +303,14 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
         </aside>
 
         <main className="flex-1 md:ml-20 flex flex-col">
-          <div className="md:hidden flex border-b border-[rgba(76,83,114,0.06)] bg-white">
+          <div className="md:hidden flex border-b border-[rgba(128,0,32,0.06)] bg-white">
             {steps.map((s, i) => {
               const active    = i === step;
               const completed = isStepCompleted(i) && i !== step;
               return (
                 <button key={s.id} onClick={() => setStep(i)}
                   className={cn("flex-1 flex flex-col items-center gap-1 py-3 px-2 border-b-2 transition-all duration-200",
-                    active ? "border-[#4C5372] text-[#4C5372]" : completed ? "border-transparent text-[#4C5372]/60" : "border-transparent text-[#949AB1]")}>
+                    active ? "border-[#800020] text-[#800020]" : completed ? "border-transparent text-[#800020]/60" : "border-transparent text-[#A05068]")}>
                   {completed ? <CheckCircle2 size={16} /> : <s.Icon size={16} />}
                   <span className="text-[10px] font-bold">{s.label}</span>
                 </button>
@@ -319,13 +319,13 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
           </div>
 
           {/* Cake SVG preview */}
-          <div className="relative h-56 md:h-72 bg-[#EDE8F5] flex items-center justify-center overflow-hidden border-b border-[rgba(76,83,114,0.06)]">
+          <div className="relative h-56 md:h-72 bg-[#EDE8F5] flex items-center justify-center overflow-hidden border-b border-[rgba(128,0,32,0.06)]">
             <div className="h-full flex items-center justify-center p-4 md:p-6" style={{ width: "min(100%, 260px)" }}>
               <CakeSVGPreview colorId={sel.cakeColor} />
             </div>
             <div className="absolute bottom-4 left-4">
-              <span className="text-[#949AB1] text-xs font-semibold uppercase tracking-widest">Step {step + 1} of {steps.length}</span>
-              <h2 className="font-playfair text-[#1E2235] text-2xl font-bold leading-tight">{steps[step].label}</h2>
+              <span className="text-[#A05068] text-xs font-semibold uppercase tracking-widest">Step {step + 1} of {steps.length}</span>
+              <h2 className="font-playfair text-[#2D000A] text-2xl font-bold leading-tight">{steps[step].label}</h2>
             </div>
           </div>
 
@@ -333,10 +333,10 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
         </main>
       </div>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/97 backdrop-blur-md border-t border-[rgba(76,83,114,0.10)] shadow-warm-sm p-4 md:pl-24">
+      <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.10)] shadow-warm-sm p-4 md:pl-24">
         <button onClick={handleNext} disabled={!canProceed}
           className={cn("w-full font-bold py-4 rounded-2xl transition-all duration-300 font-playfair text-base tracking-wide",
-            canProceed ? "bg-[#FB7185] hover:bg-[#E11D48] text-white hover:shadow-warm-lg shadow-warm-sm active:scale-[0.97]" : "bg-[#FB7185]/40 text-white/50 cursor-not-allowed")}>
+            canProceed ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white hover:shadow-warm-lg shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/40 text-white/50 cursor-not-allowed")}>
           {step === steps.length - 1 ? "Add to Cart" : "Next →"}
         </button>
       </footer>

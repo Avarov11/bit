@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} ${cairo.variable} font-sans antialiased bg-[#FFFDF6]`}
+        className={`${inter.variable} ${playfair.variable} ${cairo.variable} font-sans antialiased bg-[#FFFFFF]`}
       >
         <LanguageProvider>
           <Navbar />

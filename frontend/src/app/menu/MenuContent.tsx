@@ -57,11 +57,11 @@ const SHAPES = [
           </radialGradient>
         </defs>
         {/* Shadow */}
-        <ellipse cx="40" cy="71" rx="25" ry="4" fill="#4C5372" opacity="0.18" />
+        <ellipse cx="40" cy="71" rx="25" ry="4" fill="#800020" opacity="0.18" />
         {/* Body */}
         <rect x="14" y="38" width="52" height="24" fill="url(#sh-ck-body)" />
         {/* Bottom rim */}
-        <ellipse cx="40" cy="62" rx="26" ry="8" fill="#4C5372" />
+        <ellipse cx="40" cy="62" rx="26" ry="8" fill="#800020" />
         {/* White frosting collar */}
         <ellipse cx="40" cy="38" rx="28" ry="10" fill="white" />
         {/* Drip drops */}
@@ -82,7 +82,7 @@ const SHAPES = [
       <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14">
         {/* Depth layers */}
         <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
-          fill="#4C5372" transform="translate(0,7)" opacity="0.35" />
+          fill="#800020" transform="translate(0,7)" opacity="0.35" />
         <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
           fill="white" transform="translate(0,3)" />
         {/* Main heart */}
@@ -112,7 +112,7 @@ const SHAPES = [
         {/* Front face */}
         <rect x="11" y="37" width="45" height="28" fill="url(#sh-sq-body)" />
         {/* Right face */}
-        <polygon points="56,37 70,26 70,55 56,65" fill="#4C5372" />
+        <polygon points="56,37 70,26 70,55 56,65" fill="#800020" />
         {/* Top face */}
         <polygon points="11,37 56,37 70,26 25,26" fill="#9B2845" />
         {/* Frosting edges */}
@@ -142,14 +142,14 @@ const CHOC_FLAVORS = [
 ];
 
 const COLOURS = [
-  { id: "white", label: "White", hex: "#FFFDF6" },
+  { id: "white", label: "White", hex: "#FFFFFF" },
   { id: "pink",  label: "Pink",  hex: "#FF6B9D" },
   { id: "blue",  label: "Blue",  hex: "#B2C8D8" },
 ];
 
 const CAKE_COLORS = [
   { id: "brown", label: "Brown", hex: "#8B5E3C", sub: "Rich chocolate base"   },
-  { id: "white", label: "White", hex: "#FFFDF6", sub: "Classic vanilla cream" },
+  { id: "white", label: "White", hex: "#FFFFFF", sub: "Classic vanilla cream" },
   { id: "pink",  label: "Pink",  hex: "#FF6B9D", sub: "Strawberry & rose"     },
   { id: "blue",  label: "Blue",  hex: "#B2C8D8", sub: "Blueberry & vanilla"   },
 ];
@@ -195,7 +195,7 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
     blue:  { top: "#D8EEF8", mid: "#A8C8DC", dark: "#7898B0", shadow: "#567090" },
   };
   const c = pal[colorId] ?? pal[""];
-  const plate = "#4C5372";
+  const plate = "#800020";
   const plateLip = "#5C1422";
 
   // ── Round / Full Cake — single tier, top face prominent ──────────────────
@@ -216,7 +216,7 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
       </defs>
 
       {/* Ground shadow */}
-      <ellipse cx="130" cy="192" rx="92" ry="6" fill="rgba(76,83,114,0.13)" />
+      <ellipse cx="130" cy="192" rx="92" ry="6" fill="rgba(128,0,32,0.13)" />
       {/* Plate */}
       <ellipse cx="130" cy="183" rx="92" ry="11" fill={plate} />
       <ellipse cx="130" cy="180" rx="92" ry="11" fill={plateLip} />
@@ -258,7 +258,7 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
         </defs>
 
         {/* Ground shadow */}
-        <ellipse cx="130" cy="192" rx="74" ry="6" fill="rgba(76,83,114,0.12)" />
+        <ellipse cx="130" cy="192" rx="74" ry="6" fill="rgba(128,0,32,0.12)" />
 
         {/* Depth layers — heart shifted down */}
         <path d={HP} fill={c.shadow} transform="translate(0,22)" />
@@ -306,7 +306,7 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
       </defs>
 
       {/* Ground shadow */}
-      <ellipse cx="128" cy="193" rx="86" ry="6" fill="rgba(76,83,114,0.13)" />
+      <ellipse cx="128" cy="193" rx="86" ry="6" fill="rgba(128,0,32,0.13)" />
 
       {/* Plate */}
       <polygon points="36,183 204,183 228,163 60,163" fill={plate} />
@@ -347,11 +347,11 @@ function CakePreview({ shape, colorId }: { shape: string; colorId: string }) {
 
 function SummaryRow({ label, value, dot }: { label: string; value: string; dot?: string }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[rgba(76,83,114,0.06)] last:border-0">
-      <span className="text-xs font-bold text-[#949AB1] uppercase tracking-wide">{label}</span>
+    <div className="flex items-center justify-between py-2.5 border-b border-[rgba(128,0,32,0.06)] last:border-0">
+      <span className="text-xs font-bold text-[#A05068] uppercase tracking-wide">{label}</span>
       <div className="flex items-center gap-2">
-        {dot && <div className="w-3.5 h-3.5 rounded-full border border-[rgba(76,83,114,0.20)]" style={{ backgroundColor: dot }} />}
-        <span className="text-sm font-semibold text-[#1E2235] text-right max-w-[200px]">{value}</span>
+        {dot && <div className="w-3.5 h-3.5 rounded-full border border-[rgba(128,0,32,0.20)]" style={{ backgroundColor: dot }} />}
+        <span className="text-sm font-semibold text-[#2D000A] text-right max-w-[200px]">{value}</span>
       </div>
     </div>
   );
@@ -485,8 +485,8 @@ export default function MenuContent() {
       const cakeColorData = CAKE_COLORS.find((c) => c.id === custSel.cakeColor);
       return (
         <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-1">Your Order Summary</h2>
-          <p className="text-[#4C5372]/60 text-sm mb-5">Review your choices before adding to cart</p>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Your Order Summary</h2>
+          <p className="text-[#800020]/60 text-sm mb-5">Review your choices before adding to cart</p>
           <div className="bg-white rounded-2xl px-5 py-2 shadow-warm-sm mb-6">
             <SummaryRow label="Product"    value={custProduct?.name ?? ""} />
             <SummaryRow label="Shape"      value={shapeName} />
@@ -519,28 +519,28 @@ export default function MenuContent() {
         key={id} onClick={onClick}
         className={cn(
           "relative rounded-2xl overflow-hidden bg-white text-left transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-          selected ? "ring-2 ring-[#4C5372] shadow-warm-md" : "hover:shadow-warm-md"
+          selected ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
         )}
       >
         {selected && (
-          <span className="absolute top-2.5 right-2.5 z-10 bg-[#4C5372] rounded-full p-0.5">
+          <span className="absolute top-2.5 right-2.5 z-10 bg-[#800020] rounded-full p-0.5">
             <Check size={11} className="text-white" strokeWidth={3} />
           </span>
         )}
-        <div className="bg-[#E2D4E0] flex items-center justify-center py-7">
+        <div className="bg-[#F5D0D8] flex items-center justify-center py-7">
           <span className="text-5xl">{emoji}</span>
         </div>
         <div className="p-3">
-          <p className="font-playfair font-bold text-[#1E2235] text-sm">{label}</p>
-          {sub && <p className="text-[#949AB1] text-[11px] mt-0.5">{sub}</p>}
+          <p className="font-playfair font-bold text-[#2D000A] text-sm">{label}</p>
+          {sub && <p className="text-[#A05068] text-[11px] mt-0.5">{sub}</p>}
         </div>
       </button>
     );
 
     if (custStep === 0) return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-0.5">Choose Your Shape</h2>
-        <p className="text-[#949AB1] text-sm mb-6">Pick a shape for your brownie</p>
+        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Choose Your Shape</h2>
+        <p className="text-[#A05068] text-sm mb-6">Pick a shape for your brownie</p>
         <div className="grid grid-cols-3 gap-3">
           {SHAPES.map((shape) => {
             const sel = custSel.shape === shape.id;
@@ -550,17 +550,17 @@ export default function MenuContent() {
                 onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", stickerId: "", imageFile: null }))}
                 className={cn(
                   "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                  sel ? "ring-2 ring-[#4C5372] shadow-warm-md" : "hover:shadow-warm-md"
+                  sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
                 )}
               >
                 {sel && (
-                  <span className="absolute top-2 right-2 z-10 bg-[#4C5372] rounded-full p-0.5">
+                  <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
                     <Check size={10} className="text-white" strokeWidth={3} />
                   </span>
                 )}
-                <div className="bg-[#E2D4E0] flex items-center justify-center py-5">{shape.svg}</div>
+                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">{shape.svg}</div>
                 <div className="p-2.5">
-                  <p className="font-playfair font-bold text-[#1E2235] text-xs">{shape.label}</p>
+                  <p className="font-playfair font-bold text-[#2D000A] text-xs">{shape.label}</p>
                 </div>
               </button>
             );
@@ -574,8 +574,8 @@ export default function MenuContent() {
       const isWhiteType = custSel.flavorType === "white";
       return (
         <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-0.5">Choose Your Flavour</h2>
-          <p className="text-[#949AB1] text-sm mb-5">Pick your chocolate type</p>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Choose Your Flavour</h2>
+          <p className="text-[#A05068] text-sm mb-5">Pick your chocolate type</p>
           <div className="grid grid-cols-2 gap-3 mb-5">
             {FLAVORS.map((f) => (
               <OptionCard
@@ -587,7 +587,7 @@ export default function MenuContent() {
           </div>
           {isChocType && (
             <div>
-              <p className="text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-3">Choose Flavour</p>
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">Choose Flavour</p>
               <div className="grid grid-cols-3 gap-3">
                 {CHOC_FLAVORS.map((choc) => {
                   const sel = custSel.flavor === choc.id;
@@ -597,19 +597,19 @@ export default function MenuContent() {
                       onClick={() => setCustSel((p) => ({ ...p, flavor: choc.id }))}
                       className={cn(
                         "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                        sel ? "ring-2 ring-[#4C5372] shadow-warm-md" : "hover:shadow-warm-md"
+                        sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
                       )}
                     >
                       {sel && (
-                        <span className="absolute top-2 right-2 z-10 bg-[#4C5372] rounded-full p-0.5">
+                        <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
                           <Check size={10} className="text-white" strokeWidth={3} />
                         </span>
                       )}
-                      <div className="bg-[#E2D4E0] flex items-center justify-center py-5">
+                      <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
                         <span className="text-4xl">{choc.emoji}</span>
                       </div>
                       <div className="p-2.5">
-                        <p className="font-playfair font-bold text-[#1E2235] text-xs">{choc.label}</p>
+                        <p className="font-playfair font-bold text-[#2D000A] text-xs">{choc.label}</p>
                       </div>
                     </button>
                   );
@@ -619,7 +619,7 @@ export default function MenuContent() {
           )}
           {isWhiteType && (
             <div>
-              <p className="text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-4">Choose Colour</p>
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">Choose Colour</p>
               <div className="flex justify-around">
                 {COLOURS.map((col) => {
                   const sel = custSel.colour === col.id;
@@ -628,13 +628,13 @@ export default function MenuContent() {
                       <div
                         className={cn(
                           "w-20 h-20 rounded-full border-[5px] transition-all duration-200 flex items-center justify-center shadow-warm-sm",
-                          sel ? "border-[#4C5372] scale-110 shadow-warm-md" : "border-[rgba(76,83,114,0.12)]"
+                          sel ? "border-[#800020] scale-110 shadow-warm-md" : "border-[rgba(128,0,32,0.12)]"
                         )}
                         style={{ backgroundColor: col.hex }}
                       >
-                        {sel && <Check size={22} className="text-[#4C5372]" strokeWidth={3} />}
+                        {sel && <Check size={22} className="text-[#800020]" strokeWidth={3} />}
                       </div>
-                      <span className={cn("text-sm font-bold", sel ? "text-[#4C5372]" : "text-[#4C5372]")}>{col.label}</span>
+                      <span className={cn("text-sm font-bold", sel ? "text-[#800020]" : "text-[#800020]")}>{col.label}</span>
                     </button>
                   );
                 })}
@@ -647,8 +647,8 @@ export default function MenuContent() {
 
     if (custStep === 2) return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-0.5">Cake Color</h2>
-        <p className="text-[#949AB1] text-sm mb-5">Choose the color of your cake</p>
+        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Cake Color</h2>
+        <p className="text-[#A05068] text-sm mb-5">Choose the color of your cake</p>
         <div className="space-y-2.5">
           {CAKE_COLORS.map((color) => {
             const sel = custSel.cakeColor === color.id;
@@ -658,7 +658,7 @@ export default function MenuContent() {
                 onClick={() => setCustSel((p) => ({ ...p, cakeColor: color.id }))}
                 className={cn(
                   "w-full flex items-center gap-4 p-3.5 rounded-2xl bg-white text-left transition-all duration-200 active:scale-[0.98]",
-                  sel ? "ring-2 ring-[#4C5372] shadow-warm-md" : "shadow-warm-sm hover:shadow-warm-md"
+                  sel ? "ring-2 ring-[#800020] shadow-warm-md" : "shadow-warm-sm hover:shadow-warm-md"
                 )}
               >
                 {/* Color swatch */}
@@ -672,15 +672,15 @@ export default function MenuContent() {
                 </div>
                 {/* Label */}
                 <div className="flex-1 min-w-0">
-                  <p className={cn("font-playfair font-bold text-base leading-tight", sel ? "text-[#4C5372]" : "text-[#1E2235]")}>
+                  <p className={cn("font-playfair font-bold text-base leading-tight", sel ? "text-[#800020]" : "text-[#2D000A]")}>
                     {color.label}
                   </p>
-                  <p className="text-[#949AB1] text-xs mt-0.5">{color.sub}</p>
+                  <p className="text-[#A05068] text-xs mt-0.5">{color.sub}</p>
                 </div>
                 {/* Radio dot */}
                 <div className={cn(
                   "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
-                  sel ? "bg-[#4C5372] border-[#4C5372] scale-110" : "border-[rgba(76,83,114,0.18)]"
+                  sel ? "bg-[#800020] border-[#800020] scale-110" : "border-[rgba(128,0,32,0.18)]"
                 )}>
                   {sel && <Check size={11} className="text-white" strokeWidth={3.5} />}
                 </div>
@@ -693,8 +693,8 @@ export default function MenuContent() {
 
     if (custStep === 3) return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-0.5">Sprinkles?</h2>
-        <p className="text-[#949AB1] text-sm mb-5">Would you like sprinkles on top?</p>
+        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Sprinkles?</h2>
+        <p className="text-[#A05068] text-sm mb-5">Would you like sprinkles on top?</p>
         <div className="grid grid-cols-2 gap-3">
           {[
             { id: "yes", label: "Sprinkles", emoji: "🌈", sub: "Rainbow sprinkles on top" },
@@ -724,8 +724,8 @@ export default function MenuContent() {
 
       return (
         <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#1E2235] mb-0.5">Topping</h2>
-          <p className="text-[#949AB1] text-sm mb-5">Personalise your brownie</p>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Topping</h2>
+          <p className="text-[#A05068] text-sm mb-5">Personalise your brownie</p>
           <div className={cn("grid gap-3 mb-5", visibleCards === 3 ? "grid-cols-3" : visibleCards === 2 ? "grid-cols-2" : "grid-cols-1 max-w-[50%]")}>
             <OptionCard id="write" emoji="✍️" label="Write" sub={isLetterLimit ? "Max 3 letters" : "Max 5 words"} selected={custSel.topping === "write"} onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerId: "" }))} />
             {showSticker && <OptionCard id="sticker" emoji="🎀" label="Sticker" sub="Choose from grid" selected={custSel.topping === "sticker"} onClick={() => setCustSel((p) => ({ ...p, topping: "sticker", toppingText: "" }))} />}
@@ -734,8 +734,8 @@ export default function MenuContent() {
           {custSel.topping === "write" && (
             <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-[#949AB1] uppercase tracking-wider">Your Message</label>
-                <span className={cn("text-xs font-bold tabular-nums", count >= limit ? "text-[#4C5372]" : "text-[#949AB1]")}>{count} / {limit} {unit}</span>
+                <label className="text-xs font-bold text-[#A05068] uppercase tracking-wider">Your Message</label>
+                <span className={cn("text-xs font-bold tabular-nums", count >= limit ? "text-[#800020]" : "text-[#A05068]")}>{count} / {limit} {unit}</span>
               </div>
               <textarea
                 value={custSel.toppingText}
@@ -750,7 +750,7 @@ export default function MenuContent() {
                 }}
                 placeholder={isLetterLimit ? "e.g. Hi!" : "e.g. Happy Birthday Sarah!"}
                 rows={2}
-                className="w-full px-4 py-3 bg-[#FFFDF6] border border-[rgba(76,83,114,0.08)] focus:border-[#4C5372] rounded-xl text-sm text-[#1E2235] placeholder:text-[#949AB1] outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 bg-[#FFFFFF] border border-[rgba(128,0,32,0.08)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none"
               />
             </div>
           )}
@@ -759,7 +759,7 @@ export default function MenuContent() {
               <div className="grid grid-cols-8 gap-2">
                 {STICKERS.map((s) => (
                   <button key={s} onClick={() => setCustSel((p) => ({ ...p, stickerId: s }))}
-                    className={cn("text-2xl p-1.5 rounded-xl border-2 transition-all duration-150 active:scale-90", custSel.stickerId === s ? "border-[#4C5372] bg-[#E2D4E0]" : "border-transparent hover:border-[#4C5372]/30 bg-[#FFFDF6]")}>
+                    className={cn("text-2xl p-1.5 rounded-xl border-2 transition-all duration-150 active:scale-90", custSel.stickerId === s ? "border-[#800020] bg-[#F5D0D8]" : "border-transparent hover:border-[#800020]/30 bg-[#FFFFFF]")}>
                     {s}
                   </button>
                 ))}
@@ -770,7 +770,7 @@ export default function MenuContent() {
             onChange={(e) => { const file = e.target.files?.[0] ?? null; setCustSel((p) => ({ ...p, imageFile: file, topping: "upload" })); }} />
           {custSel.topping === "upload" && custSel.imageFile && (
             <div className="bg-white rounded-2xl px-4 py-3 shadow-warm-sm">
-              <p className="text-sm text-[#4C5372] font-semibold">📷 {custSel.imageFile.name}</p>
+              <p className="text-sm text-[#800020] font-semibold">📷 {custSel.imageFile.name}</p>
             </div>
           )}
         </div>
@@ -785,7 +785,7 @@ export default function MenuContent() {
     const badgeKey = displayCatKey(product);
     return (
       <>
-        <div className="relative aspect-square overflow-hidden bg-[#E2D4E0]">
+        <div className="relative aspect-square overflow-hidden bg-[#F5D0D8]">
           <Image
             src={product.image_url || "https://images.unsplash.com/photo-1515037893149-de7f840978e2?w=600&h=700&fit=crop&q=80"}
             alt={displayName(product)}
@@ -795,20 +795,20 @@ export default function MenuContent() {
             className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
           {product.tag && (
-            <span className="absolute top-2.5 left-2.5 bg-[#4C5372] text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide uppercase shadow-sm">
+            <span className="absolute top-2.5 left-2.5 bg-[#800020] text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide uppercase shadow-sm">
               {product.tag}
             </span>
           )}
-          <span className={cn("absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full", categoryBadge[badgeKey] ?? "bg-[#E2D4E0] text-[#4C5372]")}>
+          <span className={cn("absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full", categoryBadge[badgeKey] ?? "bg-[#F5D0D8] text-[#800020]")}>
             {t(catKeyMap[badgeKey]) || badgeKey}
           </span>
         </div>
         <div className="p-3">
-          <h3 className="font-playfair font-bold text-[#1E2235] text-sm md:text-base leading-tight mb-0.5 line-clamp-1">
+          <h3 className="font-playfair font-bold text-[#2D000A] text-sm md:text-base leading-tight mb-0.5 line-clamp-1">
             {displayName(product)}
           </h3>
-          <p className="font-bold text-[#4C5372] text-sm mb-3">QAR {product.price}</p>
-          <div className="w-full bg-[#FB7185] group-hover:bg-[#E11D48] text-white text-xs font-bold py-2.5 rounded-xl text-center tracking-wide transition-colors duration-200">
+          <p className="font-bold text-[#800020] text-sm mb-3">QAR {product.price}</p>
+          <div className="w-full bg-[#FF6B9D] group-hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-xl text-center tracking-wide transition-colors duration-200">
             {isCustomizable(product) ? t("menu_customise") : t("menu_add_to_cart")}
           </div>
         </div>
@@ -820,14 +820,14 @@ export default function MenuContent() {
   const renderGrid = (cols: string) => {
     if (loadingProducts) return (
       <div className="text-center py-24">
-        <div className="inline-block w-8 h-8 border-4 border-[#4C5372]/20 border-t-[#4C5372] rounded-full animate-spin mb-4" />
-        <p className="text-[#4C5372]/50 text-sm font-medium">Loading menu…</p>
+        <div className="inline-block w-8 h-8 border-4 border-[#800020]/20 border-t-[#800020] rounded-full animate-spin mb-4" />
+        <p className="text-[#800020]/50 text-sm font-medium">Loading menu…</p>
       </div>
     );
     if (filtered.length === 0) return (
       <div className="text-center py-24">
-        <p className="font-playfair text-2xl font-semibold text-[#4C5372]/50 mb-2">{t("menu_no_results")}</p>
-        <p className="text-[#4C5372]/40 text-sm">{t("menu_no_results_hint")}</p>
+        <p className="font-playfair text-2xl font-semibold text-[#800020]/50 mb-2">{t("menu_no_results")}</p>
+        <p className="text-[#800020]/40 text-sm">{t("menu_no_results_hint")}</p>
       </div>
     );
     const cardClass = "group bg-white rounded-2xl overflow-hidden shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1 transition-all duration-300";
@@ -857,10 +857,10 @@ export default function MenuContent() {
               onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left",
-                active ? "bg-[#4C5372] text-white" : "text-[#4C5372] hover:bg-[#4C5372]/10"
+                active ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10"
               )}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 transition-colors", active ? "bg-white" : "bg-[#4C5372]/35")} />
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 transition-colors", active ? "bg-white" : "bg-[#800020]/35")} />
               {cat}
             </button>
             {cat === "Customized" && active && (
@@ -868,7 +868,7 @@ export default function MenuContent() {
                 {customizedSubs.map(sub => (
                   <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
                     className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                      activeSubCategory === sub ? "bg-[#4C5372]/12 text-[#4C5372] font-bold" : "text-[#4C5372]/65 hover:text-[#4C5372] hover:bg-[#4C5372]/8"
+                      activeSubCategory === sub ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8"
                     )}>{sub}</button>
                 ))}
               </div>
@@ -878,7 +878,7 @@ export default function MenuContent() {
                 {accessoriesSubs.map(sub => (
                   <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
                     className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                      activeSubCategory === sub ? "bg-[#4C5372]/12 text-[#4C5372] font-bold" : "text-[#4C5372]/65 hover:text-[#4C5372] hover:bg-[#4C5372]/8"
+                      activeSubCategory === sub ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8"
                     )}>{sub}</button>
                 ))}
               </div>
@@ -891,29 +891,29 @@ export default function MenuContent() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen pt-16 md:pt-20" style={{ backgroundColor: "#FFFDF6" }}>
+    <main className="min-h-screen pt-16 md:pt-20" style={{ backgroundColor: "#FFFFFF" }}>
 
       {/* ══ MOBILE layout ══════════════════════════════════════════════════════ */}
       <div className="md:hidden">
         <section className="px-6 pt-7 pb-4">
-          <h1 className="font-playfair text-3xl font-bold text-[#1E2235] leading-tight">{t("menu_heading")}</h1>
-          <p className="text-[#4C5372]/65 text-sm mt-1 font-medium">{t("menu_subtitle")}</p>
+          <h1 className="font-playfair text-3xl font-bold text-[#2D000A] leading-tight">{t("menu_heading")}</h1>
+          <p className="text-[#800020]/65 text-sm mt-1 font-medium">{t("menu_subtitle")}</p>
         </section>
 
-        <div className="sticky top-16 z-30 bg-[#E2D4E0]/96 backdrop-blur-md border-b border-[rgba(76,83,114,0.12)] px-6 pt-3 pb-3 space-y-2.5">
+        <div className="sticky top-16 z-30 bg-[#F5D0D8]/96 backdrop-blur-md border-b border-[rgba(128,0,32,0.12)] px-6 pt-3 pb-3 space-y-2.5">
           <div className="relative">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#949AB1]" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A05068]" />
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder={t("menu_search_placeholder")}
-              className="w-full pl-9 pr-10 py-2 bg-white/85 border border-white/50 rounded-full text-sm text-[#1E2235] placeholder:text-[#949AB1] outline-none focus:bg-white focus:border-[#4C5372] transition-all duration-200"
+              className="w-full pl-9 pr-10 py-2 bg-white/85 border border-white/50 rounded-full text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all duration-200"
             />
-            {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#949AB1] hover:text-[#4C5372] text-xs font-bold">✕</button>}
+            {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020] text-xs font-bold">✕</button>}
           </div>
           <div className="flex gap-2 pb-0.5 overflow-x-auto scrollbar-hide">
             {(["All", "Customized", "Accessories", "Boxes"] as FilterCat[]).map((cat) => (
               <button key={cat} onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
                 className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-200 active:scale-[0.97]",
-                  activeCategory === cat ? "bg-[#4C5372] text-white shadow-warm-sm" : "bg-white/70 text-[#4C5372] hover:bg-white border border-white/40"
+                  activeCategory === cat ? "bg-[#800020] text-white shadow-warm-sm" : "bg-white/70 text-[#800020] hover:bg-white border border-white/40"
                 )}>{cat}</button>
             ))}
           </div>
@@ -922,7 +922,7 @@ export default function MenuContent() {
               {customizedSubs.map((sub) => (
                 <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
                   className={cn("shrink-0 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all active:scale-[0.97]",
-                    activeSubCategory === sub ? "bg-[#4C5372] text-white" : "bg-white/50 text-[#4C5372] hover:bg-white border border-white/40"
+                    activeSubCategory === sub ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40"
                   )}>{sub}</button>
               ))}
             </div>
@@ -932,7 +932,7 @@ export default function MenuContent() {
               {accessoriesSubs.map((sub) => (
                 <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
                   className={cn("shrink-0 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all active:scale-[0.97]",
-                    activeSubCategory === sub ? "bg-[#4C5372] text-white" : "bg-white/50 text-[#4C5372] hover:bg-white border border-white/40"
+                    activeSubCategory === sub ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40"
                   )}>{sub}</button>
               ))}
             </div>
@@ -941,7 +941,7 @@ export default function MenuContent() {
 
         <section className="px-4 py-6">
           {!loadingProducts && filtered.length > 0 && (
-            <p className="text-[#4C5372]/55 text-[11px] font-bold mb-4 uppercase tracking-widest">
+            <p className="text-[#800020]/55 text-[11px] font-bold mb-4 uppercase tracking-widest">
               {filtered.length} {filtered.length !== 1 ? "items" : "item"}
             </p>
           )}
@@ -953,27 +953,27 @@ export default function MenuContent() {
       <div className="hidden md:flex max-w-[1440px] mx-auto min-h-[calc(100vh-80px)]">
 
         {/* ── Sidebar ── */}
-        <aside className="w-60 lg:w-68 shrink-0 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto border-r border-[rgba(76,83,114,0.10)] flex flex-col px-6 lg:px-8 py-8">
-          <h1 className="font-playfair text-3xl lg:text-4xl font-bold text-[#1E2235] leading-tight mb-1">
+        <aside className="w-60 lg:w-68 shrink-0 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto border-r border-[rgba(128,0,32,0.10)] flex flex-col px-6 lg:px-8 py-8">
+          <h1 className="font-playfair text-3xl lg:text-4xl font-bold text-[#2D000A] leading-tight mb-1">
             {t("menu_heading")}
           </h1>
-          <p className="text-[#4C5372]/60 text-sm font-medium mb-6">{t("menu_subtitle")}</p>
+          <p className="text-[#800020]/60 text-sm font-medium mb-6">{t("menu_subtitle")}</p>
 
           <div className="relative mb-6">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#949AB1]" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A05068]" />
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="Search…"
-              className="w-full pl-8 pr-7 py-2 bg-white/75 border border-white/50 rounded-full text-xs text-[#1E2235] placeholder:text-[#949AB1] outline-none focus:bg-white focus:border-[#4C5372] transition-all"
+              className="w-full pl-8 pr-7 py-2 bg-white/75 border border-white/50 rounded-full text-xs text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all"
             />
-            {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#949AB1] hover:text-[#4C5372] text-xs">✕</button>}
+            {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020] text-xs">✕</button>}
           </div>
 
-          <p className="text-[9px] font-bold text-[#4C5372]/45 uppercase tracking-widest mb-3">Categories</p>
+          <p className="text-[9px] font-bold text-[#800020]/45 uppercase tracking-widest mb-3">Categories</p>
           {renderSidebarCategories()}
 
-          <div className="mt-auto pt-6 border-t border-[rgba(76,83,114,0.08)]">
+          <div className="mt-auto pt-6 border-t border-[rgba(128,0,32,0.08)]">
             {!loadingProducts && (
-              <p className="text-[10px] font-bold text-[#4C5372]/40 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-[#800020]/40 uppercase tracking-widest">
                 {filtered.length} {filtered.length !== 1 ? "items" : "item"}
               </p>
             )}
@@ -988,9 +988,9 @@ export default function MenuContent() {
 
       {/* ══ MOBILE customization panel ═════════════════════════════════════════ */}
       {custProduct && (
-        <div className="md:hidden fixed inset-0 z-40 flex flex-col" style={{ backgroundColor: "#E2D4E0" }}>
+        <div className="md:hidden fixed inset-0 z-40 flex flex-col" style={{ backgroundColor: "#F5D0D8" }}>
           <div className="h-16 shrink-0" />
-          <div className="shrink-0 bg-[#E2D4E0]/97 backdrop-blur-md border-b border-[rgba(76,83,114,0.12)] overflow-x-auto scrollbar-hide">
+          <div className="shrink-0 bg-[#F5D0D8]/97 backdrop-blur-md border-b border-[rgba(128,0,32,0.12)] overflow-x-auto scrollbar-hide">
             <div className="flex">
               {STEPS.map((step, i) => {
                 const active = i === custStep;
@@ -998,14 +998,14 @@ export default function MenuContent() {
                 return (
                   <button key={step.label} onClick={() => { if (done) setCustStep(i); }}
                     className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
-                      active ? "border-[#4C5372] text-[#4C5372]" : done ? "border-transparent text-[#1E2235]/60 cursor-pointer" : "border-transparent text-[#1E2235]/30 cursor-default")}>
+                      active ? "border-[#800020] text-[#800020]" : done ? "border-transparent text-[#2D000A]/60 cursor-pointer" : "border-transparent text-[#2D000A]/30 cursor-default")}>
                     <step.Icon size={16} strokeWidth={active ? 2.5 : 2} />
                     <span className="text-[10px] font-bold tracking-wide">{step.label}</span>
                   </button>
                 );
               })}
               <button className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
-                custStep === 5 ? "border-[#4C5372] text-[#4C5372]" : "border-transparent text-[#1E2235]/30 cursor-default")}>
+                custStep === 5 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
                 <Check size={16} strokeWidth={custStep === 5 ? 2.5 : 2} />
                 <span className="text-[10px] font-bold tracking-wide">Summary</span>
               </button>
@@ -1013,21 +1013,21 @@ export default function MenuContent() {
           </div>
 
           {custStep < 5 && (
-            <div className="w-full shrink-0 bg-[#E2D4E0] overflow-hidden">
+            <div className="w-full shrink-0 bg-[#F5D0D8] overflow-hidden">
               <div className="relative max-w-lg mx-auto flex items-center gap-4 px-5 py-5">
                 <div className="flex-1 min-w-0">
-                  <div className="inline-flex items-center bg-[#4C5372]/10 rounded-full px-2.5 py-1 mb-2.5">
-                    <span className="text-[#4C5372] text-[10px] font-bold uppercase tracking-widest">Step {custStep + 1} of {STEPS.length}</span>
+                  <div className="inline-flex items-center bg-[#800020]/10 rounded-full px-2.5 py-1 mb-2.5">
+                    <span className="text-[#800020] text-[10px] font-bold uppercase tracking-widest">Step {custStep + 1} of {STEPS.length}</span>
                   </div>
-                  <p className="font-playfair text-2xl font-bold text-[#1E2235] leading-tight">{STEPS[custStep].label}</p>
-                  <p className="text-[#949AB1] text-xs mt-1 font-medium">
+                  <p className="font-playfair text-2xl font-bold text-[#2D000A] leading-tight">{STEPS[custStep].label}</p>
+                  <p className="text-[#A05068] text-xs mt-1 font-medium">
                     {["Pick your shape","Pick your flavour","Pick a color","Add sprinkles?","Personalise it"][custStep]}
                   </p>
                 </div>
                 <div className="w-40 h-28 shrink-0 flex items-center justify-center">
                   <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} />
                 </div>
-                <button onClick={closeCustomizer} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#1E2235]/50 hover:bg-black/20 transition-colors">
+                <button onClick={closeCustomizer} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors">
                   <X size={15} />
                 </button>
               </div>
@@ -1036,32 +1036,32 @@ export default function MenuContent() {
 
           <div className="flex-1 overflow-y-auto">
             {custStep === 5 && (
-              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(76,83,114,0.12)]">
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(128,0,32,0.12)]">
                 <div>
-                  <p className="text-[10px] font-bold text-[#1E2235]/60 uppercase tracking-widest mb-0.5">Review your order</p>
-                  <h2 className="font-playfair text-lg font-bold text-[#1E2235] leading-tight">{custProduct.name}</h2>
+                  <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">Review your order</p>
+                  <h2 className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{custProduct.name}</h2>
                 </div>
-                <button onClick={closeCustomizer} className="p-1.5 rounded-full text-[#1E2235]/60 hover:text-[#1E2235] transition-colors"><X size={20} /></button>
+                <button onClick={closeCustomizer} className="p-1.5 rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
               </div>
             )}
             <div className="max-w-lg mx-auto px-4 py-5 pb-32">{renderStep()}</div>
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#E2D4E0]/97 backdrop-blur-md border-t border-[rgba(76,83,114,0.12)] px-4 py-4">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 py-4">
             {custStep < 5 ? (
               <div className="max-w-lg mx-auto flex gap-3">
-                <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#4C5372] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
+                <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
                   {custStep === 0 ? "Cancel" : "← Back"}
                 </button>
                 <button onClick={handleNext} disabled={!canProceed()}
                   className={cn("flex-[2] font-bold py-4 rounded-2xl text-sm font-playfair tracking-wide transition-all",
-                    canProceed() ? "bg-[#FB7185] hover:bg-[#E11D48] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FB7185]/40 text-white/50 cursor-not-allowed")}>
+                    canProceed() ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/40 text-white/50 cursor-not-allowed")}>
                   {custStep === STEP_LABELS.length - 1 ? "Review Order →" : "Next →"}
                 </button>
               </div>
             ) : (
               <div className="max-w-lg mx-auto">
-                <button onClick={handleAddToCart} className="w-full bg-[#FB7185] hover:bg-[#E11D48] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
+                <button onClick={handleAddToCart} className="w-full bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
                   Add to Cart
                 </button>
               </div>
@@ -1079,9 +1079,9 @@ export default function MenuContent() {
           <div className="bg-white rounded-3xl w-full max-w-[820px] max-h-[90vh] overflow-hidden flex shadow-2xl">
 
             {/* Left panel — preview + step nav */}
-            <div className="w-64 shrink-0 bg-[#E2D4E0] flex flex-col p-6">
-              <p className="text-[9px] font-bold text-[#949AB1] uppercase tracking-widest mb-1">Customising</p>
-              <h3 className="font-playfair font-bold text-[#1E2235] text-lg leading-tight mb-4 line-clamp-2">{custProduct.name}</h3>
+            <div className="w-64 shrink-0 bg-[#F5D0D8] flex flex-col p-6">
+              <p className="text-[9px] font-bold text-[#A05068] uppercase tracking-widest mb-1">Customising</p>
+              <h3 className="font-playfair font-bold text-[#2D000A] text-lg leading-tight mb-4 line-clamp-2">{custProduct.name}</h3>
 
               <div className="w-full aspect-square bg-white/60 rounded-2xl flex items-center justify-center p-3 mb-5 shrink-0">
                 <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} />
@@ -1094,7 +1094,7 @@ export default function MenuContent() {
                   return (
                     <button key={step.label} onClick={() => { if (done) setCustStep(i); }}
                       className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left",
-                        active ? "bg-[#4C5372] text-white" : done ? "text-[#4C5372]/70 hover:bg-[#4C5372]/10 cursor-pointer" : "text-[#4C5372]/30 cursor-default"
+                        active ? "bg-[#800020] text-white" : done ? "text-[#800020]/70 hover:bg-[#800020]/10 cursor-pointer" : "text-[#800020]/30 cursor-default"
                       )}>
                       <step.Icon size={13} strokeWidth={active ? 2.5 : 2} />
                       <span className="flex-1">{step.label}</span>
@@ -1103,14 +1103,14 @@ export default function MenuContent() {
                   );
                 })}
                 <button className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left",
-                  custStep === 5 ? "bg-[#4C5372] text-white" : "text-[#4C5372]/30 cursor-default")}>
+                  custStep === 5 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
                   <Check size={13} strokeWidth={custStep === 5 ? 2.5 : 2} />
                   <span className="flex-1">Summary</span>
                 </button>
               </div>
 
               <button onClick={closeCustomizer}
-                className="mt-4 w-full py-2.5 rounded-xl bg-[#4C5372]/10 text-[#4C5372] text-xs font-bold hover:bg-[#4C5372]/18 transition-colors shrink-0">
+                className="mt-4 w-full py-2.5 rounded-xl bg-[#800020]/10 text-[#800020] text-xs font-bold hover:bg-[#800020]/18 transition-colors shrink-0">
                 Cancel
               </button>
             </div>
@@ -1120,22 +1120,22 @@ export default function MenuContent() {
               <div className="flex-1 overflow-y-auto px-8 py-7">
                 {renderStep()}
               </div>
-              <div className="shrink-0 px-8 py-5 border-t border-[rgba(76,83,114,0.08)] bg-[#FDFAF8]">
+              <div className="shrink-0 px-8 py-5 border-t border-[rgba(128,0,32,0.08)] bg-[#FDFAF8]">
                 {custStep < 5 ? (
                   <div className="flex gap-3">
                     <button onClick={handleBack}
-                      className="flex-1 bg-white border border-[rgba(76,83,114,0.12)] text-[#4C5372] font-bold py-3 rounded-2xl text-sm hover:border-[#4C5372] transition-all active:scale-[0.97]">
+                      className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
                       {custStep === 0 ? "Cancel" : "← Back"}
                     </button>
                     <button onClick={handleNext} disabled={!canProceed()}
                       className={cn("flex-[2] font-bold py-3 rounded-2xl text-sm font-playfair tracking-wide transition-all",
-                        canProceed() ? "bg-[#FB7185] hover:bg-[#E11D48] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FB7185]/35 text-white/50 cursor-not-allowed")}>
+                        canProceed() ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/35 text-white/50 cursor-not-allowed")}>
                       {custStep === STEP_LABELS.length - 1 ? "Review Order →" : "Next →"}
                     </button>
                   </div>
                 ) : (
                   <button onClick={handleAddToCart}
-                    className="w-full bg-[#FB7185] hover:bg-[#E11D48] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
+                    className="w-full bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
                     Add to Cart
                   </button>
                 )}

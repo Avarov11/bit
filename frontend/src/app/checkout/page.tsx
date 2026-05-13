@@ -15,14 +15,14 @@ function Field({
 }: { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
-      <label className="block text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
         {label}
       </label>
       <input
         {...props}
         className={cn(
-          "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#1E2235] placeholder:text-[#949AB1] outline-none transition-colors",
-          error ? "border-red-400 focus:border-red-500" : "border-[rgba(76,83,114,0.10)] focus:border-[#4C5372]"
+          "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors",
+          error ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
         )}
       />
       {error && <p className="text-red-500 text-[11px] mt-1">{error}</p>}
@@ -33,7 +33,7 @@ function Field({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl shadow-warm-xs p-5 md:p-6 space-y-4">
-      <h3 className="font-playfair text-lg font-bold text-[#1E2235]">{title}</h3>
+      <h3 className="font-playfair text-lg font-bold text-[#2D000A]">{title}</h3>
       {children}
     </div>
   );
@@ -185,19 +185,19 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
   if (!mounted) {
     return (
-      <main className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#E2D4E0" }}>
-        <div className="w-8 h-8 rounded-full border-2 border-[#4C5372] border-t-transparent animate-spin" />
+      <main className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#F5D0D8" }}>
+        <div className="w-8 h-8 rounded-full border-2 border-[#800020] border-t-transparent animate-spin" />
       </main>
     );
   }
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 text-center" style={{ backgroundColor: "#E2D4E0" }}>
-        <p data-i18n="checkout_empty" className="font-playfair text-2xl font-bold text-[#1E2235] mb-3">
+      <main className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 text-center" style={{ backgroundColor: "#F5D0D8" }}>
+        <p data-i18n="checkout_empty" className="font-playfair text-2xl font-bold text-[#2D000A] mb-3">
           {t("checkout_empty")}
         </p>
-        <Link href="/menu" data-i18n="checkout_browse_menu" className="text-[#4C5372] font-semibold hover:underline">
+        <Link href="/menu" data-i18n="checkout_browse_menu" className="text-[#800020] font-semibold hover:underline">
           {t("checkout_browse_menu")}
         </Link>
       </main>
@@ -205,18 +205,18 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
   }
 
   return (
-    <main className="min-h-screen pt-16 md:pt-20 pb-10" style={{ backgroundColor: "#E2D4E0" }}>
+    <main className="min-h-screen pt-16 md:pt-20 pb-10" style={{ backgroundColor: "#F5D0D8" }}>
       {/* Header */}
-      <div className="border-b border-[rgba(76,83,114,0.10)] px-6 md:px-12 py-5">
+      <div className="border-b border-[rgba(128,0,32,0.10)] px-6 md:px-12 py-5">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
-          <Link href="/cart" className="text-[#949AB1] hover:text-[#4C5372] transition-colors">
+          <Link href="/cart" className="text-[#A05068] hover:text-[#800020] transition-colors">
             <ChevronLeft size={22} />
           </Link>
           <div>
-            <h1 data-i18n="checkout_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#1E2235]">
+            <h1 data-i18n="checkout_title" className="font-playfair text-2xl md:text-3xl font-bold text-[#2D000A]">
               {t("checkout_title")}
             </h1>
-            <p data-i18n="checkout_subtitle" className="text-[#4C5372]/60 text-sm">
+            <p data-i18n="checkout_subtitle" className="text-[#800020]/60 text-sm">
               {t("checkout_subtitle")}
             </p>
           </div>
@@ -272,19 +272,19 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                       className={cn(
                         "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
                         form.deliveryMethod === id
-                          ? "border-[#4C5372] bg-[#E2D4E0] shadow-warm-xs"
-                          : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/30 bg-white"
+                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
+                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
                       )}
                     >
                       <div className={cn(
                         "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                        form.deliveryMethod === id ? "bg-[#4C5372] text-white" : "bg-[#E2D4E0] text-[#949AB1]"
+                        form.deliveryMethod === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
                       )}>
                         <Icon size={16} />
                       </div>
                       <span className={cn(
                         "text-sm font-semibold",
-                        form.deliveryMethod === id ? "text-[#4C5372]" : "text-[#4C5372]"
+                        form.deliveryMethod === id ? "text-[#800020]" : "text-[#800020]"
                       )}>
                         {label}
                       </span>
@@ -294,16 +294,16 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
                 {/* Store card — pickup only */}
                 {form.deliveryMethod === "pickup" && (
-                  <div className="flex items-start gap-3 p-4 bg-[#E2D4E0] border border-[rgba(76,83,114,0.10)] rounded-xl">
-                    <MapPin size={16} className="text-[#4C5372] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-[#F5D0D8] border border-[rgba(128,0,32,0.10)] rounded-xl">
+                    <MapPin size={16} className="text-[#800020] shrink-0 mt-0.5" />
                     <div>
-                      <p data-i18n="checkout_boutique_name" className="font-semibold text-[#1E2235] text-sm">
+                      <p data-i18n="checkout_boutique_name" className="font-semibold text-[#2D000A] text-sm">
                         {t("checkout_boutique_name")}
                       </p>
-                      <p data-i18n="checkout_address" className="text-[#4C5372] text-xs mt-0.5">
+                      <p data-i18n="checkout_address" className="text-[#800020] text-xs mt-0.5">
                         {t("checkout_address")}
                       </p>
-                      <p data-i18n="checkout_hours" className="text-[#949AB1] text-xs flex items-center gap-1 mt-1">
+                      <p data-i18n="checkout_hours" className="text-[#A05068] text-xs flex items-center gap-1 mt-1">
                         <Clock size={10} /> {t("checkout_hours")}
                       </p>
                     </div>
@@ -313,7 +313,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                 {/* Address field — delivery only */}
                 {form.deliveryMethod === "delivery" && (
                   <div>
-                    <label className="block text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
                       Delivery Address
                     </label>
                     <textarea
@@ -322,8 +322,8 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                       placeholder="Enter your full delivery address..."
                       rows={3}
                       className={cn(
-                        "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#1E2235] placeholder:text-[#949AB1] outline-none transition-colors resize-none",
-                        errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(76,83,114,0.10)] focus:border-[#4C5372]"
+                        "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none",
+                        errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
                       )}
                     />
                     {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
@@ -332,15 +332,15 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
                 {/* Date */}
                 <div>
-                  <label className="block text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
                     {form.deliveryMethod === "delivery" ? "Delivery Date" : t("checkout_pickup_date")}
                   </label>
                   <input
                     type="date" min={today} max={maxDate}
                     value={form.pickupDate} onChange={(e) => set("pickupDate", e.target.value)}
                     className={cn(
-                      "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#1E2235] outline-none transition-colors",
-                      errors.pickupDate ? "border-red-400" : "border-[rgba(76,83,114,0.10)] focus:border-[#4C5372]"
+                      "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] outline-none transition-colors",
+                      errors.pickupDate ? "border-red-400" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
                     )}
                   />
                   {errors.pickupDate && <p className="text-red-500 text-[11px] mt-1">{errors.pickupDate}</p>}
@@ -348,7 +348,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
                 {/* Time slots */}
                 <div>
-                  <label className="block text-xs font-bold text-[#949AB1] uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-2">
                     {form.deliveryMethod === "delivery" ? "Delivery Time" : t("checkout_pickup_time")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -363,8 +363,8 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                           className={cn(
                             "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97]",
                             form.pickupTime === slotLabel
-                              ? "border-[#4C5372] bg-[#4C5372] text-white shadow-warm-sm"
-                              : "border-[rgba(76,83,114,0.10)] text-[#4C5372] hover:border-[#4C5372]/40 bg-white"
+                              ? "border-[#800020] bg-[#800020] text-white shadow-warm-sm"
+                              : "border-[rgba(128,0,32,0.10)] text-[#800020] hover:border-[#800020]/40 bg-white"
                           )}
                         >
                           {slotLabel}
@@ -377,7 +377,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
               </Section>
 
               <Section title={t("checkout_payment_section")}>
-                <p data-i18n="checkout_payment_note" className="text-[#949AB1] text-xs -mt-1">
+                <p data-i18n="checkout_payment_note" className="text-[#A05068] text-xs -mt-1">
                   {t("checkout_payment_note")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -390,13 +390,13 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                       className={cn(
                         "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
                         form.payment === id
-                          ? "border-[#4C5372] bg-[#E2D4E0] shadow-warm-xs"
-                          : "border-[rgba(76,83,114,0.10)] hover:border-[#4C5372]/30 bg-white"
+                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
+                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
                       )}
                     >
                       <div className={cn(
                         "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                        form.payment === id ? "bg-[#4C5372] text-white" : "bg-[#E2D4E0] text-[#949AB1]"
+                        form.payment === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
                       )}>
                         <Icon size={16} />
                       </div>
@@ -404,7 +404,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                         data-i18n={labelKey}
                         className={cn(
                           "text-sm font-semibold",
-                          form.payment === id ? "text-[#4C5372]" : "text-[#4C5372]"
+                          form.payment === id ? "text-[#800020]" : "text-[#800020]"
                         )}
                       >
                         {t(labelKey)}
@@ -415,7 +415,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
               </Section>
 
               <Section title={t("checkout_notes_section")}>
-                <label data-i18n="checkout_special_requests" className="block text-xs font-bold text-[#949AB1] uppercase tracking-wider -mt-2 mb-1.5">
+                <label data-i18n="checkout_special_requests" className="block text-xs font-bold text-[#A05068] uppercase tracking-wider -mt-2 mb-1.5">
                   {t("checkout_special_requests")}
                 </label>
                 <textarea
@@ -423,7 +423,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                   data-i18n="checkout_notes_placeholder"
                   placeholder={t("checkout_notes_placeholder")}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white border border-[rgba(76,83,114,0.10)] focus:border-[#4C5372] rounded-xl text-sm text-[#1E2235] placeholder:text-[#949AB1] outline-none transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-white border border-[rgba(128,0,32,0.10)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none"
                 />
               </Section>
             </div>
@@ -431,36 +431,36 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
             {/* ── Order summary ──────────────────────── */}
             <div className="w-full lg:w-80 xl:w-96 shrink-0">
               <div className="bg-white rounded-2xl shadow-warm-sm p-6 sticky top-24">
-                <h2 data-i18n="checkout_order_summary" className="font-playfair text-xl font-bold text-[#1E2235] mb-5">
+                <h2 data-i18n="checkout_order_summary" className="font-playfair text-xl font-bold text-[#2D000A] mb-5">
                   {t("checkout_order_summary")}
                 </h2>
 
                 <div className="space-y-2 mb-4 max-h-52 overflow-y-auto pr-1">
                   {items.map((item) => (
                     <div key={item.cartId} className="flex justify-between text-sm gap-2">
-                      <span className="text-[#4C5372] truncate">
+                      <span className="text-[#800020] truncate">
                         {item.productName}
-                        {item.quantity > 1 && <span className="text-[#949AB1] ml-1">×{item.quantity}</span>}
+                        {item.quantity > 1 && <span className="text-[#A05068] ml-1">×{item.quantity}</span>}
                       </span>
-                      <span className="font-semibold text-[#1E2235] shrink-0">
+                      <span className="font-semibold text-[#2D000A] shrink-0">
                         QAR {item.unitPrice * item.quantity}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-[rgba(76,83,114,0.08)] pt-4 space-y-2 mb-6">
+                <div className="border-t border-[rgba(128,0,32,0.08)] pt-4 space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span data-i18n="checkout_subtotal" className="text-[#949AB1]">{t("checkout_subtotal")}</span>
-                    <span className="font-semibold text-[#1E2235]">QAR {subtotal}</span>
+                    <span data-i18n="checkout_subtotal" className="text-[#A05068]">{t("checkout_subtotal")}</span>
+                    <span className="font-semibold text-[#2D000A]">QAR {subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span data-i18n="cart_delivery" className="text-[#949AB1]">{t("cart_delivery")}</span>
+                    <span data-i18n="cart_delivery" className="text-[#A05068]">{t("cart_delivery")}</span>
                     <span data-i18n="checkout_delivery_free" className="text-emerald-600 font-semibold">{t("checkout_delivery_free")}</span>
                   </div>
-                  <div className="border-t border-[rgba(76,83,114,0.08)] pt-3 flex justify-between">
-                    <span data-i18n="checkout_total" className="font-bold text-[#1E2235]">{t("checkout_total")}</span>
-                    <span className="font-playfair font-bold text-[#4C5372] text-xl">QAR {subtotal}</span>
+                  <div className="border-t border-[rgba(128,0,32,0.08)] pt-3 flex justify-between">
+                    <span data-i18n="checkout_total" className="font-bold text-[#2D000A]">{t("checkout_total")}</span>
+                    <span className="font-playfair font-bold text-[#800020] text-xl">QAR {subtotal}</span>
                   </div>
                 </div>
 
@@ -469,8 +469,8 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                   className={cn(
                     "w-full font-bold py-4 rounded-2xl transition-all duration-300 font-playfair tracking-wide",
                     placing
-                      ? "bg-[#FB7185]/50 text-white/50 cursor-not-allowed"
-                      : "bg-[#FB7185] hover:bg-[#E11D48] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
+                      ? "bg-[#FF6B9D]/50 text-white/50 cursor-not-allowed"
+                      : "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
                   )}
                 >
                   {placing ? (
@@ -483,7 +483,7 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
                   )}
                 </button>
 
-                <p data-i18n="checkout_terms" className="text-center text-[#949AB1] text-xs mt-3">
+                <p data-i18n="checkout_terms" className="text-center text-[#A05068] text-xs mt-3">
                   {t("checkout_terms")}
                 </p>
               </div>
