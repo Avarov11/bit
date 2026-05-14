@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type { DbProduct } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -42,10 +43,15 @@ const categoryBadge: Record<string, string> = {
 
 export default function MenuContent() {
   const { t, lang } = useLanguage();
+  const searchParams = useSearchParams();
 
   const [products, setProducts]                   = useState<DbProduct[]>([]);
   const [loadingProducts, setLoadingProducts]     = useState(true);
-  const [activeCategory, setActiveCategory]       = useState<FilterCat>("All");
+  const [activeCategory, setActiveCategory]       = useState<FilterCat>(() => {
+    const cat = searchParams.get("category");
+    if (cat === "Customized" || cat === "Accessories" || cat === "Boxes") return cat;
+    return "All";
+  });
   const [activeSubCategory, setActiveSubCategory] = useState<SubCat | null>(null);
   const [query, setQuery]                         = useState("");
   const [custProduct, setCustProduct]             = useState<DbProduct | null>(null);

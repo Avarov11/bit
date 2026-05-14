@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin, Mail, Phone, ArrowRight, ShoppingBag, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
@@ -13,32 +13,48 @@ import CakeCustomizerModal from "@/components/CakeCustomizerModal";
 const footerNavKeys = ["nav_home", "nav_menu", "nav_about", "nav_contact"];
 const footerNavHrefs = ["/", "/menu", "/about", "/contact"];
 
-const DOTS = [
-  { x: "6%",  y: "18%", r: 8,  color: "#FF6B9D", opacity: 0.60 },
-  { x: "11%", y: "70%", r: 5,  color: "#A05068", opacity: 0.42 },
-  { x: "47%", y: "7%",  r: 4,  color: "#FF6B9D", opacity: 0.38 },
-  { x: "93%", y: "24%", r: 6,  color: "#A05068", opacity: 0.50 },
-  { x: "87%", y: "76%", r: 9,  color: "#FF6B9D", opacity: 0.30 },
-  { x: "21%", y: "86%", r: 5,  color: "#A05068", opacity: 0.38 },
-  { x: "74%", y: "91%", r: 4,  color: "#FF6B9D", opacity: 0.45 },
-];
-
 const HERO_SLIDES = [
   {
-    image: "https://images.unsplash.com/photo-1607920592519-bab2a80efd81?w=800&q=85",
-    label: "Artisan Brownies",
+    image: "/slide1.jpeg",
+    label: "Handcrafted in Qatar · Est. 2021",
+    headline: ["Qatar's Premier", "Brownie Brand."],
+    sub: "Biteez was born in Doha with one mission — to craft brownies that go beyond the ordinary. From our signature artisan flavours to fully personalised gift boxes, every bite celebrates quality, creativity, and love.",
+    tags: ["Fresh Baked Daily", "10+ Flavours", "Gift Boxes", "Fully Customizable"],
+    stats: [
+      { value: "10+", label: "Flavours" },
+      { value: "50+", label: "Box Designs" },
+      { value: "100%", label: "Handcrafted" },
+    ],
+    steps: null,
+    btn: "Order Now",
+    href: "/menu",
   },
   {
-    image: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=800&q=85",
-    label: "Fully Customizable",
+    image: "/slide2.jpeg",
+    label: "Customize Your Box",
+    headline: ["Your brownie,", "your way."],
+    sub: "Design your dream brownie box from scratch — every detail, entirely your choice. Perfect for gifting or treating yourself.",
+    tags: null,
+    stats: null,
+    steps: [
+      { n: "01", text: "Choose your flavour" },
+      { n: "02", text: "Pick your toppings" },
+      { n: "03", text: "Custom packaging" },
+      { n: "04", text: "Add a message" },
+    ],
+    btn: "Shop Customized",
+    href: "/menu?category=Customized",
   },
   {
-    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=85",
+    image: "/slide3.jpeg",
     label: "For Every Occasion",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=85",
-    label: "Made with Love",
+    headline: ["The perfect gift,", "every time."],
+    sub: "Birthdays, graduations, weddings — we make every celebration sweeter.",
+    tags: null,
+    stats: null,
+    steps: null,
+    btn: "Shop Accessories",
+    href: "/menu?category=Accessories",
   },
 ];
 
@@ -140,6 +156,7 @@ export default function HomePage() {
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
   const [heroSlide, setHeroSlide]     = useState(0);
   const [heroPaused, setHeroPaused]   = useState(false);
+  const touchStartX = useRef(0);
   const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
 
   useEffect(() => {
@@ -180,228 +197,245 @@ export default function HomePage() {
     <main className="overflow-x-hidden">
 
       {/* ═══════════════════════════════════════════════════════════
-          HERO
+          HERO — cinematic full-screen slideshow
       ═══════════════════════════════════════════════════════════ */}
       <section
-        className="relative min-h-screen flex items-center overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse 130% 90% at 72% 55%, #F5D0D8 0%, #FFFFFF 52%)",
+        className="relative w-full overflow-hidden bg-[#0a0005]"
+        style={{ minHeight: "100dvh" }}
+        onMouseEnter={() => setHeroPaused(true)}
+        onMouseLeave={() => setHeroPaused(false)}
+        onTouchStart={(e) => { touchStartX.current = e.changedTouches[0].clientX; }}
+        onTouchEnd={(e) => {
+          const diff = touchStartX.current - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) setHeroSlide(s => (s + 1) % HERO_SLIDES.length);
+            else setHeroSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+          }
         }}
       >
-        {/* Floating dots */}
-        {DOTS.map((d, i) => (
+        {/* Ken Burns slides */}
+        {HERO_SLIDES.map((slide, i) => (
           <div
             key={i}
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              left: d.x,
-              top: d.y,
-              width: d.r,
-              height: d.r,
-              backgroundColor: d.color,
-              opacity: d.opacity,
-            }}
-          />
-        ))}
-
-        {/* Ring accent — top left */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "13%",
-            left: "4%",
-            width: 70,
-            height: 70,
-            border: "2.5px solid #FF6B9D",
-            borderRadius: "50%",
-            opacity: 0.22,
-          }}
-        />
-
-        {/* Plus accent */}
-        <div
-          className="absolute pointer-events-none"
-          style={{ top: "36%", left: "7.5%" }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: 2,
-              height: 18,
-              backgroundColor: "#A05068",
-              left: 8,
-              top: 0,
-              opacity: 0.32,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: 18,
-              height: 2,
-              backgroundColor: "#A05068",
-              left: 0,
-              top: 8,
-              opacity: 0.32,
-            }}
-          />
-        </div>
-
-        {/* Small ring — bottom right */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: "20%",
-            right: "5%",
-            width: 46,
-            height: 46,
-            border: "2px solid #A05068",
-            borderRadius: "50%",
-            opacity: 0.18,
-          }}
-        />
-
-        <div className="relative max-w-7xl mx-auto px-6 md:px-12 lg:px-20 w-full pt-28 md:pt-32 pb-20 md:pb-16 flex flex-col md:flex-row items-center gap-14 md:gap-8 lg:gap-12">
-
-          {/* ── LEFT: Text ── */}
-          <div className="flex-1 z-10 md:pr-6">
-            <div className="animate-fade-up inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-[#F5D0D8] rounded-full px-4 py-1.5 mb-7">
-              <span className="w-2 h-2 rounded-full bg-[#FF6B9D]" />
-              <span className="text-[10px] font-bold tracking-[0.24em] uppercase text-[#800020]">
-                Handcrafted in Qatar
-              </span>
-            </div>
-
-            <h1 className="font-playfair animate-fade-up-d1 text-[2.9rem] sm:text-[3.7rem] md:text-[4.4rem] lg:text-[5.1rem] font-bold text-[#2D000A] leading-[1.06] mb-7">
-              Brownies
-              <br />
-              <em className="not-italic" style={{ color: "#800020" }}>
-                worth every
-              </em>
-              <br />
-              <span
-                style={{
-                  background:
-                    "linear-gradient(135deg, #FF6B9D 0%, #2D000A 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                indulgence.
-              </span>
-            </h1>
-
-            <p className="animate-fade-up-d2 text-[#A05068] text-base md:text-lg leading-relaxed max-w-[420px] mb-10">
-              Artisan brownies crafted with the finest ingredients — fully
-              customizable for every occasion.
-            </p>
-
-            <div className="animate-fade-up-d3 flex flex-wrap items-center gap-4">
-              <Link
-                href="/menu"
-                className="inline-flex items-center gap-2.5 bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-semibold px-8 py-4 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
-                style={{ boxShadow: "0 8px 28px rgba(255,107,157,0.38)" }}
-              >
-                Order Now <ArrowRight size={16} />
-              </Link>
-              <Link
-                href="/about"
-                className="inline-flex items-center gap-1.5 text-[#800020] font-semibold text-sm hover:text-[#2D000A] transition-colors"
-              >
-                Our Story <ArrowRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-          {/* ── RIGHT: Slideshow ── */}
-          <div className="flex-1 relative flex items-center justify-center md:justify-end">
-            {/* Blob */}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-[1200ms]",
+              i === heroSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+            )}
+          >
+            <Image
+              key={`img-${i}-${i === heroSlide ? "active" : "idle"}`}
+              src={slide.image}
+              alt={slide.label}
+              fill
+              sizes="100vw"
+              className={cn("object-cover", i === heroSlide && "animate-kenburns")}
+              priority={i === 0}
+            />
+            {/* Vignette: strong left panel + bottom fade */}
             <div
-              className="absolute rounded-full pointer-events-none transition-colors duration-700"
+              className="absolute inset-0"
               style={{
-                width: "min(450px, 90vw)",
-                height: "min(450px, 90vw)",
-                background: "radial-gradient(circle, #D8CCD8 0%, #F5D0D8 58%, transparent 100%)",
-                opacity: 0.88,
+                background: [
+                  "linear-gradient(to right, rgba(6,0,2,0.82) 0%, rgba(6,0,2,0.52) 38%, rgba(6,0,2,0.12) 62%, transparent 100%)",
+                  "linear-gradient(to top,   rgba(6,0,2,0.55) 0%, transparent 40%)",
+                ].join(", "),
               }}
             />
+          </div>
+        ))}
 
-            {/* Slide container */}
-            <div
-              className="relative z-10"
-              style={{ width: "min(400px, 82vw)", height: "min(400px, 82vw)" }}
-              onMouseEnter={() => setHeroPaused(true)}
-              onMouseLeave={() => setHeroPaused(false)}
-            >
-              <div
-                className="relative w-full h-full rounded-[2.5rem] overflow-hidden"
-                style={{ boxShadow: "0 32px 80px rgba(128,0,32,0.24)" }}
-              >
-                {HERO_SLIDES.map((slide, i) => (
-                  <Image
-                    key={i}
-                    src={slide.image}
-                    alt={slide.label}
-                    fill
-                    className={cn(
-                      "object-cover transition-opacity duration-700",
-                      i === heroSlide ? "opacity-100" : "opacity-0"
-                    )}
-                    priority={i === 0}
-                  />
-                ))}
-              </div>
+        {/* ── Text + CTA (left-aligned, vertically centered) ── */}
+        <div
+          className="relative z-20 flex items-center w-full"
+          style={{ minHeight: "100dvh", paddingTop: "7rem", paddingBottom: "5rem" }}
+        >
+          <div className="px-6 sm:px-10 md:px-16 lg:px-24 w-full max-w-[92%] sm:max-w-xl lg:max-w-2xl">
 
-              {/* Slide label pill */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-                <span className="bg-white/80 backdrop-blur-sm text-[#800020] text-[11px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-full shadow-sm">
+            {/* Animated block — key remounts on slide change to replay animation */}
+            <div key={heroSlide} className="animate-hero-text">
+
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 mb-5 sm:mb-7 backdrop-blur-sm bg-white/5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B9D] shrink-0" />
+                <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.26em] uppercase text-white/55">
                   {HERO_SLIDES[heroSlide].label}
                 </span>
               </div>
 
-              {/* Prev arrow */}
+              {/* Headline */}
+              <h1
+                className="font-playfair font-bold leading-[1.04] mb-4 sm:mb-5 text-white"
+                style={{ fontSize: "clamp(2.2rem, 5.5vw, 5rem)" }}
+              >
+                {HERO_SLIDES[heroSlide].headline[0]}
+                <br />
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #FF6B9D 0%, #FFD0E0 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {HERO_SLIDES[heroSlide].headline[1]}
+                </span>
+              </h1>
+
+              {/* Divider */}
+              <div className="w-10 sm:w-14 h-px bg-[#FF6B9D]/50 mb-4 sm:mb-5 rounded-full" />
+
+              {/* Subtext */}
+              <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-[340px] sm:max-w-md mb-5 sm:mb-6">
+                {HERO_SLIDES[heroSlide].sub}
+              </p>
+
+              {/* ── Slide 1: feature tags + stats row ── */}
+              {HERO_SLIDES[heroSlide].tags && (
+                <>
+                  <div className="flex flex-wrap gap-2 mb-5 sm:mb-6">
+                    {HERO_SLIDES[heroSlide].tags!.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 backdrop-blur-sm text-white/70 text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-full"
+                      >
+                        <span className="w-1 h-1 rounded-full bg-[#FF6B9D] shrink-0" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {HERO_SLIDES[heroSlide].stats && (
+                    <div className="flex items-center gap-5 sm:gap-8 mb-6 sm:mb-8">
+                      {HERO_SLIDES[heroSlide].stats!.map((s, i) => (
+                        <div key={i} className="flex flex-col">
+                          <span
+                            className="font-playfair font-bold text-white leading-none"
+                            style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)" }}
+                          >
+                            {s.value}
+                          </span>
+                          <span className="text-white/35 text-[10px] font-semibold tracking-widest uppercase mt-0.5">
+                            {s.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ── Slide 2: customization steps ── */}
+              {HERO_SLIDES[heroSlide].steps && (
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-6 sm:mb-8">
+                  {HERO_SLIDES[heroSlide].steps!.map((step) => (
+                    <div
+                      key={step.n}
+                      className="flex items-center gap-2.5 bg-white/6 border border-white/12 backdrop-blur-sm rounded-xl px-3 py-2.5 sm:px-4 sm:py-3"
+                    >
+                      <span
+                        className="font-playfair font-bold text-[#FF6B9D] shrink-0 leading-none"
+                        style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)" }}
+                      >
+                        {step.n}
+                      </span>
+                      <span className="text-white/70 text-[11px] sm:text-xs font-semibold leading-tight">
+                        {step.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CTA button */}
+              <Link
+                href={HERO_SLIDES[heroSlide].href}
+                className="inline-flex items-center gap-2.5 bg-[#FF6B9D] hover:bg-white hover:text-[#800020] text-white font-semibold px-7 py-3.5 sm:px-9 sm:py-4 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97] text-sm sm:text-base whitespace-nowrap"
+                style={{ boxShadow: "0 10px 32px rgba(255,107,157,0.40)" }}
+              >
+                {HERO_SLIDES[heroSlide].btn} <ArrowRight size={16} />
+              </Link>
+
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bottom bar: progress + label + arrows ── */}
+        <div className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 px-4 sm:px-8 md:px-14 pb-4 sm:pb-6"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 1rem))" }}
+        >
+          {/* Progress strips */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {HERO_SLIDES.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setHeroSlide(i)}
+                aria-label={`Slide ${i + 1}`}
+                className="relative rounded-full overflow-hidden transition-all duration-300"
+                style={{
+                  height: 3,
+                  width: i === heroSlide ? 44 : 18,
+                  background: "rgba(255,255,255,0.18)",
+                }}
+              >
+                {i < heroSlide && (
+                  <span className="absolute inset-0 bg-white/55 rounded-full" />
+                )}
+                {i === heroSlide && !heroPaused && (
+                  <span
+                    key={`bar-${heroSlide}`}
+                    className="absolute inset-y-0 left-0 bg-[#FF6B9D] rounded-full"
+                    style={{ animation: "herobar 5s linear forwards" }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Label + arrows */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:block text-white/35 text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
+              {HERO_SLIDES[heroSlide].label}
+            </span>
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setHeroSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/75 hover:bg-white rounded-full p-2 shadow-md text-[#800020] transition-all duration-200 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Previous"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={16} />
               </button>
-
-              {/* Next arrow */}
               <button
                 onClick={() => setHeroSlide(s => (s + 1) % HERO_SLIDES.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/75 hover:bg-white rounded-full p-2 shadow-md text-[#800020] transition-all duration-200 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Next"
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={16} />
               </button>
-
-              {/* Dot indicators */}
-              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                {HERO_SLIDES.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setHeroSlide(i)}
-                    className={cn(
-                      "rounded-full transition-all duration-300",
-                      i === heroSlide ? "w-5 h-2 bg-[#800020]" : "w-2 h-2 bg-[#800020]/30 hover:bg-[#800020]/60"
-                    )}
-                    aria-label={`Slide ${i + 1}`}
-                  />
-                ))}
-              </div>
             </div>
-
-            {/* Decorative dots */}
-            <div className="absolute top-6 right-6 w-3 h-3 rounded-full bg-[#FF6B9D] opacity-55 z-20" />
-            <div className="absolute bottom-14 right-1 w-2 h-2 rounded-full bg-[#A05068] opacity-45 z-20" />
-            <div className="absolute top-1/2 -left-2 w-4 h-4 rounded-full border-2 border-[#A05068] opacity-45 z-20" />
           </div>
         </div>
       </section>
+
+      <style jsx global>{`
+        @keyframes kenburns {
+          from { transform: scale(1)    translateY(0px); }
+          to   { transform: scale(1.10) translateY(-12px); }
+        }
+        .animate-kenburns {
+          animation: kenburns 7s ease-out forwards;
+        }
+        @keyframes herobar {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
+        @keyframes hero-text-in {
+          0%   { opacity: 0; transform: translateY(28px); }
+          100% { opacity: 1; transform: translateY(0);    }
+        }
+        .animate-hero-text {
+          animation: hero-text-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+      `}</style>
 
       {/* ═══════════════════════════════════════════════════════════
           BESTSELLERS
