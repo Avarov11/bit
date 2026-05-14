@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/types";
 
@@ -23,12 +23,37 @@ const EMPTY: FormData = {
 export default function ProductForm({ product }: { product?: Product }) {
   const router  = useRouter();
   const isEdit  = !!product;
-  const [form, setForm]     = useState<FormData>(product ? { ...product } : EMPTY);
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState("");
+  const [form, setForm]         = useState<FormData>(product ? { ...product } : EMPTY);
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function set(field: keyof FormData, value: unknown) {
     setForm(f => ({ ...f, [field]: value }));
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError("");
+    setUploading(true);
+
+    const body = new FormData();
+    body.append("file", file);
+
+    const res = await fetch("/api/upload", { method: "POST", body });
+    const data = await res.json();
+
+    setUploading(false);
+
+    if (!res.ok) {
+      setUploadError(data.error ?? "Upload failed");
+    } else {
+      set("image_url", data.url);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -53,6 +78,7 @@ export default function ProductForm({ product }: { product?: Product }) {
   }
 
   const subs = SUBCATEGORIES[form.category] ?? [];
+  const preview = form.image_url;
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 md:p-6 max-w-2xl space-y-5">
@@ -112,9 +138,90 @@ export default function ProductForm({ product }: { product?: Product }) {
         </Field>
       </div>
 
-      <Field label="Image URL">
-        <input type="url" value={form.image_url ?? ""}
-          onChange={e => set("image_url", e.target.value)} className="input" />
+      {/* Image upload */}
+      <Field label="Product Image">
+        <div className="space-y-3">
+
+          {/* Preview */}
+          {preview ? (
+            <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt="Product preview"
+                className="w-full h-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => { set("image_url", ""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                className="absolute top-2 right-2 bg-white border border-gray-200 text-gray-500 hover:text-red-500 rounded-full w-7 h-7 flex items-center justify-center text-sm shadow-sm transition-colors"
+                title="Remove image"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            /* Upload zone */
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full h-40 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-brand-400 hover:text-brand-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-gray-50"
+            >
+              {uploading ? (
+                <>
+                  <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">Uploading…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M4 16l4-4m0 0l4 4m-4-4v9M20 16l-4-4m0 0l-4 4m4-4V3" />
+                  </svg>
+                  <span className="text-sm font-medium">Click to upload image</span>
+                  <span className="text-xs">JPG, PNG, WEBP — max 10 MB</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Change button when preview exists */}
+          {preview && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="inline-flex items-center gap-2 text-sm text-brand-700 hover:text-brand-900 font-medium disabled:opacity-50 transition-colors"
+            >
+              {uploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                  Uploading…
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Change image
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+
+          {uploadError && <p className="text-red-500 text-xs">{uploadError}</p>}
+        </div>
       </Field>
 
       <div className="flex gap-6">
@@ -133,7 +240,7 @@ export default function ProductForm({ product }: { product?: Product }) {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={saving}
+        <button type="submit" disabled={saving || uploading}
           className="bg-brand-700 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-brand-900 disabled:opacity-50 transition-colors">
           {saving ? "Saving…" : isEdit ? "Save Changes" : "Add Product"}
         </button>
