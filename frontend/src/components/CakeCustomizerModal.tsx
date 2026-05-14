@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
@@ -375,6 +376,7 @@ export default function CakeCustomizerModal({
   onClose: () => void;
 }) {
   const addToCart = useCartStore((s) => s.addItem);
+  const router    = useRouter();
   const [custStep, setCustStep] = useState(0);
   const [custSel, setCustSel]   = useState<CustSel>(EMPTY_SEL);
   const imageInputRef           = useRef<HTMLInputElement>(null);
@@ -414,7 +416,7 @@ export default function CakeCustomizerModal({
     else onClose();
   };
 
-  const handleAddToCart = () => {
+  const commitToCart = () => {
     const flavorLabel = custSel.flavorType === "chocolate"
       ? CHOC_FLAVORS.find((f) => f.id === custSel.flavor)?.label ?? "Chocolate"
       : `White Chocolate – ${COLOURS.find((c) => c.id === custSel.colour)?.label ?? ""}`;
@@ -437,8 +439,10 @@ export default function CakeCustomizerModal({
         hasCustomImage: custSel.topping === "upload"  ? true : undefined,
       },
     });
-    onClose();
   };
+
+  const handleCheckout = () => { commitToCart(); onClose(); router.push("/checkout"); };
+  const handleContinue = () => { commitToCart(); onClose(); router.push("/menu"); };
 
   const OptionCard = ({
     id, emoji, label, sub, selected, onClick,
@@ -772,9 +776,14 @@ export default function CakeCustomizerModal({
               </button>
             </div>
           ) : (
-            <div className="max-w-lg mx-auto">
-              <button onClick={handleAddToCart} className="w-full bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
-                Add to Cart
+            <div className="max-w-lg mx-auto flex gap-3">
+              <button onClick={handleContinue}
+                className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
+                Continue Shopping
+              </button>
+              <button onClick={handleCheckout}
+                className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
+                Checkout →
               </button>
             </div>
           )}
@@ -844,10 +853,16 @@ export default function CakeCustomizerModal({
                   </button>
                 </div>
               ) : (
-                <button onClick={handleAddToCart}
-                  className="w-full bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
-                  Add to Cart
-                </button>
+                <div className="flex gap-3">
+                  <button onClick={handleContinue}
+                    className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
+                    Continue Shopping
+                  </button>
+                  <button onClick={handleCheckout}
+                    className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
+                    Checkout →
+                  </button>
+                </div>
               )}
             </div>
           </div>
