@@ -628,14 +628,13 @@ export default function CakeCustomizerModal({
     );
 
     if (custStep === 3) {
-      const shape         = custSel.shape;
-      const showExtras    = shape === "cake" || shape === "square";
-      const isLetterLimit = shape === "heart" || shape === "square";
-      const limit  = isLetterLimit ? 3 : 5;
-      const unit   = isLetterLimit ? "letters" : "words";
-      const count  = isLetterLimit
-        ? custSel.toppingText.length
-        : (custSel.toppingText.trim() === "" ? 0 : custSel.toppingText.trim().split(/\s+/).length);
+      const shape       = custSel.shape;
+      const showSticker = shape === "square" || shape === "cake";
+      const showImage   = shape === "cake";
+      const hasWordLimit = shape === "heart" || shape === "square"; // 3-word limit
+      const limit = hasWordLimit ? 3 : Infinity;
+      const count = custSel.toppingText.trim() === "" ? 0 : custSel.toppingText.trim().split(/\s+/).length;
+      const cardCols = showImage ? "grid-cols-3" : showSticker ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
       const UploadZone = ({
         file, onPick, onRemove, label, icon,
@@ -679,14 +678,14 @@ export default function CakeCustomizerModal({
           <p className="text-[#A05068] text-sm mb-5">Personalise your brownie</p>
 
           {/* Option cards */}
-          <div className={cn("grid gap-3 mb-5", showExtras ? "grid-cols-3" : "grid-cols-1 max-w-[50%]")}>
+          <div className={cn("grid gap-3 mb-5", cardCols)}>
             <OptionCard
               id="write" emoji="✍️" label="Write"
-              sub={isLetterLimit ? "Max 3 letters" : "Max 5 words"}
+              sub={hasWordLimit ? "Max 3 words" : "No word limit"}
               selected={custSel.topping === "write"}
               onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerFile: null, imageFile: null }))}
             />
-            {showExtras && (
+            {showSticker && (
               <OptionCard
                 id="sticker" emoji="🎨" label="Upload Sticker"
                 sub="Custom sticker file"
@@ -694,7 +693,7 @@ export default function CakeCustomizerModal({
                 onClick={() => setCustSel((p) => ({ ...p, topping: "sticker", toppingText: "", imageFile: null }))}
               />
             )}
-            {showExtras && (
+            {showImage && (
               <OptionCard
                 id="image" emoji="📷" label="Upload Image"
                 sub="Photo or design"
@@ -709,22 +708,24 @@ export default function CakeCustomizerModal({
             <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-[#A05068] uppercase tracking-wider">Your Message</label>
-                <span className={cn("text-xs font-bold tabular-nums", count >= limit ? "text-[#800020]" : "text-[#A05068]")}>
-                  {count} / {limit} {unit}
-                </span>
+                {hasWordLimit && (
+                  <span className={cn("text-xs font-bold tabular-nums", count >= limit ? "text-[#800020]" : "text-[#A05068]")}>
+                    {count} / {limit} words
+                  </span>
+                )}
               </div>
               <textarea
                 value={custSel.toppingText}
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (isLetterLimit) {
-                    if (val.length <= limit) setCustSel((p) => ({ ...p, toppingText: val }));
-                  } else {
+                  if (hasWordLimit) {
                     const words = val.trim() === "" ? [] : val.trim().split(/\s+/);
                     if (words.length <= limit) setCustSel((p) => ({ ...p, toppingText: val }));
+                  } else {
+                    setCustSel((p) => ({ ...p, toppingText: val }));
                   }
                 }}
-                placeholder={isLetterLimit ? "e.g. Hi!" : "e.g. Happy Birthday Sarah!"}
+                placeholder="e.g. Happy Birthday Sarah!"
                 rows={2}
                 className="w-full px-4 py-3 bg-[#FFFFFF] border border-[rgba(128,0,32,0.08)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none"
               />
