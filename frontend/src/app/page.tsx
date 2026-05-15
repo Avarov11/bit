@@ -155,15 +155,8 @@ export default function HomePage() {
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
   const [heroSlide, setHeroSlide]     = useState(0);
-  const [heroPaused, setHeroPaused]   = useState(false);
   const touchStartX = useRef(0);
   const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
-
-  useEffect(() => {
-    if (heroPaused) return;
-    const id = setInterval(() => setHeroSlide(s => (s + 1) % HERO_SLIDES.length), 4500);
-    return () => clearInterval(id);
-  }, [heroPaused]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -202,8 +195,6 @@ export default function HomePage() {
       <section
         className="relative w-full overflow-hidden bg-[#0a0005]"
         style={{ minHeight: "100dvh" }}
-        onMouseEnter={() => setHeroPaused(true)}
-        onMouseLeave={() => setHeroPaused(false)}
         onTouchStart={(e) => { touchStartX.current = e.changedTouches[0].clientX; }}
         onTouchEnd={(e) => {
           const diff = touchStartX.current - e.changedTouches[0].clientX;
@@ -380,12 +371,8 @@ export default function HomePage() {
                 {i < heroSlide && (
                   <span className="absolute inset-0 bg-white/55 rounded-full" />
                 )}
-                {i === heroSlide && !heroPaused && (
-                  <span
-                    key={`bar-${heroSlide}`}
-                    className="absolute inset-y-0 left-0 bg-[#FF6B9D] rounded-full"
-                    style={{ animation: "herobar 5s linear forwards" }}
-                  />
+                {i === heroSlide && (
+                  <span className="absolute inset-0 bg-[#FF6B9D]/80 rounded-full" />
                 )}
               </button>
             ))}
@@ -423,10 +410,6 @@ export default function HomePage() {
         }
         .animate-kenburns {
           animation: kenburns 7s ease-out forwards;
-        }
-        @keyframes herobar {
-          from { width: 0%; }
-          to   { width: 100%; }
         }
         @keyframes hero-text-in {
           0%   { opacity: 0; transform: translateY(28px); }

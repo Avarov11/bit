@@ -9,16 +9,6 @@ const en: Record<string, string> = {
   nav_lang_button: "عربي",
   nav_switch_label: "Switch to Arabic",
 
-  // ── Hero ─────────────────────────────────────────────────
-  hero_title_line1: "Biteez Gifting",
-  hero_title_line2: "Bakery",
-  hero_card1_title: "Curated Selections",
-  hero_card1_subtitle: "Custom-gifting brownies",
-  hero_card2_title: "Biteez Classics",
-  hero_card2_subtitle: "Custom-sized brownies",
-  hero_cta: "Customise Your Treats",
-  hero_img_alt: "Biteez brownie gift box",
-
   // ── Footer ───────────────────────────────────────────────
   footer_tagline:
     "Premium handcrafted brownies made with love and the finest ingredients. Every bite tells a story of passion and craft.",
@@ -87,9 +77,6 @@ const en: Record<string, string> = {
   checkout_pickup_date: "Pickup Date",
   checkout_pickup_time: "Pickup Time",
   checkout_payment_section: "Payment Method",
-  checkout_payment_note:
-    "Payment is collected at pickup — no online payment required.",
-  checkout_cash_pickup: "Cash on Pickup",
   checkout_card_pickup: "Card on Pickup",
   checkout_notes_section: "Order Notes",
   checkout_special_requests: "Special Requests (optional)",
@@ -273,32 +260,6 @@ const en: Record<string, string> = {
   placement_center_bottom: "Center Bottom",
   placement_border_frame: "Border Frame",
 
-  // ── Product names & descriptions ─────────────────────────
-  product_name_birthday_brownie_box: "Birthday Brownie Box",
-  product_desc_birthday_brownie_box:
-    "Dense chocolate fudge brownies topped with rainbow sprinkles, a gold-dusted ganache finish, and a birthday candle — because every birthday deserves the good stuff.",
-  product_name_congrats_brownie_tower: "Congrats Brownie Tower",
-  product_desc_congrats_brownie_tower:
-    "A stacked tower of gold-dusted dark chocolate brownies, gift-wrapped and ready to celebrate any big win in style.",
-  product_name_graduation_brownie_platter: "Graduation Brownie Platter",
-  product_desc_graduation_brownie_platter:
-    "A generous platter of mixed fudge brownies and blondies, dressed in cap-and-gown ribbon — the perfect reward after years of hard work.",
-  product_name_get_well_brownie_bundle: "Get Well Brownie Bundle",
-  product_desc_get_well_brownie_bundle:
-    "A cozy bundle of soft caramel blondies and classic fudge brownies — baked with warmth and sent with all the good wishes in the world.",
-  product_name_bride_to_be_brownie_set: "Bride to Be Brownie Set",
-  product_desc_bride_to_be_brownie_set:
-    "Blush-frosted blondies adorned with edible pearls and rose-gold dust — bridal elegance captured in every single bite.",
-  product_name_gender_reveal_brownie_box: "Gender Reveal Brownie Box",
-  product_desc_gender_reveal_brownie_box:
-    "Chocolate shell brownies with a surprise pink or blue fudge centre inside — crack one open and let the reveal begin.",
-  product_name_customized_brownie_box: "Customized Brownie Box",
-  product_desc_customized_brownie_box:
-    "Fully bespoke brownie box — you choose the size, flavour, frosting colour, toppings, and personalised message. Made exactly how you imagined it.",
-  product_name_walnut_brownie_box: "Walnut Brownie Box",
-  product_desc_walnut_brownie_box:
-    "Classic dark chocolate brownies packed with toasted walnut pieces — rich, chewy, and impossible to stop at one.",
-
   // ── About page ───────────────────────────────────────────
   about_hero_tag: "Our Story",
   about_hero_title_line1: "Crafted with Passion,",
@@ -378,16 +339,6 @@ const ar: Record<string, string> = {
   nav_lang_button: "English",
   nav_switch_label: "Switch to English",
 
-  // ── Hero ─────────────────────────────────────────────────
-  hero_title_line1: "بيتيز",
-  hero_title_line2: "مخبزة الهدايا",
-  hero_card1_title: "تشكيلات مختارة",
-  hero_card1_subtitle: "براونيز هدايا مخصصة",
-  hero_card2_title: "كلاسيكيات بيتيز",
-  hero_card2_subtitle: "براونيز بأحجام مخصصة",
-  hero_cta: "خصّص حلوياتك",
-  hero_img_alt: "علبة هدايا براونيز بيتيز",
-
   // ── Footer ───────────────────────────────────────────────
   footer_tagline:
     "براونيز فاخرة مصنوعة يدوياً بحب وأجود المكونات. كل قضمة تحكي قصة شغف وإتقان.",
@@ -456,9 +407,6 @@ const ar: Record<string, string> = {
   checkout_pickup_date: "تاريخ الاستلام",
   checkout_pickup_time: "وقت الاستلام",
   checkout_payment_section: "طريقة الدفع",
-  checkout_payment_note:
-    "يتم تحصيل الدفع عند الاستلام - لا يلزم الدفع الإلكتروني.",
-  checkout_cash_pickup: "نقداً عند الاستلام",
   checkout_card_pickup: "بطاقة عند الاستلام",
   checkout_notes_section: "ملاحظات الطلب",
   checkout_special_requests: "طلبات خاصة (اختياري)",
@@ -634,32 +582,6 @@ const ar: Record<string, string> = {
   placement_center_middle: "وسط",
   placement_center_bottom: "أسفل الوسط",
   placement_border_frame: "إطار حدودي",
-
-  // ── Product names & descriptions ─────────────────────────
-  product_name_birthday_brownie_box: "علبة براونيز عيد الميلاد",
-  product_desc_birthday_brownie_box:
-    "براونيز فدج الشوكولاتة الكثيفة مزينة برشات قوس قزح وغطاء جاناش مطلي بالذهب وشمعة عيد ميلاد — لأن كل عيد ميلاد يستحق الأفضل.",
-  product_name_congrats_brownie_tower: "برج براونيز التهنئة",
-  product_desc_congrats_brownie_tower:
-    "برج متراكم من براونيز الشوكولاتة الداكنة المطلية بالذهب، مغلفة بشكل جميل وجاهزة للاحتفال بأي إنجاز بأسلوب راقٍ.",
-  product_name_graduation_brownie_platter: "طبق براونيز التخرج",
-  product_desc_graduation_brownie_platter:
-    "طبق سخي من براونيز الفدج المشكلة والبلوندي، مزين بشريط القبعة والرداء — المكافأة المثالية بعد سنوات من العمل الجاد.",
-  product_name_get_well_brownie_bundle: "حزمة براونيز للشفاء",
-  product_desc_get_well_brownie_bundle:
-    "حزمة دافئة من بلوندي الكراميل الناعم وبراونيز الفدج الكلاسيكية — مخبوزة بدفء ومرسلة مع أجمل الأمنيات.",
-  product_name_bride_to_be_brownie_set: "طقم براونيز العروس",
-  product_desc_bride_to_be_brownie_set:
-    "بلوندي مزين بغلاف وردي ولآلئ صالحة للأكل وبودرة ذهبية وردية — أناقة عروسية في كل قضمة.",
-  product_name_gender_reveal_brownie_box: "علبة براونيز الكشف عن الجنس",
-  product_desc_gender_reveal_brownie_box:
-    "براونيز بقشرة شوكولاتة مع مركز فدج وردي أو أزرق مفاجئ بداخلها — اكسر واحدة ودع الكشف يبدأ.",
-  product_name_customized_brownie_box: "علبة براونيز مخصصة",
-  product_desc_customized_brownie_box:
-    "علبة براونيز مخصصة بالكامل — أنت تختار الحجم والنكهة ولون الغلاف والإضافات والرسالة المخصصة. مصنوع تماماً كما تخيلته.",
-  product_name_walnut_brownie_box: "علبة براونيز الجوز",
-  product_desc_walnut_brownie_box:
-    "براونيز الشوكولاتة الداكنة الكلاسيكية محشوة بقطع الجوز المحمص — غنية ومطاطة ويستحيل التوقف عند واحدة.",
 
   // ── About page ───────────────────────────────────────────
   about_hero_tag: "قصتنا",
