@@ -122,12 +122,13 @@ interface CustSel {
   sprinkles: string;
   topping: string;
   toppingText: string;
+  stickerFile: File | null;
   imageFile: File | null;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
-  sprinkles: "", topping: "", toppingText: "", imageFile: null,
+  sprinkles: "", topping: "", toppingText: "", stickerFile: null, imageFile: null,
 };
 
 // ─── CakePreview ─────────────────────────────────────────────────────────────
@@ -375,6 +376,7 @@ export default function CakeCustomizerModal({
   const router    = useRouter();
   const [custStep, setCustStep] = useState(0);
   const [custSel, setCustSel]   = useState<CustSel>(EMPTY_SEL);
+  const stickerInputRef         = useRef<HTMLInputElement>(null);
   const imageInputRef           = useRef<HTMLInputElement>(null);
 
   // Reset state whenever product changes
@@ -398,8 +400,9 @@ export default function CakeCustomizerModal({
     }
     if (custStep === 2) return !!custSel.sprinkles;
     if (custStep === 3) {
-      if (custSel.topping === "write") return true;
-      if (custSel.topping === "upload") return custSel.imageFile !== null;
+      if (custSel.topping === "write")   return true;
+      if (custSel.topping === "sticker") return custSel.stickerFile !== null;
+      if (custSel.topping === "image")   return custSel.imageFile !== null;
       return false;
     }
     return true;
@@ -430,7 +433,8 @@ export default function CakeCustomizerModal({
         color:          cakeColorLabel || undefined,
         toppings:       toppingsList.length ? toppingsList : undefined,
         message:        custSel.topping === "write"   ? custSel.toppingText || undefined : undefined,
-        hasCustomImage: custSel.topping === "upload" && !!custSel.imageFile ? true : undefined,
+        stickerEmoji:   custSel.topping === "sticker" && !!custSel.stickerFile ? custSel.stickerFile.name : undefined,
+        hasCustomImage: custSel.topping === "image"   && !!custSel.imageFile   ? true : undefined,
       },
     });
   };
@@ -485,8 +489,9 @@ export default function CakeCustomizerModal({
             <SummaryRow
               label="Topping"
               value={
-                custSel.topping === "write"  ? `Writing: "${custSel.toppingText || "—"}"`
-                : custSel.topping === "upload" && custSel.imageFile ? `📷 ${custSel.imageFile.name}`
+                custSel.topping === "write"   ? `Writing: "${custSel.toppingText || "—"}"`
+                : custSel.topping === "sticker" && custSel.stickerFile ? `🎨 ${custSel.stickerFile.name}`
+                : custSel.topping === "image"   && custSel.imageFile   ? `📷 ${custSel.imageFile.name}`
                 : "—"
               }
             />
@@ -505,7 +510,7 @@ export default function CakeCustomizerModal({
             return (
               <button
                 key={shape.id}
-                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", imageFile: null }))}
+                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", stickerFile: null, imageFile: null }))}
                 className={cn(
                   "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                   sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -624,7 +629,7 @@ export default function CakeCustomizerModal({
 
     if (custStep === 3) {
       const shape         = custSel.shape;
-      const showUpload    = shape === "cake" || shape === "square";
+      const showExtras    = shape === "cake" || shape === "square";
       const isLetterLimit = shape === "heart" || shape === "square";
       const limit  = isLetterLimit ? 3 : 5;
       const unit   = isLetterLimit ? "letters" : "words";
@@ -632,30 +637,74 @@ export default function CakeCustomizerModal({
         ? custSel.toppingText.length
         : (custSel.toppingText.trim() === "" ? 0 : custSel.toppingText.trim().split(/\s+/).length);
 
+      const UploadZone = ({
+        file, onPick, onRemove, label, icon,
+      }: { file: File | null; onPick: () => void; onRemove: () => void; label: string; icon: string }) => (
+        <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
+          <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">{label}</p>
+          <button
+            onClick={onPick}
+            className={cn(
+              "w-full rounded-xl border-2 border-dashed py-8 text-center transition-all duration-200",
+              file
+                ? "border-[#800020] bg-[#F5D0D8]/30"
+                : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
+            )}
+          >
+            {file ? (
+              <div>
+                <p className="text-3xl mb-2">{icon}</p>
+                <p className="text-sm text-[#800020] font-semibold truncate px-6">{file.name}</p>
+                <p className="text-[11px] text-[#A05068] mt-1">Tap to change</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-3xl mb-2">📤</p>
+                <p className="text-sm font-semibold text-[#800020]">Tap to upload</p>
+                <p className="text-[11px] text-[#A05068] mt-1">PNG · JPG · GIF · WebP</p>
+              </div>
+            )}
+          </button>
+          {file && (
+            <button onClick={onRemove} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-2 transition-colors">
+              Remove ✕
+            </button>
+          )}
+        </div>
+      );
+
       return (
         <div>
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Topping</h2>
           <p className="text-[#A05068] text-sm mb-5">Personalise your brownie</p>
 
           {/* Option cards */}
-          <div className={cn("grid gap-3 mb-5", showUpload ? "grid-cols-2" : "grid-cols-1 max-w-[50%]")}>
+          <div className={cn("grid gap-3 mb-5", showExtras ? "grid-cols-3" : "grid-cols-1 max-w-[50%]")}>
             <OptionCard
               id="write" emoji="✍️" label="Write"
               sub={isLetterLimit ? "Max 3 letters" : "Max 5 words"}
               selected={custSel.topping === "write"}
-              onClick={() => setCustSel((p) => ({ ...p, topping: "write", imageFile: null }))}
+              onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerFile: null, imageFile: null }))}
             />
-            {showUpload && (
+            {showExtras && (
               <OptionCard
-                id="upload" emoji="📤" label="Upload"
-                sub="Your sticker or image"
-                selected={custSel.topping === "upload"}
-                onClick={() => setCustSel((p) => ({ ...p, topping: "upload", toppingText: "" }))}
+                id="sticker" emoji="🎨" label="Upload Sticker"
+                sub="Custom sticker file"
+                selected={custSel.topping === "sticker"}
+                onClick={() => setCustSel((p) => ({ ...p, topping: "sticker", toppingText: "", imageFile: null }))}
+              />
+            )}
+            {showExtras && (
+              <OptionCard
+                id="image" emoji="📷" label="Upload Image"
+                sub="Photo or design"
+                selected={custSel.topping === "image"}
+                onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerFile: null }))}
               />
             )}
           </div>
 
-          {/* Write sub-section */}
+          {/* Write */}
           {custSel.topping === "write" && (
             <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-2">
@@ -682,54 +731,32 @@ export default function CakeCustomizerModal({
             </div>
           )}
 
-          {/* Upload sub-section */}
-          {custSel.topping === "upload" && (
-            <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
-              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">
-                Upload your sticker or image
-              </p>
-              <button
-                onClick={() => imageInputRef.current?.click()}
-                className={cn(
-                  "w-full rounded-xl border-2 border-dashed py-8 text-center transition-all duration-200",
-                  custSel.imageFile
-                    ? "border-[#800020] bg-[#F5D0D8]/30"
-                    : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
-                )}
-              >
-                {custSel.imageFile ? (
-                  <div>
-                    <p className="text-3xl mb-2">📷</p>
-                    <p className="text-sm text-[#800020] font-semibold truncate px-6">{custSel.imageFile.name}</p>
-                    <p className="text-[11px] text-[#A05068] mt-1">Tap to change</p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-3xl mb-2">📤</p>
-                    <p className="text-sm font-semibold text-[#800020]">Tap to upload</p>
-                    <p className="text-[11px] text-[#A05068] mt-1">PNG · JPG · GIF · WebP</p>
-                  </div>
-                )}
-              </button>
-              {custSel.imageFile && (
-                <button
-                  onClick={() => setCustSel((p) => ({ ...p, imageFile: null }))}
-                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-2 transition-colors"
-                >
-                  Remove ✕
-                </button>
-              )}
-            </div>
+          {/* Upload Sticker */}
+          {custSel.topping === "sticker" && (
+            <UploadZone
+              file={custSel.stickerFile}
+              onPick={() => stickerInputRef.current?.click()}
+              onRemove={() => setCustSel((p) => ({ ...p, stickerFile: null }))}
+              label="Upload your sticker"
+              icon="🎨"
+            />
           )}
 
-          <input
-            ref={imageInputRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
-              setCustSel((p) => ({ ...p, imageFile: file }));
-              e.target.value = "";
-            }}
-          />
+          {/* Upload Image */}
+          {custSel.topping === "image" && (
+            <UploadZone
+              file={custSel.imageFile}
+              onPick={() => imageInputRef.current?.click()}
+              onRemove={() => setCustSel((p) => ({ ...p, imageFile: null }))}
+              label="Upload your image"
+              icon="📷"
+            />
+          )}
+
+          <input ref={stickerInputRef} type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0] ?? null; setCustSel((p) => ({ ...p, stickerFile: f })); e.target.value = ""; }} />
+          <input ref={imageInputRef}   type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0] ?? null; setCustSel((p) => ({ ...p, imageFile: f })); e.target.value = ""; }} />
         </div>
       );
     }
