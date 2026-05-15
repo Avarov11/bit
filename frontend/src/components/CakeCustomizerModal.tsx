@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 async function uploadToOrders(file: File, folder: string): Promise<string | null> {
-  const ext  = file.name.split(".").pop() ?? "jpg";
-  const path = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("orders").upload(path, file);
-  if (error) { console.error("Upload error:", error.message); return null; }
-  return supabase.storage.from("orders").getPublicUrl(path).data.publicUrl;
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("folder", folder);
+  const res = await fetch("/api/upload-order-file", { method: "POST", body: fd });
+  if (!res.ok) { console.error("Upload error:", await res.text()); return null; }
+  const { url } = await res.json();
+  return url ?? null;
 }
 
 // ─── Data ────────────────────────────────────────────────────────────────────
