@@ -41,26 +41,34 @@ function ItemsList({ items }: { items: OrderItem[] }) {
                 <span className="text-gray-700 italic bg-gray-50 rounded px-1.5 py-0.5">"{c.message}"</span>
               </p>
             )}
-            {c?.stickerUrl && (
-              <div className="mt-1.5 ml-2">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">🎨 Sticker</p>
-                <a href={c.stickerUrl} target="_blank" rel="noopener noreferrer" title="Open full size">
-                  <img src={c.stickerUrl} alt="Sticker" className="w-20 h-20 object-contain rounded-lg border border-gray-200 bg-gray-50 hover:opacity-80 transition-opacity" />
-                </a>
-              </div>
-            )}
-            {c?.imageUrl && (
-              <div className="mt-1.5 ml-2">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">📷 Image</p>
-                <a href={c.imageUrl} target="_blank" rel="noopener noreferrer" title="Open full size">
-                  <img src={c.imageUrl} alt="Custom image" className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity" />
-                </a>
-              </div>
-            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; imageUrl: string | null }) {
+  if (!stickerUrl && !imageUrl) return null;
+  return (
+    <div className="flex gap-3 flex-wrap">
+      {stickerUrl && (
+        <div>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Sticker</p>
+          <a href={stickerUrl} target="_blank" rel="noopener noreferrer">
+            <img src={stickerUrl} alt="Sticker" className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-gray-50 hover:opacity-75 transition-opacity" />
+          </a>
+        </div>
+      )}
+      {imageUrl && (
+        <div>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Image</p>
+          <a href={imageUrl} target="_blank" rel="noopener noreferrer">
+            <img src={imageUrl} alt="Custom image" className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-75 transition-opacity" />
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -130,6 +138,11 @@ export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; on
                   {order.notes && (
                     <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-2">📝 {order.notes}</p>
                   )}
+                  {(order.sticker_url || order.image_url) && (
+                    <div className="mt-3">
+                      <UploadedMedia stickerUrl={order.sticker_url} imageUrl={order.image_url} />
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <p className="text-gray-700">{order.pickup_date}</p>
@@ -196,6 +209,11 @@ export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; on
             {/* Notes */}
             {order.notes && (
               <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1.5">📝 {order.notes}</p>
+            )}
+
+            {/* Uploaded sticker / image */}
+            {(order.sticker_url || order.image_url) && (
+              <UploadedMedia stickerUrl={order.sticker_url} imageUrl={order.image_url} />
             )}
 
             {/* Payment + status change */}

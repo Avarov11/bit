@@ -45,6 +45,8 @@ export interface Order {
   notes: string | null;
   language: "en" | "ar";
   status: OrderStatus;
+  sticker_url: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }

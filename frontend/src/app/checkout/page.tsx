@@ -143,6 +143,10 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
 
     const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Extract sticker/image URLs from any customized item
+    const stickerUrl = items.map(i => i.customization?.stickerUrl).find(Boolean) ?? null;
+    const imageUrl   = items.map(i => i.customization?.imageUrl).find(Boolean) ?? null;
+
     const payload = {
       order_number:     orderNumber,
       customer_name:    form.name,
@@ -153,6 +157,8 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
       pickup_date:      form.pickupDate,
       pickup_time:      form.pickupTime,
       payment_method:   form.payment,
+      sticker_url:      stickerUrl,
+      image_url:        imageUrl,
       items: items.map((i) => ({
         productId:     i.productId,
         productName:   i.productName,
