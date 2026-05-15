@@ -1,95 +1,329 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
-const STATUS_COLORS: Record<OrderStatus, string> = {
-  pending:   "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  preparing: "bg-purple-100 text-purple-800",
-  ready:     "bg-green-100 text-green-800",
-  delivered: "bg-gray-100 text-gray-600",
-  cancelled: "bg-red-100 text-red-700",
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const STATUS_META: Record<OrderStatus, {
+  label: string; color: string; bg: string; stripe: string; dot: string;
+}> = {
+  pending:   { label: "Pending",   color: "text-amber-700",   bg: "bg-amber-50",   stripe: "#F59E0B", dot: "bg-amber-400"   },
+  confirmed: { label: "Confirmed", color: "text-blue-700",    bg: "bg-blue-50",    stripe: "#3B82F6", dot: "bg-blue-500"    },
+  preparing: { label: "Preparing", color: "text-violet-700",  bg: "bg-violet-50",  stripe: "#8B5CF6", dot: "bg-violet-500"  },
+  ready:     { label: "Ready",     color: "text-emerald-700", bg: "bg-emerald-50", stripe: "#10B981", dot: "bg-emerald-500" },
+  delivered: { label: "Delivered", color: "text-gray-500",    bg: "bg-gray-100",   stripe: "#9CA3AF", dot: "bg-gray-400"    },
+  cancelled: { label: "Cancelled", color: "text-red-600",     bg: "bg-red-50",     stripe: "#EF4444", dot: "bg-red-400"     },
 };
 
-const STATUSES: OrderStatus[] = ["pending","confirmed","preparing","ready","delivered","cancelled"];
+const TIMELINE_STEPS: OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "delivered"];
+const ALL_STATUSES:   OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"];
 
-function ItemsList({ items }: { items: OrderItem[] }) {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return "Just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: OrderStatus }) {
+  const m = STATUS_META[status];
   return (
-    <ul className="space-y-2">
-      {items.map((item, i) => {
-        const c = item.customization;
-        const details = [
-          c?.shape  && `Shape: ${c.shape}`,
-          c?.flavor && `Flavor: ${c.flavor}`,
-          c?.color  && `Color: ${c.color}`,
-          c?.toppings?.length && `Toppings: ${c.toppings.join(", ")}`,
-        ].filter(Boolean) as string[];
-
-        return (
-          <li key={i} className="text-sm">
-            <div>
-              <span className="font-medium text-gray-900">{item.productName}</span>
-              <span className="text-brand-700 font-bold ml-1">× {item.quantity}</span>
-              <span className="text-gray-400 text-xs ml-1">({item.subtotal} QAR)</span>
-            </div>
-            {details.length > 0 && (
-              <p className="text-gray-400 text-xs mt-0.5 ml-2">{details.join(" · ")}</p>
-            )}
-            {c?.message && (
-              <p className="text-xs mt-1 ml-2 flex items-start gap-1">
-                <span>✍️</span>
-                <span className="text-gray-700 italic bg-gray-50 rounded px-1.5 py-0.5">"{c.message}"</span>
-              </p>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${m.color} ${m.bg}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
+      {m.label}
+    </span>
   );
 }
 
-function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; imageUrl: string | null }) {
-  if (!stickerUrl && !imageUrl) return null;
+// ─── Order Timeline ───────────────────────────────────────────────────────────
+
+function OrderTimeline({ status }: { status: OrderStatus }) {
+  const activeIdx   = TIMELINE_STEPS.indexOf(status);
+  const isCancelled = status === "cancelled";
+
   return (
-    <div className="flex gap-3 flex-wrap">
-      {stickerUrl && (
-        <div>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Sticker</p>
-          <a href={stickerUrl} target="_blank" rel="noopener noreferrer">
-            <img src={stickerUrl} alt="Sticker" className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-gray-50 hover:opacity-75 transition-opacity" />
-          </a>
+    <div className="flex items-start w-full">
+      {TIMELINE_STEPS.map((step, i) => {
+        const m      = STATUS_META[step];
+        const isPast = !isCancelled && i < activeIdx;
+        const isCurr = !isCancelled && i === activeIdx;
+        const isLast = i === TIMELINE_STEPS.length - 1;
+
+        const node = (
+          <div className="flex flex-col items-center shrink-0">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-all ${
+                isCurr ? `${m.bg} ${m.color}` :
+                isPast ? "bg-emerald-500 border-emerald-500 text-white" :
+                         "bg-white border-gray-200 text-gray-400"
+              }`}
+              style={isCurr ? { borderColor: m.stripe, boxShadow: `0 0 0 3px ${m.stripe}33` } : {}}
+            >
+              {isPast ? (
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (i + 1)}
+            </div>
+            <span className={`mt-1.5 text-[8px] font-bold uppercase tracking-wide text-center leading-tight ${
+              isCurr ? m.color : isPast ? "text-emerald-600" : "text-gray-300"
+            }`}>
+              {m.label}
+            </span>
+          </div>
+        );
+
+        if (isLast) return <div key={step}>{node}</div>;
+
+        return (
+          <div key={step} className="flex-1 flex items-start">
+            {node}
+            <div className={`flex-1 h-0.5 mt-[13px] mx-1.5 rounded-full transition-all ${
+              isPast ? "bg-emerald-400" : "bg-gray-200"
+            }`} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Item Detail ──────────────────────────────────────────────────────────────
+
+function ItemDetail({ item }: { item: OrderItem }) {
+  const c = item.customization;
+  const details = [
+    c?.shape   && c.shape,
+    c?.flavor  && c.flavor,
+    c?.color   && c.color,
+    c?.toppings?.length && c.toppings.join(", "),
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <span className="font-semibold text-gray-900 text-sm">{item.productName}</span>
+          <span className="ml-2 text-xs text-brand-700 font-bold">×{item.quantity}</span>
+        </div>
+        <span className="text-xs font-semibold text-gray-500 shrink-0">{item.subtotal} QAR</span>
+      </div>
+      {details.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {details.map((d, i) => (
+            <span key={i} className="px-2 py-0.5 bg-white border border-gray-200 rounded-full text-[11px] text-gray-500 font-medium">
+              {d}
+            </span>
+          ))}
         </div>
       )}
-      {imageUrl && (
-        <div>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Image</p>
-          <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-            <img src={imageUrl} alt="Custom image" className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-75 transition-opacity" />
-          </a>
+      {c?.message && (
+        <div className="mt-2 flex items-start gap-1.5">
+          <span className="text-sm leading-none mt-0.5">✍️</span>
+          <p className="text-xs text-gray-600 italic bg-white rounded-lg px-2.5 py-1.5 border border-gray-200 flex-1">
+            &ldquo;{c.message}&rdquo;
+          </p>
         </div>
       )}
     </div>
   );
 }
 
-function StatusSelect({ orderId, status, updating, onChange }: {
-  orderId: string; status: OrderStatus; updating: boolean;
-  onChange: (s: OrderStatus) => void;
-}) {
+// ─── Uploaded Media ───────────────────────────────────────────────────────────
+
+function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; imageUrl: string | null }) {
+  if (!stickerUrl && !imageUrl) return null;
   return (
-    <select
-      disabled={updating}
-      value={status}
-      onChange={e => onChange(e.target.value as OrderStatus)}
-      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50 w-full"
-    >
-      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-    </select>
+    <div className="flex gap-3">
+      {stickerUrl && (
+        <a href={stickerUrl} target="_blank" rel="noopener noreferrer">
+          <div className="p-2 bg-white border border-gray-200 rounded-xl hover:border-brand-500 transition-colors text-center">
+            <img src={stickerUrl} alt="Sticker" className="w-14 h-14 object-contain rounded-lg" />
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide mt-1">Sticker</p>
+          </div>
+        </a>
+      )}
+      {imageUrl && (
+        <a href={imageUrl} target="_blank" rel="noopener noreferrer">
+          <div className="p-2 bg-white border border-gray-200 rounded-xl hover:border-brand-500 transition-colors text-center">
+            <img src={imageUrl} alt="Custom image" className="w-14 h-14 object-cover rounded-lg" />
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide mt-1">Image</p>
+          </div>
+        </a>
+      )}
+    </div>
   );
 }
 
+// ─── Order Card ───────────────────────────────────────────────────────────────
+
+function OrderCard({ order, updating, onChangeStatus }: {
+  order: Order;
+  updating: boolean;
+  onChangeStatus: (id: string, s: OrderStatus) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const m         = STATUS_META[order.status];
+  const items     = Array.isArray(order.items) ? order.items : [];
+  const itemCount = items.length;
+  const preview   = itemCount > 0
+    ? `${items[0].productName}${itemCount > 1 ? ` +${itemCount - 1} more` : ""}`
+    : "No items";
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+      {/* Status stripe */}
+      <div className="h-1 w-full" style={{ background: m.stripe }} />
+
+      <div className="p-4 sm:p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <StatusBadge status={order.status} />
+            <span className="font-mono font-bold text-gray-900 text-sm">#{order.order_number}</span>
+            <span className="text-gray-400 text-xs">{timeAgo(order.created_at)}</span>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="font-bold text-gray-900 text-xl leading-none">{order.total}</p>
+            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wide">QAR</p>
+          </div>
+        </div>
+
+        <div className="h-px bg-gray-50 my-3" />
+
+        {/* Customer + logistics */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 text-sm leading-snug">{order.customer_name}</p>
+            <p className="text-gray-400 text-xs mt-0.5">{order.customer_phone}</p>
+            {order.customer_email && <p className="text-gray-400 text-xs truncate">{order.customer_email}</p>}
+          </div>
+          <div className="flex flex-col gap-1 sm:items-end shrink-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                order.delivery_method === "delivery" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"
+              }`}>
+                {order.delivery_method === "delivery" ? "🚚 Delivery" : "🏪 Pickup"}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500">{order.pickup_date} · {order.pickup_time}</p>
+            {order.delivery_address && (
+              <p className="text-[11px] text-gray-400 sm:text-right max-w-[200px]">{order.delivery_address}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Items preview */}
+        {itemCount > 0 && (
+          <>
+            <div className="h-px bg-gray-50 my-3" />
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-gray-500 truncate">{preview}</p>
+              <span className="shrink-0 text-[11px] font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full">
+                {itemCount} item{itemCount !== 1 ? "s" : ""}
+              </span>
+            </div>
+          </>
+        )}
+
+        {/* Footer: status select + expand */}
+        <div className="h-px bg-gray-50 my-3" />
+        <div className="flex items-center justify-between gap-3">
+          <select
+            disabled={updating}
+            value={order.status}
+            onChange={e => onChangeStatus(order.id, e.target.value as OrderStatus)}
+            className="text-xs font-semibold border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 bg-white text-gray-700 cursor-pointer"
+          >
+            {ALL_STATUSES.map(s => (
+              <option key={s} value={s}>{STATUS_META[s].label}</option>
+            ))}
+          </select>
+          {updating && (
+            <svg className="w-4 h-4 text-brand-700 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+            </svg>
+          )}
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="ml-auto flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors px-3 py-2 rounded-xl hover:bg-gray-50"
+          >
+            {expanded ? "Hide details" : "View details"}
+            <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Expanded detail */}
+        {expanded && (
+          <div className="mt-4 pt-4 border-t border-gray-50 space-y-5">
+            {/* Timeline */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Order Progress</p>
+              <OrderTimeline status={order.status} />
+              {order.status === "cancelled" && (
+                <p className="mt-3 text-xs text-red-500 font-medium text-center">This order was cancelled</p>
+              )}
+            </div>
+
+            {/* Items */}
+            {items.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Items Ordered</p>
+                <div className="space-y-2">
+                  {items.map((item, i) => <ItemDetail key={i} item={item} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Uploads */}
+            {(order.sticker_url || order.image_url) && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Uploads</p>
+                <UploadedMedia stickerUrl={order.sticker_url} imageUrl={order.image_url} />
+              </div>
+            )}
+
+            {/* Notes */}
+            {order.notes && (
+              <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
+                <span className="text-base leading-none mt-0.5">📝</span>
+                <p className="text-xs text-amber-800 leading-relaxed">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Payment */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400 font-medium">Payment method</span>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                order.payment_method === "card" ? "bg-purple-50 text-purple-700" : "bg-green-50 text-green-700"
+              }`}>
+                {order.payment_method === "card" ? "💳 Card" : "💵 Cash"}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+
 export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; onRefresh: () => void }) {
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [updating,     setUpdating]     = useState<string | null>(null);
+  const [search,       setSearch]       = useState("");
+  const [activeStatus, setActiveStatus] = useState<OrderStatus | "all">("all");
 
   async function changeStatus(orderId: string, status: OrderStatus) {
     setUpdating(orderId);
@@ -102,130 +336,114 @@ export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; on
     onRefresh();
   }
 
-  if (orders.length === 0) {
-    return <p className="text-gray-400 text-sm">No orders found.</p>;
-  }
+  const statusCounts = useMemo(() => {
+    const counts: Partial<Record<OrderStatus | "all", number>> = { all: orders.length };
+    for (const s of ALL_STATUSES) counts[s] = orders.filter(o => o.status === s).length;
+    return counts;
+  }, [orders]);
+
+  const filtered = useMemo(() => {
+    let res = orders;
+    if (activeStatus !== "all") res = res.filter(o => o.status === activeStatus);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      res = res.filter(o =>
+        o.order_number.toLowerCase().includes(q) ||
+        o.customer_name.toLowerCase().includes(q) ||
+        o.customer_phone.includes(q)
+      );
+    }
+    return res;
+  }, [orders, activeStatus, search]);
 
   return (
-    <>
-      {/* Desktop table */}
-      <div className="hidden lg:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr>
-              {["Order #","Customer","Items Ordered","Date / Time","Total","Payment","Status",""].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {orders.map(order => (
-              <tr key={order.id} className="hover:bg-gray-50 transition-colors align-top">
-                <td className="px-4 py-3 font-mono font-medium text-brand-700 whitespace-nowrap">#{order.order_number}</td>
-                <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900 whitespace-nowrap">{order.customer_name}</p>
-                  <p className="text-gray-400 text-xs">{order.customer_phone}</p>
-                  {order.customer_email && <p className="text-gray-400 text-xs">{order.customer_email}</p>}
-                  <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${order.delivery_method === "delivery" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
-                    {order.delivery_method}
-                  </span>
-                  {order.delivery_address && <p className="text-gray-400 text-xs mt-0.5 max-w-[140px]">{order.delivery_address}</p>}
-                </td>
-                <td className="px-4 py-3 min-w-[220px]">
-                  {Array.isArray(order.items) && order.items.length > 0
-                    ? <ItemsList items={order.items} />
-                    : <span className="text-gray-400 text-xs">No items</span>}
-                  {order.notes && (
-                    <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-2">📝 {order.notes}</p>
-                  )}
-                  {(order.sticker_url || order.image_url) && (
-                    <div className="mt-3">
-                      <UploadedMedia stickerUrl={order.sticker_url} imageUrl={order.image_url} />
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <p className="text-gray-700">{order.pickup_date}</p>
-                  <p className="text-gray-400 text-xs">{order.pickup_time}</p>
-                </td>
-                <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">{order.total} QAR</td>
-                <td className="px-4 py-3 text-gray-600 capitalize whitespace-nowrap">{order.payment_method}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status]}`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 min-w-[120px]">
-                  <StatusSelect orderId={order.id} status={order.status} updating={updating === order.id} onChange={s => changeStatus(order.id, s)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-4">
+      {/* Search bar */}
+      <div className="relative">
+        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Search by order #, name or phone…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {/* Mobile / tablet cards */}
-      <div className="lg:hidden space-y-4">
-        {orders.map(order => (
-          <div key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
-            {/* Header row */}
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <span className="font-mono font-bold text-brand-700">#{order.order_number}</span>
-                <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status]}`}>
-                  {order.status}
-                </span>
-              </div>
-              <span className="font-semibold text-gray-900 text-sm shrink-0">{order.total} QAR</span>
-            </div>
+      {/* Status filter pills */}
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setActiveStatus("all")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            activeStatus === "all"
+              ? "bg-gray-900 text-white shadow-sm"
+              : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300 hover:text-gray-700"
+          }`}
+        >
+          All <span className="ml-1 opacity-60">{statusCounts.all}</span>
+        </button>
+        {ALL_STATUSES.map(s => {
+          const m      = STATUS_META[s];
+          const count  = statusCounts[s] ?? 0;
+          const active = activeStatus === s;
+          return (
+            <button key={s} onClick={() => setActiveStatus(s)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                active
+                  ? `${m.bg} ${m.color} shadow-sm`
+                  : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300 hover:text-gray-700"
+              }`}
+            >
+              {m.label} <span className="ml-1 opacity-60">{count}</span>
+            </button>
+          );
+        })}
+      </div>
 
-            {/* Customer */}
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">{order.customer_name}</p>
-              <p className="text-gray-400 text-xs">{order.customer_phone}</p>
-              {order.customer_email && <p className="text-gray-400 text-xs">{order.customer_email}</p>}
-            </div>
+      {/* Result count hint */}
+      {(search || activeStatus !== "all") && filtered.length > 0 && (
+        <p className="text-xs text-gray-400">
+          Showing <span className="font-semibold text-gray-600">{filtered.length}</span> of {orders.length} orders
+        </p>
+      )}
 
-            {/* Date + method */}
-            <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span>📅 {order.pickup_date}</span>
-              <span>🕐 {order.pickup_time}</span>
-              <span className={`px-1.5 py-0.5 rounded font-medium ${order.delivery_method === "delivery" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
-                {order.delivery_method}
-              </span>
-            </div>
-            {order.delivery_address && (
-              <p className="text-xs text-gray-400">📍 {order.delivery_address}</p>
-            )}
-
-            {/* Items */}
-            <div className="border-t border-gray-50 pt-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Items</p>
-              {Array.isArray(order.items) && order.items.length > 0
-                ? <ItemsList items={order.items} />
-                : <p className="text-gray-400 text-xs">No items</p>}
-            </div>
-
-            {/* Notes */}
-            {order.notes && (
-              <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1.5">📝 {order.notes}</p>
-            )}
-
-            {/* Uploaded sticker / image */}
-            {(order.sticker_url || order.image_url) && (
-              <UploadedMedia stickerUrl={order.sticker_url} imageUrl={order.image_url} />
-            )}
-
-            {/* Payment + status change */}
-            <div className="flex items-center gap-3 pt-1 border-t border-gray-50">
-              <span className="text-xs text-gray-500 capitalize">{order.payment_method} payment</span>
-              <div className="ml-auto w-36">
-                <StatusSelect orderId={order.id} status={order.status} updating={updating === order.id} onChange={s => changeStatus(order.id, s)} />
-              </div>
-            </div>
+      {/* Empty state */}
+      {filtered.length === 0 && (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
           </div>
+          <p className="text-gray-500 font-medium text-sm">No orders found</p>
+          <p className="text-gray-400 text-xs mt-1">Try adjusting your search or filter</p>
+        </div>
+      )}
+
+      {/* Cards grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {filtered.map(order => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            updating={updating === order.id}
+            onChangeStatus={changeStatus}
+          />
         ))}
       </div>
-    </>
+    </div>
   );
 }
