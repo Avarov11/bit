@@ -2,10 +2,19 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+
+async function uploadToOrders(file: File, folder: string): Promise<string | null> {
+  const ext  = file.name.split(".").pop() ?? "jpg";
+  const path = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("orders").upload(path, file);
+  if (error) { console.error("Upload error:", error.message); return null; }
+  return supabase.storage.from("orders").getPublicUrl(path).data.publicUrl;
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -374,10 +383,11 @@ export default function CakeCustomizerModal({
 }) {
   const addToCart = useCartStore((s) => s.addItem);
   const router    = useRouter();
-  const [custStep, setCustStep] = useState(0);
-  const [custSel, setCustSel]   = useState<CustSel>(EMPTY_SEL);
-  const stickerInputRef         = useRef<HTMLInputElement>(null);
-  const imageInputRef           = useRef<HTMLInputElement>(null);
+  const [custStep,   setCustStep]   = useState(0);
+  const [custSel,    setCustSel]    = useState<CustSel>(EMPTY_SEL);
+  const [uploading,  setUploading]  = useState(false);
+  const stickerInputRef             = useRef<HTMLInputElement>(null);
+  const imageInputRef               = useRef<HTMLInputElement>(null);
 
   // Reset state whenever product changes
   const [lastProduct, setLastProduct] = useState<DbProduct | null>(null);
@@ -414,13 +424,23 @@ export default function CakeCustomizerModal({
     else onClose();
   };
 
-  const commitToCart = () => {
+  const commitToCart = async () => {
     const flavorLabel = custSel.flavorType === "chocolate"
       ? CHOC_FLAVORS.find((f) => f.id === custSel.flavor)?.label ?? "Chocolate"
       : `White Chocolate – ${COLOURS.find((c) => c.id === custSel.colour)?.label ?? ""}`;
     const cakeColorLabel = CAKE_COLORS.find((c) => c.id === custSel.cakeColor)?.label;
     const toppingsList: string[] = [];
     if (custSel.sprinkles === "yes") toppingsList.push("Sprinkles");
+
+    let stickerUrl: string | undefined;
+    let imageUrl:   string | undefined;
+    if (custSel.topping === "sticker" && custSel.stickerFile) {
+      stickerUrl = (await uploadToOrders(custSel.stickerFile, "stickers")) ?? undefined;
+    }
+    if (custSel.topping === "image" && custSel.imageFile) {
+      imageUrl = (await uploadToOrders(custSel.imageFile, "images")) ?? undefined;
+    }
+
     addToCart({
       productId:    product.id,
       productName:  product.name,
@@ -428,19 +448,27 @@ export default function CakeCustomizerModal({
       quantity:     1,
       unitPrice:    product.price,
       customization: {
-        shape:          SHAPES.find((s) => s.id === custSel.shape)?.label,
-        flavor:         flavorLabel,
-        color:          cakeColorLabel || undefined,
-        toppings:       toppingsList.length ? toppingsList : undefined,
-        message:        custSel.topping === "write"   ? custSel.toppingText || undefined : undefined,
-        stickerEmoji:   custSel.topping === "sticker" && !!custSel.stickerFile ? custSel.stickerFile.name : undefined,
-        hasCustomImage: custSel.topping === "image"   && !!custSel.imageFile   ? true : undefined,
+        shape:    SHAPES.find((s) => s.id === custSel.shape)?.label,
+        flavor:   flavorLabel,
+        color:    cakeColorLabel || undefined,
+        toppings: toppingsList.length ? toppingsList : undefined,
+        message:  custSel.topping === "write" ? custSel.toppingText || undefined : undefined,
+        stickerUrl,
+        imageUrl,
       },
     });
   };
 
-  const handleCheckout = () => { commitToCart(); onClose(); router.push("/checkout"); };
-  const handleContinue = () => { commitToCart(); onClose(); router.push("/menu"); };
+  const handleCheckout = async () => {
+    setUploading(true);
+    try { await commitToCart(); onClose(); router.push("/checkout"); }
+    finally { setUploading(false); }
+  };
+  const handleContinue = async () => {
+    setUploading(true);
+    try { await commitToCart(); onClose(); router.push("/menu"); }
+    finally { setUploading(false); }
+  };
 
   const OptionCard = ({
     id, emoji, label, sub, selected, onClick,
@@ -843,13 +871,13 @@ export default function CakeCustomizerModal({
             </div>
           ) : (
             <div className="max-w-lg mx-auto flex gap-3">
-              <button onClick={handleContinue}
-                className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
-                Continue Shopping
+              <button onClick={handleContinue} disabled={uploading}
+                className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
+                {uploading ? "Uploading…" : "Continue Shopping"}
               </button>
-              <button onClick={handleCheckout}
-                className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
-                Checkout →
+              <button onClick={handleCheckout} disabled={uploading}
+                className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {uploading ? <><Loader2 size={16} className="animate-spin" /> Uploading…</> : "Checkout →"}
               </button>
             </div>
           )}
@@ -920,13 +948,13 @@ export default function CakeCustomizerModal({
                 </div>
               ) : (
                 <div className="flex gap-3">
-                  <button onClick={handleContinue}
-                    className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
-                    Continue Shopping
+                  <button onClick={handleContinue} disabled={uploading}
+                    className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
+                    {uploading ? "Uploading…" : "Continue Shopping"}
                   </button>
-                  <button onClick={handleCheckout}
-                    className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97]">
-                    Checkout →
+                  <button onClick={handleCheckout} disabled={uploading}
+                    className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    {uploading ? <><Loader2 size={15} className="animate-spin" /> Uploading…</> : "Checkout →"}
                   </button>
                 </div>
               )}

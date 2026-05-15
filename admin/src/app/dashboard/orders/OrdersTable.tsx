@@ -41,18 +41,21 @@ function ItemsList({ items }: { items: OrderItem[] }) {
                 <span className="text-gray-700 italic bg-gray-50 rounded px-1.5 py-0.5">"{c.message}"</span>
               </p>
             )}
-            {c?.stickerEmoji && (
-              <p className="text-xs mt-1 ml-2 flex items-center gap-1.5">
-                <span>🎀</span>
-                <span className="text-gray-600">Sticker:</span>
-                <span className="text-2xl leading-none">{c.stickerEmoji}</span>
-              </p>
+            {c?.stickerUrl && (
+              <div className="mt-1.5 ml-2">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">🎨 Sticker</p>
+                <a href={c.stickerUrl} target="_blank" rel="noopener noreferrer" title="Open full size">
+                  <img src={c.stickerUrl} alt="Sticker" className="w-20 h-20 object-contain rounded-lg border border-gray-200 bg-gray-50 hover:opacity-80 transition-opacity" />
+                </a>
+              </div>
             )}
-            {c?.hasCustomImage && (
-              <p className="text-xs mt-1 ml-2 flex items-center gap-1.5 bg-blue-50 text-blue-700 rounded px-2 py-1">
-                <span>📷</span>
-                <span className="font-medium">Customer has a custom image — ask them to send it</span>
-              </p>
+            {c?.imageUrl && (
+              <div className="mt-1.5 ml-2">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">📷 Image</p>
+                <a href={c.imageUrl} target="_blank" rel="noopener noreferrer" title="Open full size">
+                  <img src={c.imageUrl} alt="Custom image" className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity" />
+                </a>
+              </div>
             )}
           </li>
         );

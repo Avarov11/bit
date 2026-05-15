@@ -14,8 +14,8 @@ export interface CartItem {
     color?: string;
     toppings?: string[];
     message?: string;
-    stickerEmoji?: string;
-    hasCustomImage?: boolean;
+    stickerUrl?: string;
+    imageUrl?: string;
   };
 }
 

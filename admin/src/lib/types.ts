@@ -12,8 +12,8 @@ export interface CartItemCustomization {
   color?: string;
   toppings?: string[];
   message?: string;
-  stickerEmoji?: string;
-  hasCustomImage?: boolean;
+  stickerUrl?: string;
+  imageUrl?: string;
 }
 
 export interface OrderItem {
