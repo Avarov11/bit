@@ -104,8 +104,6 @@ const CAKE_COLORS = [
   { id: "blue",  label: "Blue",  hex: "#B2C8D8" },
 ];
 
-const STICKERS = ["🎂","🎉","🎀","🌸","💝","⭐","🎁","🎈","🌟","🦋","💐","🍰","🎊","🌺","💫","🧁"];
-
 const STEP_LABELS = ["Shape", "Flavour", "Sprinkles", "Topping"];
 
 const STEPS = [
@@ -124,14 +122,12 @@ interface CustSel {
   sprinkles: string;
   topping: string;
   toppingText: string;
-  stickerId: string;
   imageFile: File | null;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
-  sprinkles: "", topping: "", toppingText: "",
-  stickerId: "", imageFile: null,
+  sprinkles: "", topping: "", toppingText: "", imageFile: null,
 };
 
 // ─── CakePreview ─────────────────────────────────────────────────────────────
@@ -403,7 +399,7 @@ export default function CakeCustomizerModal({
     if (custStep === 2) return !!custSel.sprinkles;
     if (custStep === 3) {
       if (custSel.topping === "write") return true;
-      if (custSel.topping === "sticker") return !!custSel.stickerId || custSel.imageFile !== null;
+      if (custSel.topping === "upload") return custSel.imageFile !== null;
       return false;
     }
     return true;
@@ -434,8 +430,7 @@ export default function CakeCustomizerModal({
         color:          cakeColorLabel || undefined,
         toppings:       toppingsList.length ? toppingsList : undefined,
         message:        custSel.topping === "write"   ? custSel.toppingText || undefined : undefined,
-        stickerEmoji:   custSel.topping === "sticker" ? custSel.stickerId  || undefined : undefined,
-        hasCustomImage: custSel.topping === "sticker" && !!custSel.imageFile ? true : undefined,
+        hasCustomImage: custSel.topping === "upload" && !!custSel.imageFile ? true : undefined,
       },
     });
   };
@@ -490,13 +485,8 @@ export default function CakeCustomizerModal({
             <SummaryRow
               label="Topping"
               value={
-                custSel.topping === "write"
-                  ? `Writing: "${custSel.toppingText || "—"}"`
-                : custSel.topping === "sticker"
-                  ? [
-                      custSel.stickerId ? `Sticker: ${custSel.stickerId}` : "",
-                      custSel.imageFile  ? `📷 ${custSel.imageFile.name}` : "",
-                    ].filter(Boolean).join(" + ") || "—"
+                custSel.topping === "write"  ? `Writing: "${custSel.toppingText || "—"}"`
+                : custSel.topping === "upload" && custSel.imageFile ? `📷 ${custSel.imageFile.name}`
                 : "—"
               }
             />
@@ -515,7 +505,7 @@ export default function CakeCustomizerModal({
             return (
               <button
                 key={shape.id}
-                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", stickerId: "", imageFile: null }))}
+                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", imageFile: null }))}
                 className={cn(
                   "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                   sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -634,6 +624,7 @@ export default function CakeCustomizerModal({
 
     if (custStep === 3) {
       const shape         = custSel.shape;
+      const showUpload    = shape === "cake" || shape === "square";
       const isLetterLimit = shape === "heart" || shape === "square";
       const limit  = isLetterLimit ? 3 : 5;
       const unit   = isLetterLimit ? "letters" : "words";
@@ -646,20 +637,22 @@ export default function CakeCustomizerModal({
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Topping</h2>
           <p className="text-[#A05068] text-sm mb-5">Personalise your brownie</p>
 
-          {/* Always 2 cards: Write | Sticker/Image */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          {/* Option cards */}
+          <div className={cn("grid gap-3 mb-5", showUpload ? "grid-cols-2" : "grid-cols-1 max-w-[50%]")}>
             <OptionCard
               id="write" emoji="✍️" label="Write"
               sub={isLetterLimit ? "Max 3 letters" : "Max 5 words"}
               selected={custSel.topping === "write"}
-              onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerId: "", imageFile: null }))}
+              onClick={() => setCustSel((p) => ({ ...p, topping: "write", imageFile: null }))}
             />
-            <OptionCard
-              id="sticker" emoji="🎀" label="Sticker / Image"
-              sub="Emoji, upload, or both"
-              selected={custSel.topping === "sticker"}
-              onClick={() => setCustSel((p) => ({ ...p, topping: "sticker", toppingText: "" }))}
-            />
+            {showUpload && (
+              <OptionCard
+                id="upload" emoji="📤" label="Upload"
+                sub="Your sticker or image"
+                selected={custSel.topping === "upload"}
+                onClick={() => setCustSel((p) => ({ ...p, topping: "upload", toppingText: "" }))}
+              />
+            )}
           </div>
 
           {/* Write sub-section */}
@@ -689,80 +682,42 @@ export default function CakeCustomizerModal({
             </div>
           )}
 
-          {/* Sticker + Image sub-section (merged) */}
-          {custSel.topping === "sticker" && (
-            <div className="bg-white rounded-2xl p-4 shadow-warm-sm space-y-4">
-
-              {/* Emoji sticker grid */}
-              <div>
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-2.5">Choose Sticker</p>
-                <div className="grid grid-cols-8 gap-2">
-                  {STICKERS.map((s) => (
-                    <button key={s}
-                      onClick={() => setCustSel((p) => ({ ...p, stickerId: p.stickerId === s ? "" : s }))}
-                      className={cn(
-                        "text-2xl p-1.5 rounded-xl border-2 transition-all duration-150 active:scale-90",
-                        custSel.stickerId === s
-                          ? "border-[#800020] bg-[#F5D0D8]"
-                          : "border-transparent hover:border-[#800020]/30 bg-[#FFFFFF]"
-                      )}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-[rgba(128,0,32,0.08)]" />
-                <span className="text-[11px] text-[#A05068] font-semibold">or upload your own</span>
-                <div className="h-px flex-1 bg-[rgba(128,0,32,0.08)]" />
-              </div>
-
-              {/* Upload area */}
-              <div>
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-2.5">Upload Image</p>
-                <button
-                  onClick={() => imageInputRef.current?.click()}
-                  className={cn(
-                    "w-full rounded-xl border-2 border-dashed py-5 text-center transition-all duration-200",
-                    custSel.imageFile
-                      ? "border-[#800020] bg-[#F5D0D8]/30"
-                      : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
-                  )}
-                >
-                  {custSel.imageFile ? (
-                    <div>
-                      <p className="text-xl mb-1">📷</p>
-                      <p className="text-xs text-[#800020] font-semibold truncate px-4">{custSel.imageFile.name}</p>
-                      <p className="text-[10px] text-[#A05068] mt-0.5">Tap to change</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-2xl mb-1">📤</p>
-                      <p className="text-xs font-semibold text-[#800020]">Tap to upload</p>
-                      <p className="text-[10px] text-[#A05068] mt-0.5">PNG, JPG, GIF supported</p>
-                    </div>
-                  )}
-                </button>
-                {custSel.imageFile && (
-                  <button
-                    onClick={() => setCustSel((p) => ({ ...p, imageFile: null }))}
-                    className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-1.5 transition-colors"
-                  >
-                    Remove image ✕
-                  </button>
+          {/* Upload sub-section */}
+          {custSel.topping === "upload" && (
+            <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">
+                Upload your sticker or image
+              </p>
+              <button
+                onClick={() => imageInputRef.current?.click()}
+                className={cn(
+                  "w-full rounded-xl border-2 border-dashed py-8 text-center transition-all duration-200",
+                  custSel.imageFile
+                    ? "border-[#800020] bg-[#F5D0D8]/30"
+                    : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
                 )}
-              </div>
-
-              {/* Both selected confirmation */}
-              {custSel.stickerId && custSel.imageFile && (
-                <div className="flex items-center gap-2 bg-[#F5D0D8] rounded-xl px-3 py-2.5">
-                  <Check size={13} className="text-[#800020] shrink-0" strokeWidth={2.5} />
-                  <p className="text-xs text-[#800020] font-semibold">
-                    {custSel.stickerId} sticker + your image will both be added!
-                  </p>
-                </div>
+              >
+                {custSel.imageFile ? (
+                  <div>
+                    <p className="text-3xl mb-2">📷</p>
+                    <p className="text-sm text-[#800020] font-semibold truncate px-6">{custSel.imageFile.name}</p>
+                    <p className="text-[11px] text-[#A05068] mt-1">Tap to change</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-3xl mb-2">📤</p>
+                    <p className="text-sm font-semibold text-[#800020]">Tap to upload</p>
+                    <p className="text-[11px] text-[#A05068] mt-1">PNG · JPG · GIF · WebP</p>
+                  </div>
+                )}
+              </button>
+              {custSel.imageFile && (
+                <button
+                  onClick={() => setCustSel((p) => ({ ...p, imageFile: null }))}
+                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-2 transition-colors"
+                >
+                  Remove ✕
+                </button>
               )}
             </div>
           )}
