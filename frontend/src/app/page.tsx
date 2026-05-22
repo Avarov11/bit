@@ -13,50 +13,6 @@ import CakeCustomizerModal from "@/components/CakeCustomizerModal";
 const footerNavKeys = ["nav_home", "nav_menu", "nav_about", "nav_contact"];
 const footerNavHrefs = ["/", "/menu", "/about", "/contact"];
 
-const HERO_SLIDES = [
-  {
-    image: "/slide1.jpeg",
-    label: "Handcrafted in Qatar · Est. 2021",
-    headline: ["Qatar's Premier", "Brownie Brand."],
-    sub: "Biteez was born in Doha with one mission — to craft brownies that go beyond the ordinary. From our signature artisan flavours to fully personalised gift boxes, every bite celebrates quality, creativity, and love.",
-    tags: ["Fresh Baked Daily", "10+ Flavours", "Gift Boxes", "Fully Customizable"],
-    stats: [
-      { value: "10+", label: "Flavours" },
-      { value: "50+", label: "Box Designs" },
-      { value: "100%", label: "Handcrafted" },
-    ],
-    steps: null,
-    btn: "Order Now",
-    href: "/menu",
-  },
-  {
-    image: "/slide2.jpeg",
-    label: "Customize Your Box",
-    headline: ["Your brownie,", "your way."],
-    sub: "Design your dream brownie box from scratch — every detail, entirely your choice. Perfect for gifting or treating yourself.",
-    tags: null,
-    stats: null,
-    steps: [
-      { n: "01", text: "Choose your flavour" },
-      { n: "02", text: "Pick your toppings" },
-      { n: "03", text: "Custom packaging" },
-      { n: "04", text: "Add a message" },
-    ],
-    btn: "Shop Customized",
-    href: "/menu?category=Customized",
-  },
-  {
-    image: "/slide3.jpeg",
-    label: "For Every Occasion",
-    headline: ["The perfect gift,", "every time."],
-    sub: "Birthdays, graduations, weddings — we make every celebration sweeter.",
-    tags: null,
-    stats: null,
-    steps: null,
-    btn: "Shop Accessories",
-    href: "/menu?category=Accessories",
-  },
-];
 
 function ProductCard({
   product,
@@ -69,7 +25,8 @@ function ProductCard({
   onAdd: () => void;
   onCustomize: () => void;
 }) {
-  const isCustomizable = product.category === "Customized";
+  const { t } = useLanguage();
+  const isCustomizable = product.category !== "Accessories" && product.category !== "Boxes";
   const href = `/product/${product.id}`;
 
   return (
@@ -120,7 +77,7 @@ function ProductCard({
               onClick={onCustomize}
               className="w-full block text-center bg-[#FF6B9D] hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-full transition-all duration-200"
             >
-              Customise
+              {t("home_customise")}
             </button>
           ) : (
             <button
@@ -134,11 +91,11 @@ function ProductCard({
             >
               {added ? (
                 <>
-                  <Check size={12} /> Added
+                  <Check size={12} /> {t("home_added")}
                 </>
               ) : (
                 <>
-                  <ShoppingBag size={12} /> Add to Cart
+                  <ShoppingBag size={12} /> {t("home_add_to_cart")}
                 </>
               )}
             </button>
@@ -152,6 +109,51 @@ function ProductCard({
 export default function HomePage() {
   const { t } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
+
+  const HERO_SLIDES = [
+    {
+      image: "/slide1.jpeg",
+      label: t("home_slide1_label"),
+      headline: [t("home_slide1_headline_1"), t("home_slide1_headline_2")],
+      sub: t("home_slide1_sub"),
+      tags: [t("home_slide1_tag_1"), t("home_slide1_tag_2"), t("home_slide1_tag_3"), t("home_slide1_tag_4")],
+      stats: [
+        { value: t("home_slide1_stat1_value"), label: t("home_slide1_stat1_label") },
+        { value: t("home_slide1_stat2_value"), label: t("home_slide1_stat2_label") },
+        { value: t("home_slide1_stat3_value"), label: t("home_slide1_stat3_label") },
+      ],
+      steps: null,
+      btn: t("home_slide1_btn"),
+      href: "/menu",
+    },
+    {
+      image: "/slide2.jpeg",
+      label: t("home_slide2_label"),
+      headline: [t("home_slide2_headline_1"), t("home_slide2_headline_2")],
+      sub: t("home_slide2_sub"),
+      tags: null,
+      stats: null,
+      steps: [
+        { n: "01", text: t("home_slide2_step_1") },
+        { n: "02", text: t("home_slide2_step_2") },
+        { n: "03", text: t("home_slide2_step_3") },
+        { n: "04", text: t("home_slide2_step_4") },
+      ],
+      btn: t("home_slide2_btn"),
+      href: "/menu?category=Customized",
+    },
+    {
+      image: "/slide3.jpeg",
+      label: t("home_slide3_label"),
+      headline: [t("home_slide3_headline_1"), t("home_slide3_headline_2")],
+      sub: t("home_slide3_sub"),
+      tags: null,
+      stats: null,
+      steps: null,
+      btn: t("home_slide3_btn"),
+      href: "/menu?category=Accessories",
+    },
+  ];
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
   const [heroSlide, setHeroSlide]     = useState(0);
@@ -430,18 +432,18 @@ export default function HomePage() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-8 h-px bg-[#FF6B9D] inline-block" />
                 <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-[#A05068]">
-                  Our Collection
+                  {t("home_collection_tag")}
                 </span>
               </div>
               <h2 className="font-playfair text-3xl md:text-4xl font-bold text-[#2D000A]">
-                Bestsellers
+                {t("home_bestsellers")}
               </h2>
             </div>
             <Link
               href="/menu"
               className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-[#800020] hover:text-[#FF6B9D] transition-colors"
             >
-              View all <ArrowRight size={14} />
+              {t("home_view_all")} <ArrowRight size={14} />
             </Link>
           </div>
 
@@ -470,7 +472,7 @@ export default function HomePage() {
               href="/menu"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#800020] hover:text-[#FF6B9D] transition-colors"
             >
-              View all <ArrowRight size={14} />
+              {t("home_view_all")} <ArrowRight size={14} />
             </Link>
           </div>
         </div>
@@ -504,7 +506,7 @@ export default function HomePage() {
                   2021
                 </p>
                 <p className="text-[#A05068] text-xs font-semibold mt-0.5">
-                  Est. in Qatar
+                  {t("home_story_est")}
                 </p>
               </div>
             </div>
@@ -514,25 +516,21 @@ export default function HomePage() {
               <div className="flex items-center gap-2 mb-5">
                 <span className="w-8 h-px bg-[#FF6B9D] inline-block" />
                 <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-[#A05068]">
-                  Our Story
+                  {t("home_story_tag")}
                 </span>
               </div>
               <blockquote className="font-playfair text-3xl md:text-[2.35rem] font-bold italic text-[#800020] leading-[1.22] mb-6">
-                &ldquo;Every bite tells a story of passion, craft, and the finest
-                chocolate.&rdquo;
+                &ldquo;{t("home_story_quote")}&rdquo;
               </blockquote>
               <div className="w-12 h-0.5 bg-[#FF6B9D] rounded-full mb-6" />
               <p className="text-[#800020]/70 text-base leading-relaxed mb-8">
-                Born in the heart of Qatar, Biteez was founded on a simple
-                belief: that brownies could be extraordinary. We hand-craft each
-                box with love, using only premium ingredients sourced from around
-                the world.
+                {t("home_story_body")}
               </p>
               <Link
                 href="/about"
                 className="inline-flex items-center gap-2.5 border-2 border-[#800020] text-[#800020] hover:bg-[#800020] hover:text-white font-semibold px-7 py-3.5 rounded-full transition-all duration-200 active:scale-[0.97]"
               >
-                Read Our Story <ArrowRight size={15} />
+                {t("home_story_cta")} <ArrowRight size={15} />
               </Link>
             </div>
           </div>

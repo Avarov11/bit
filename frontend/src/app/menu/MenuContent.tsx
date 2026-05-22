@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import CakeCustomizerModal from "@/components/CakeCustomizerModal";
 
 // ─── Filter category type (UI only) ────────────────────────────────────────────
-type FilterCat = "All" | "Customized" | "Accessories" | "Boxes";
-type SubCat = "Birthday" | "Congrats" | "Graduation" | "Get Well Soon" | "Bride to Be" | "Gender Reveal" | "Candles" | "Balloons";
+type FilterCat = "All" | "Customized" | "Birthday" | "Congrats" | "Graduation" | "Get Well Soon" | "Bride to Be" | "Gender Reveal" | "Accessories" | "Boxes";
+type SubCat = "Candles" | "Balloons";
 
-const customizedSubs: SubCat[] = ["Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal"];
 const accessoriesSubs: SubCat[] = ["Candles", "Balloons"];
+const customizedSubCats = ["Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal"] as const;
 
 const catKeyMap: Record<string, string> = {
   All: "cat_all", Accessories: "cat_accessories", Candles: "cat_candles",
@@ -49,7 +49,8 @@ export default function MenuContent() {
   const [loadingProducts, setLoadingProducts]     = useState(true);
   const [activeCategory, setActiveCategory]       = useState<FilterCat>(() => {
     const cat = searchParams.get("category");
-    if (cat === "Customized" || cat === "Accessories" || cat === "Boxes") return cat;
+    const valid: FilterCat[] = ["Customized", "Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal", "Accessories", "Boxes"];
+    if (valid.includes(cat as FilterCat)) return cat as FilterCat;
     return "All";
   });
   const [activeSubCategory, setActiveSubCategory] = useState<SubCat | null>(null);
@@ -65,7 +66,7 @@ export default function MenuContent() {
 
   const displayName    = (p: DbProduct) => lang === "ar" ? (p.name_ar ?? p.name) : p.name;
   const displayCatKey  = (p: DbProduct) => p.subcategory ?? p.category;
-  const isCustomizable = (p: DbProduct) => p.category === "Customized";
+  const isCustomizable = (p: DbProduct) => p.category !== "Accessories" && p.category !== "Boxes";
 
   const openCustomizer  = (product: DbProduct) => setCustProduct(product);
   const closeCustomizer = () => setCustProduct(null);
@@ -77,8 +78,9 @@ export default function MenuContent() {
       if (activeCategory === "All") {
         matchCat = true;
       } else if (activeCategory === "Customized") {
-        matchCat = p.category === "Customized" &&
-          (activeSubCategory ? p.subcategory === activeSubCategory : true);
+        matchCat = p.category === "Customized" && !p.subcategory;
+      } else if ((customizedSubCats as readonly string[]).includes(activeCategory)) {
+        matchCat = p.category === activeCategory;
       } else if (activeCategory === "Accessories") {
         matchCat = p.category === "Accessories" &&
           (activeSubCategory ? p.subcategory === activeSubCategory : true);
@@ -162,30 +164,22 @@ export default function MenuContent() {
   // ─── Shared category sidebar content ───────────────────────────────────────
   const renderSidebarCategories = () => (
     <div className="space-y-0.5">
-      {(["All", "Customized", "Accessories", "Boxes"] as FilterCat[]).map((cat) => {
+      {(["All", "Customized", ...customizedSubCats, "Accessories", "Boxes"] as FilterCat[]).map((cat) => {
         const active = activeCategory === cat;
+        const isCustomizedSub = (customizedSubCats as readonly string[]).includes(cat);
         return (
           <div key={cat}>
             <button
               onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left",
+                isCustomizedSub ? "pl-5 text-[13px]" : "",
                 active ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10"
               )}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 transition-colors", active ? "bg-white" : "bg-[#800020]/35")} />
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 transition-colors", active ? "bg-white" : isCustomizedSub ? "bg-[#800020]/20" : "bg-[#800020]/35")} />
               {cat}
             </button>
-            {cat === "Customized" && active && (
-              <div className="ml-5 mt-1 space-y-0.5">
-                {customizedSubs.map(sub => (
-                  <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
-                    className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                      activeSubCategory === sub ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8"
-                    )}>{sub}</button>
-                ))}
-              </div>
-            )}
             {cat === "Accessories" && active && (
               <div className="ml-5 mt-1 space-y-0.5">
                 {accessoriesSubs.map(sub => (
@@ -223,23 +217,13 @@ export default function MenuContent() {
             {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020] text-xs font-bold">✕</button>}
           </div>
           <div className="flex gap-2 pb-0.5 overflow-x-auto scrollbar-hide">
-            {(["All", "Customized", "Accessories", "Boxes"] as FilterCat[]).map((cat) => (
+            {(["All", "Customized", ...customizedSubCats, "Accessories", "Boxes"] as FilterCat[]).map((cat) => (
               <button key={cat} onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
                 className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-200 active:scale-[0.97]",
                   activeCategory === cat ? "bg-[#800020] text-white shadow-warm-sm" : "bg-white/70 text-[#800020] hover:bg-white border border-white/40"
                 )}>{cat}</button>
             ))}
           </div>
-          {activeCategory === "Customized" && (
-            <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
-              {customizedSubs.map((sub) => (
-                <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
-                  className={cn("shrink-0 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all active:scale-[0.97]",
-                    activeSubCategory === sub ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40"
-                  )}>{sub}</button>
-              ))}
-            </div>
-          )}
           {activeCategory === "Accessories" && (
             <div className="flex gap-2 pb-0.5">
               {accessoriesSubs.map((sub) => (

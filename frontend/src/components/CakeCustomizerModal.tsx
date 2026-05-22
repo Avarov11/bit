@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 async function uploadToOrders(file: File, folder: string): Promise<string | null> {
   const fd = new FormData();
@@ -23,7 +25,7 @@ const SHAPES = [
   {
     id: "cake", label: "Full Cake",
     svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14">
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
         <defs>
           <linearGradient id="sh-ck-body" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"  stopColor="#4A0F1C" />
@@ -51,7 +53,7 @@ const SHAPES = [
   {
     id: "heart", label: "Heart",
     svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14">
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
         <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
           fill="#800020" transform="translate(0,7)" opacity="0.35" />
         <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
@@ -68,7 +70,7 @@ const SHAPES = [
   {
     id: "square", label: "Square",
     svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14">
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
         <defs>
           <linearGradient id="sh-sq-body" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"  stopColor="#4A0F1C" />
@@ -91,20 +93,20 @@ const SHAPES = [
 ];
 
 const FLAVORS = [
-  { id: "chocolate", label: "Chocolate",       emoji: "🍫", sub: "Milk · Hazelnut · Oreo" },
-  { id: "white",     label: "White Chocolate", emoji: "🤍", sub: "White · Pink · Blue"    },
+  { id: "chocolate", label: "Chocolate",       emoji: "🍫", tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
+  { id: "white",     label: "White Chocolate", emoji: "🤍", tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
 ];
 
 const CHOC_FLAVORS = [
-  { id: "milk",     label: "Milk",     emoji: "🍫" },
-  { id: "hazelnut", label: "Hazelnut", emoji: "🌰" },
-  { id: "oreo",     label: "Oreo",     emoji: "⚫" },
+  { id: "milk",     label: "Milk",     emoji: "🍫", tKey: "cust_modal_choc_milk"     },
+  { id: "hazelnut", label: "Hazelnut", emoji: "🌰", tKey: "cust_modal_choc_hazelnut" },
+  { id: "oreo",     label: "Oreo",     emoji: "⚫", tKey: "cust_modal_choc_oreo"     },
 ];
 
 const COLOURS = [
-  { id: "white", label: "White", hex: "#FFFFFF" },
-  { id: "pink",  label: "Pink",  hex: "#FF6B9D" },
-  { id: "blue",  label: "Blue",  hex: "#B2C8D8" },
+  { id: "white", label: "White", hex: "#FFFFFF", tKey: "cust_modal_colour_white" },
+  { id: "pink",  label: "Pink",  hex: "#FF6B9D", tKey: "cust_modal_colour_pink"  },
+  { id: "blue",  label: "Blue",  hex: "#B2C8D8", tKey: "cust_modal_colour_blue"  },
 ];
 
 const CAKE_COLORS = [
@@ -132,28 +134,38 @@ interface CustSel {
   sprinkles: string;
   topping: string;
   toppingText: string;
-  stickerFile: File | null;
+  stickerUrl: string | null;
   imageFile: File | null;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
-  sprinkles: "", topping: "", toppingText: "", stickerFile: null, imageFile: null,
+  sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
 };
 
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
-function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: string; text?: string }) {
+function CakePreview({ shape, colorId, text = "", stickerUrl = "" }: { shape: string; colorId: string; text?: string; stickerUrl?: string }) {
   const [view, setView] = useState<"side"|"top">("side");
 
-  const pal: Record<string, { top: string; mid: string; dark: string; shadow: string }> = {
-    "":    { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" },
-    brown: { top: "#D4A272", mid: "#A06840", dark: "#6C4018", shadow: "#4A2C0A" },
-    white: { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" },
-    pink:  { top: "#FAD8DF", mid: "#D49AA8", dark: "#A06878", shadow: "#784858" },
-    blue:  { top: "#D8EEF8", mid: "#A8C8DC", dark: "#7898B0", shadow: "#567090" },
+  useEffect(() => {
+    if (text || stickerUrl) setView("top");
+  }, [!!text, !!stickerUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fixed brownie body — white/cream, never changes
+  const bc = { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" };
+
+  // Sauce/frosting on top — driven by colorId
+  const saucePal: Record<string, { hi: string; lo: string }> = {
+    "":     { hi: "#FFFCF8", lo: "#EDE0D4" },
+    brown:  { hi: "#C07830", lo: "#9A5818" },
+    white:  { hi: "#FFFCF8", lo: "#EDE0D4" },
+    pink:   { hi: "#FAD8DF", lo: "#D49AA8" },
+    blue:   { hi: "#D8EEF8", lo: "#A8C8DC" },
+    beige:  { hi: "#F0DEC0", lo: "#C8A068" },
+    black:  { hi: "#2A2A2A", lo: "#0D0D0D" },
   };
-  const c = pal[colorId] ?? pal[""];
+  const sc = saucePal[colorId] ?? saucePal[""];
   const plate = "#800020";
   const plateLip = "#5C1422";
 
@@ -165,22 +177,23 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cp-sg" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={c.shadow} />
-            <stop offset="14%"  stopColor={c.dark}   />
-            <stop offset="50%"  stopColor={c.mid}    />
-            <stop offset="86%"  stopColor={c.dark}   />
-            <stop offset="100%" stopColor={c.shadow} />
+            <stop offset="0%"   stopColor={bc.shadow} />
+            <stop offset="14%"  stopColor={bc.dark}   />
+            <stop offset="50%"  stopColor={bc.mid}    />
+            <stop offset="86%"  stopColor={bc.dark}   />
+            <stop offset="100%" stopColor={bc.shadow} />
           </linearGradient>
           <radialGradient id="cp-tg" cx="35%" cy="32%" r="64%">
-            <stop offset="0%"   stopColor={c.top} />
-            <stop offset="100%" stopColor={c.mid} />
+            <stop offset="0%"   stopColor={sc.hi} />
+            <stop offset="100%" stopColor={sc.lo} />
           </radialGradient>
+          <clipPath id="sc-cs"><ellipse cx="130" cy="104" rx="76" ry="18" /></clipPath>
         </defs>
         <ellipse cx="130" cy="192" rx="92" ry="6" fill="rgba(128,0,32,0.13)" />
         <ellipse cx="130" cy="183" rx="92" ry="11" fill={plate} />
         <ellipse cx="130" cy="180" rx="92" ry="11" fill={plateLip} />
         <rect x="38" y="104" width="184" height="70" fill="url(#cp-sg)" />
-        <ellipse cx="130" cy="174" rx="92" ry="13" fill={c.shadow} />
+        <ellipse cx="130" cy="174" rx="92" ry="13" fill={bc.shadow} />
         <ellipse cx="130" cy="104" rx="94" ry="20" fill="white" />
         {([54,74,94,113,130,147,166,186,206] as const).map((x, i) => (
           <ellipse key={x} cx={x} cy={118+(i%3)*3} rx={5} ry={6+(i%3)*4} fill="white" />
@@ -189,7 +202,9 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
           <circle key={x} cx={x} cy={152} r={3.5} fill="white" opacity="0.62" />
         ))}
         <ellipse cx="130" cy="104" rx="86" ry="22" fill="url(#cp-tg)" />
+        {([{x:72,y:116,h:18},{x:91,y:119,h:24},{x:111,y:122,h:14},{x:130,y:124,h:28},{x:149,y:122,h:20},{x:169,y:119,h:16},{x:188,y:116,h:14}] as const).map(d=><rect key={d.x} x={d.x-3.5} y={d.y} width={7} height={d.h} rx={3.5} fill={sc.hi} opacity={0.88}/>)}
         <ellipse cx="106" cy="92" rx="38" ry="10" fill="white" opacity="0.17" />
+        {stickerUrl && <image href={stickerUrl} x="98" y="86" width="64" height="36" clipPath="url(#sc-cs)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="131" y="105" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
           <text x="130" y="104" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
@@ -200,9 +215,10 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="ct-cg" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stopColor={c.top} />
-            <stop offset="100%" stopColor={c.mid} />
+            <stop offset="0%" stopColor={sc.hi} />
+            <stop offset="100%" stopColor={sc.lo} />
           </radialGradient>
+          <clipPath id="sc-ct"><circle cx="130" cy="100" r="70" /></clipPath>
         </defs>
         <circle cx="130" cy="100" r="93" fill={plate} />
         <circle cx="130" cy="100" r="88" fill="white" />
@@ -216,6 +232,7 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
           return <circle key={deg} cx={130 + 62*Math.cos(rad)} cy={100 + 62*Math.sin(rad)} r={3} fill="white" opacity="0.62" />;
         })}
         <ellipse cx="108" cy="78" rx="28" ry="14" fill="white" opacity="0.17" transform="rotate(-25,108,78)" />
+        {stickerUrl && <image href={stickerUrl} x="76" y="46" width="108" height="108" clipPath="url(#sc-ct)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
           <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="13" fontFamily="Georgia, serif">{text}</text>
@@ -229,22 +246,20 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="cp-hg" cx="34%" cy="28%" r="66%">
-            <stop offset="0%"   stopColor={c.top} />
-            <stop offset="100%" stopColor={c.mid} />
+            <stop offset="0%"   stopColor={sc.hi} />
+            <stop offset="100%" stopColor={sc.lo} />
           </radialGradient>
+          <clipPath id="sc-hs"><path d="M130,182 C104,164 58,134 58,101 C58,74 76,60 100,60 C114,60 124,69 130,81 C136,69 146,60 160,60 C184,60 202,74 202,101 C202,134 156,164 130,182Z" /></clipPath>
         </defs>
         <ellipse cx="130" cy="192" rx="74" ry="6" fill="rgba(128,0,32,0.12)" />
-        <path d={HP} fill={c.shadow} transform="translate(0,22)" />
-        <path d={HP} fill={c.dark}   transform="translate(0,14)" />
+        <path d={HP} fill={bc.shadow} transform="translate(0,22)" />
+        <path d={HP} fill={bc.dark}   transform="translate(0,14)" />
         <path d={HP} fill="white"         transform="translate(0,8)" />
         <path d={HP} fill="url(#cp-hg)"   transform="translate(0,6)" />
         <path d={HP} fill="white"         transform="translate(0,2)" />
         <path d={HP} fill="url(#cp-hg)" transform="translate(130,115) scale(0.88) translate(-130,-115)" />
         <ellipse cx="96" cy="75" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,75)" />
-        {[106,118,130,142,154].map(x => (
-          <circle key={x} cx={x} cy={144} r={3} fill="white" opacity="0.75" />
-        ))}
-        <circle cx="130" cy="156" r={3} fill="white" opacity="0.75" />
+        {stickerUrl && <image href={stickerUrl} x="90" y="75" width="80" height="80" clipPath="url(#sc-hs)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="131" y="121" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
           <text x="130" y="120" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
@@ -255,18 +270,16 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="ct-hg" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stopColor={c.top} />
-            <stop offset="100%" stopColor={c.mid} />
+            <stop offset="0%" stopColor={sc.hi} />
+            <stop offset="100%" stopColor={sc.lo} />
           </radialGradient>
+          <clipPath id="sc-ht"><path d="M130,161 C104,143 58,113 58,80 C58,53 76,39 100,39 C114,39 124,48 130,60 C136,48 146,39 160,39 C184,39 202,53 202,80 C202,113 156,143 130,161Z" /></clipPath>
         </defs>
         <path d={HTP} fill="rgba(128,0,32,0.12)" transform="translate(4,5)" />
         <path d={HTP} fill="none" stroke="white" strokeWidth="14" />
         <path d={HTP} fill="url(#ct-hg)" />
         <ellipse cx="96" cy="68" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,68)" />
-        {[106,118,130,142,154].map(x => (
-          <circle key={x} cx={x} cy={132} r={3} fill="white" opacity="0.75" />
-        ))}
-        <circle cx="130" cy="148" r={3} fill="white" opacity="0.75" />
+        {stickerUrl && <image href={stickerUrl} x="80" y="50" width="100" height="100" clipPath="url(#sc-ht)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
           <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
@@ -278,18 +291,19 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cp-sqf" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={c.dark}   />
-            <stop offset="45%"  stopColor={c.mid}    />
-            <stop offset="100%" stopColor={c.dark}   />
+            <stop offset="0%"   stopColor={bc.dark}   />
+            <stop offset="45%"  stopColor={bc.mid}    />
+            <stop offset="100%" stopColor={bc.dark}   />
           </linearGradient>
           <linearGradient id="cp-sqr" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={c.dark}   />
-            <stop offset="100%" stopColor={c.shadow} />
+            <stop offset="0%"   stopColor={bc.dark}   />
+            <stop offset="100%" stopColor={bc.shadow} />
           </linearGradient>
           <linearGradient id="cp-sqt" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={c.mid}  />
-            <stop offset="100%" stopColor={c.top}  />
+            <stop offset="0%"   stopColor={sc.lo} />
+            <stop offset="100%" stopColor={sc.hi} />
           </linearGradient>
+          <clipPath id="sc-ss"><polygon points="42,112 200,112 224,93 64,93" /></clipPath>
         </defs>
         <ellipse cx="128" cy="193" rx="86" ry="6" fill="rgba(128,0,32,0.13)" />
         <polygon points="36,183 204,183 228,163 60,163" fill={plate} />
@@ -302,6 +316,7 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
         <polygon points="204,106 228,84 228,98 204,120" fill="white" />
         <polygon points="36,106 204,106 228,84 60,84" fill="white" opacity="0.88" />
         <polygon points="46,108 204,108 226,87 68,87" fill="url(#cp-sqt)" />
+        {([{x:55,h:16},{x:76,h:24},{x:97,h:14},{x:119,h:28},{x:140,h:20},{x:161,h:22},{x:183,h:14}] as const).map(d=><rect key={d.x} x={d.x-3.5} y={113} width={7} height={d.h} rx={3.5} fill={sc.hi} opacity={0.88}/>)}
         {([52,74,96,118,140,162,186] as const).map((x, i) => (
           <rect key={x} x={x-4} y={118} width={8} height={7+(i%3)*5} rx={4} fill="white" opacity="0.92" />
         ))}
@@ -309,6 +324,7 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
           <circle key={x} cx={x} cy={150} r={3.5} fill="white" opacity="0.62" />
         ))}
         <line x1="36" y1="114" x2="36" y2="176" stroke="white" strokeWidth="2.5" opacity="0.25" />
+        {stickerUrl && <image href={stickerUrl} x="95" y="84" width="76" height="30" clipPath="url(#sc-ss)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="137" y="98" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
           <text x="136" y="97" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
@@ -319,9 +335,10 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="ct-sqg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={c.top} />
-            <stop offset="100%" stopColor={c.mid} />
+            <stop offset="0%" stopColor={sc.hi} />
+            <stop offset="100%" stopColor={sc.lo} />
           </linearGradient>
+          <clipPath id="sc-st"><rect x="58" y="60" width="144" height="84" rx="2" /></clipPath>
         </defs>
         <rect x="50" y="52" width="168" height="108" rx="4" fill="rgba(128,0,32,0.12)" />
         <rect x="44" y="46" width="172" height="110" rx="4" fill="white" />
@@ -333,6 +350,7 @@ function CakePreview({ shape, colorId, text = "" }: { shape: string; colorId: st
         {[80,108,130,152,180].map(x => (
           <circle key={x} cx={x} cy={136} r={3.5} fill="white" opacity="0.62" />
         ))}
+        {stickerUrl && <image href={stickerUrl} x="80" y="62" width="100" height="80" clipPath="url(#sc-st)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
         {text && <>
           <text x="131" y="103" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
           <text x="130" y="102" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="16" fontFamily="Georgia, serif">{text}</text>
@@ -382,13 +400,22 @@ export default function CakeCustomizerModal({
   product: DbProduct | null;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const addToCart = useCartStore((s) => s.addItem);
   const router    = useRouter();
   const [custStep,   setCustStep]   = useState(0);
   const [custSel,    setCustSel]    = useState<CustSel>(EMPTY_SEL);
   const [uploading,  setUploading]  = useState(false);
-  const stickerInputRef             = useRef<HTMLInputElement>(null);
-  const imageInputRef               = useRef<HTMLInputElement>(null);
+  const [stickers,        setStickers]        = useState<{ name: string; url: string }[]>([]);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const imageInputRef                           = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/stickers")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setStickers(data); })
+      .catch(() => {});
+  }, []);
 
   // Reset state whenever product changes
   const [lastProduct, setLastProduct] = useState<DbProduct | null>(null);
@@ -397,6 +424,7 @@ export default function CakeCustomizerModal({
     if (product) {
       setCustStep(0);
       setCustSel(EMPTY_SEL);
+      setShowStickerPicker(false);
     }
   }
 
@@ -412,7 +440,7 @@ export default function CakeCustomizerModal({
     if (custStep === 2) return !!custSel.sprinkles;
     if (custStep === 3) {
       if (custSel.topping === "write")   return true;
-      if (custSel.topping === "sticker") return custSel.stickerFile !== null;
+      if (custSel.topping === "sticker") return custSel.stickerUrl !== null;
       if (custSel.topping === "image")   return custSel.imageFile !== null;
       return false;
     }
@@ -433,11 +461,8 @@ export default function CakeCustomizerModal({
     const toppingsList: string[] = [];
     if (custSel.sprinkles === "yes") toppingsList.push("Sprinkles");
 
-    let stickerUrl: string | undefined;
+    const stickerUrl = custSel.topping === "sticker" ? custSel.stickerUrl ?? undefined : undefined;
     let imageUrl:   string | undefined;
-    if (custSel.topping === "sticker" && custSel.stickerFile) {
-      stickerUrl = (await uploadToOrders(custSel.stickerFile, "stickers")) ?? undefined;
-    }
     if (custSel.topping === "image" && custSel.imageFile) {
       imageUrl = (await uploadToOrders(custSel.imageFile, "images")) ?? undefined;
     }
@@ -498,28 +523,28 @@ export default function CakeCustomizerModal({
 
   const renderStep = () => {
     if (custStep === 4) {
-      const shapeName  = SHAPES.find((s) => s.id === custSel.shape)?.label ?? "—";
+      const shapeName  = t("cust_modal_shape_" + custSel.shape) || "—";
       const flavorName = custSel.flavorType === "chocolate"
-        ? CHOC_FLAVORS.find((f) => f.id === custSel.flavor)?.label ?? "—"
-        : "White Chocolate";
+        ? t("cust_modal_choc_" + custSel.flavor) || "—"
+        : t("cust_modal_flavor_white");
       const colourData = COLOURS.find((c) => c.id === custSel.colour);
       return (
         <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">Your Order Summary</h2>
-          <p className="text-[#800020]/60 text-sm mb-5">Review your choices before adding to cart</p>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-1">{t("cust_modal_summary_title")}</h2>
+          <p className="text-[#800020]/60 text-sm mb-5">{t("cust_modal_summary_subtitle")}</p>
           <div className="bg-white rounded-2xl px-5 py-2 shadow-warm-sm mb-6">
-            <SummaryRow label="Product"    value={product.name} />
-            <SummaryRow label="Shape"      value={shapeName} />
-            <SummaryRow label="Flavour"    value={flavorName} />
+            <SummaryRow label={t("cust_modal_summary_product")}   value={product.name} />
+            <SummaryRow label={t("cust_modal_summary_shape")}     value={shapeName} />
+            <SummaryRow label={t("cust_modal_summary_flavour")}   value={flavorName} />
             {custSel.flavorType === "white" && colourData && (
-              <SummaryRow label="Colour" value={colourData.label} dot={colourData.hex} />
+              <SummaryRow label={t("cust_modal_summary_colour")} value={t(colourData.tKey)} dot={colourData.hex} />
             )}
-            <SummaryRow label="Sprinkles"  value={custSel.sprinkles === "yes" ? "Yes ✨" : "None"} />
+            <SummaryRow label={t("cust_modal_summary_sprinkles")} value={custSel.sprinkles === "yes" ? t("cust_modal_summary_yes") : t("cust_modal_summary_none")} />
             <SummaryRow
-              label="Topping"
+              label={t("cust_modal_summary_topping")}
               value={
-                custSel.topping === "write"   ? `Writing: "${custSel.toppingText || "—"}"`
-                : custSel.topping === "sticker" && custSel.stickerFile ? `🎨 ${custSel.stickerFile.name}`
+                custSel.topping === "write"   ? `${t("cust_modal_writing")} "${custSel.toppingText || "—"}"`
+                : custSel.topping === "sticker" && custSel.stickerUrl ? `🎨 Sticker selected`
                 : custSel.topping === "image"   && custSel.imageFile   ? `📷 ${custSel.imageFile.name}`
                 : "—"
               }
@@ -529,17 +554,21 @@ export default function CakeCustomizerModal({
       );
     }
 
-    if (custStep === 0) return (
+    if (custStep === 0) {
+      const availableShapes = product.category === "Birthday"
+        ? SHAPES.filter((s) => s.id !== "heart")
+        : SHAPES;
+      return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Choose Your Shape</h2>
-        <p className="text-[#A05068] text-sm mb-6">Pick a shape for your brownie</p>
-        <div className="grid grid-cols-3 gap-3">
-          {SHAPES.map((shape) => {
+        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_shape_title")}</h2>
+        <p className="text-[#A05068] text-sm mb-6">{t("cust_modal_shape_subtitle")}</p>
+        <div className={cn("grid gap-4", availableShapes.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
+          {availableShapes.map((shape) => {
             const sel = custSel.shape === shape.id;
             return (
               <button
                 key={shape.id}
-                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", stickerFile: null, imageFile: null }))}
+                onClick={() => setCustSel((p) => ({ ...p, shape: shape.id, topping: "", toppingText: "", stickerUrl: null, imageFile: null }))}
                 className={cn(
                   "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                   sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -550,9 +579,9 @@ export default function CakeCustomizerModal({
                     <Check size={10} className="text-white" strokeWidth={3} />
                   </span>
                 )}
-                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">{shape.svg}</div>
-                <div className="p-2.5">
-                  <p className="font-playfair font-bold text-[#2D000A] text-xs">{shape.label}</p>
+                <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
+                <div className="p-3 md:p-4">
+                  <p className="font-playfair font-bold text-[#2D000A] text-sm md:text-base">{t("cust_modal_shape_" + shape.id)}</p>
                 </div>
               </button>
             );
@@ -560,18 +589,19 @@ export default function CakeCustomizerModal({
         </div>
       </div>
     );
+    }
 
     if (custStep === 1) {
       const isChocType  = custSel.flavorType === "chocolate";
       const isWhiteType = custSel.flavorType === "white";
       return (
         <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Choose Your Flavour</h2>
-          <p className="text-[#A05068] text-sm mb-5">Pick your chocolate type</p>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_flavor_title")}</h2>
+          <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_flavor_subtitle")}</p>
           <div className="grid grid-cols-2 gap-3 mb-5">
             {FLAVORS.map((f) => (
               <OptionCard
-                key={f.id} id={f.id} emoji={f.emoji} label={f.label} sub={f.sub}
+                key={f.id} id={f.id} emoji={f.emoji} label={t(f.tKey)} sub={t(f.subKey)}
                 selected={custSel.flavorType === f.id}
                 onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "", cakeColor: f.id === "chocolate" ? "brown" : "" }))}
               />
@@ -579,14 +609,18 @@ export default function CakeCustomizerModal({
           </div>
           {isChocType && (
             <div>
-              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">Choose Flavour</p>
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">{t("cust_modal_choose_flavor")}</p>
               <div className="grid grid-cols-3 gap-3">
                 {CHOC_FLAVORS.map((choc) => {
                   const sel = custSel.flavor === choc.id;
                   return (
                     <button
                       key={choc.id}
-                      onClick={() => setCustSel((p) => ({ ...p, flavor: choc.id }))}
+                      onClick={() => setCustSel((p) => ({
+                        ...p,
+                        flavor: choc.id,
+                        cakeColor: choc.id === "milk" ? "brown" : choc.id === "hazelnut" ? "beige" : "black",
+                      }))}
                       className={cn(
                         "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                         sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -601,7 +635,7 @@ export default function CakeCustomizerModal({
                         <span className="text-4xl">{choc.emoji}</span>
                       </div>
                       <div className="p-2.5">
-                        <p className="font-playfair font-bold text-[#2D000A] text-xs">{choc.label}</p>
+                        <p className="font-playfair font-bold text-[#2D000A] text-xs">{t(choc.tKey)}</p>
                       </div>
                     </button>
                   );
@@ -611,7 +645,7 @@ export default function CakeCustomizerModal({
           )}
           {isWhiteType && (
             <div>
-              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">Choose Colour</p>
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">{t("cust_modal_choose_colour")}</p>
               <div className="flex justify-around">
                 {COLOURS.map((col) => {
                   const sel = custSel.colour === col.id;
@@ -626,7 +660,7 @@ export default function CakeCustomizerModal({
                       >
                         {sel && <Check size={22} className="text-[#800020]" strokeWidth={3} />}
                       </div>
-                      <span className="text-sm font-bold text-[#800020]">{col.label}</span>
+                      <span className="text-sm font-bold text-[#800020]">{t(col.tKey)}</span>
                     </button>
                   );
                 })}
@@ -639,15 +673,15 @@ export default function CakeCustomizerModal({
 
     if (custStep === 2) return (
       <div>
-        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Sprinkles?</h2>
-        <p className="text-[#A05068] text-sm mb-5">Would you like sprinkles on top?</p>
+        <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_sprinkles_title")}</h2>
+        <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_sprinkles_subtitle")}</p>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { id: "yes", label: "Sprinkles", emoji: "🌈", sub: "Rainbow sprinkles on top" },
-            { id: "no",  label: "None",      emoji: "✖️", sub: "Keep it plain"            },
+            { id: "yes", labelKey: "cust_modal_sprinkles_yes", emoji: "🌈", subKey: "cust_modal_sprinkles_yes_sub" },
+            { id: "no",  labelKey: "cust_modal_sprinkles_no",  emoji: "✖️", subKey: "cust_modal_sprinkles_no_sub"  },
           ].map((opt) => (
             <OptionCard
-              key={opt.id} id={opt.id} emoji={opt.emoji} label={opt.label} sub={opt.sub}
+              key={opt.id} id={opt.id} emoji={opt.emoji} label={t(opt.labelKey)} sub={t(opt.subKey)}
               selected={custSel.sprinkles === opt.id}
               onClick={() => setCustSel((p) => ({ ...p, sprinkles: opt.id }))}
             />
@@ -657,89 +691,47 @@ export default function CakeCustomizerModal({
     );
 
     if (custStep === 3) {
-      const shape       = custSel.shape;
-      const showSticker = shape === "square" || shape === "cake";
-      const showImage   = shape === "cake";
-      const hasWordLimit = shape === "heart" || shape === "square"; // 3-word limit
+      const shape        = custSel.shape;
+      const showSticker  = shape === "square" || shape === "cake";
+      const showImage    = shape === "cake";
+      const hasWordLimit = shape === "heart" || shape === "square";
       const limit = hasWordLimit ? 3 : Infinity;
       const count = custSel.toppingText.trim() === "" ? 0 : custSel.toppingText.trim().split(/\s+/).length;
-      const cardCols = showImage ? "grid-cols-3" : showSticker ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
-
-      const UploadZone = ({
-        file, onPick, onRemove, label, icon,
-      }: { file: File | null; onPick: () => void; onRemove: () => void; label: string; icon: string }) => (
-        <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
-          <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">{label}</p>
-          <button
-            onClick={onPick}
-            className={cn(
-              "w-full rounded-xl border-2 border-dashed py-8 text-center transition-all duration-200",
-              file
-                ? "border-[#800020] bg-[#F5D0D8]/30"
-                : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
-            )}
-          >
-            {file ? (
-              <div>
-                <p className="text-3xl mb-2">{icon}</p>
-                <p className="text-sm text-[#800020] font-semibold truncate px-6">{file.name}</p>
-                <p className="text-[11px] text-[#A05068] mt-1">Tap to change</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-3xl mb-2">📤</p>
-                <p className="text-sm font-semibold text-[#800020]">Tap to upload</p>
-                <p className="text-[11px] text-[#A05068] mt-1">PNG · JPG · GIF · WebP</p>
-              </div>
-            )}
-          </button>
-          {file && (
-            <button onClick={onRemove} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-2 transition-colors">
-              Remove ✕
-            </button>
-          )}
-        </div>
-      );
+      const cardCols = showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
       return (
-        <div>
-          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Topping</h2>
-          <p className="text-[#A05068] text-sm mb-5">Personalise your brownie</p>
+        <div className="space-y-5">
+          <div>
+            <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_topping_title")}</h2>
+            <p className="text-[#A05068] text-sm">{t("cust_modal_topping_subtitle")}</p>
+          </div>
 
-          {/* Option cards */}
-          <div className={cn("grid gap-3 mb-5", cardCols)}>
+          {/* Write + Image option cards */}
+          <div className={cn("grid gap-3", cardCols)}>
             <OptionCard
-              id="write" emoji="✍️" label="Write"
-              sub={hasWordLimit ? "Max 3 words" : "No word limit"}
+              id="write" emoji="✍️" label={t("cust_modal_write")}
+              sub={hasWordLimit ? t("cust_modal_write_max3") : t("cust_modal_write_no_limit")}
               selected={custSel.topping === "write"}
-              onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerFile: null, imageFile: null }))}
+              onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
             />
-            {showSticker && (
-              <OptionCard
-                id="sticker" emoji="🎨" label="Upload Sticker"
-                sub="Custom sticker file"
-                selected={custSel.topping === "sticker"}
-                onClick={() => setCustSel((p) => ({ ...p, topping: "sticker", toppingText: "", imageFile: null }))}
-              />
-            )}
             {showImage && (
               <OptionCard
-                id="image" emoji="📷" label="Upload Image"
-                sub="Photo or design"
+                id="image" emoji="📷" label={t("cust_modal_image")}
+                sub={t("cust_modal_image_sub")}
                 selected={custSel.topping === "image"}
-                onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerFile: null }))}
+                onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}
               />
             )}
           </div>
 
-          {/* Write */}
+          {/* Write textarea */}
           {custSel.topping === "write" && (
             <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-[#A05068] uppercase tracking-wider">Your Message</label>
+                <label className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{t("cust_modal_your_message")}</label>
                 {hasWordLimit && (
                   <span className={cn("text-xs font-bold tabular-nums", count >= limit ? "text-[#800020]" : "text-[#A05068]")}>
-                    {count} / {limit} words
+                    {count} / {limit} {t("cust_modal_words")}
                   </span>
                 )}
               </div>
@@ -754,38 +746,143 @@ export default function CakeCustomizerModal({
                     setCustSel((p) => ({ ...p, toppingText: val }));
                   }
                 }}
-                placeholder="e.g. Happy Birthday Sarah!"
+                placeholder={t("cust_modal_msg_placeholder")}
                 rows={2}
                 className="w-full px-4 py-3 bg-[#FFFFFF] border border-[rgba(128,0,32,0.08)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none"
               />
             </div>
           )}
 
-          {/* Upload Sticker */}
-          {custSel.topping === "sticker" && (
-            <UploadZone
-              file={custSel.stickerFile}
-              onPick={() => stickerInputRef.current?.click()}
-              onRemove={() => setCustSel((p) => ({ ...p, stickerFile: null }))}
-              label="Upload your sticker"
-              icon="🎨"
-            />
-          )}
-
-          {/* Upload Image */}
+          {/* Image upload */}
           {custSel.topping === "image" && (
-            <UploadZone
-              file={custSel.imageFile}
-              onPick={() => imageInputRef.current?.click()}
-              onRemove={() => setCustSel((p) => ({ ...p, imageFile: null }))}
-              label="Upload your image"
-              icon="📷"
-            />
+            <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
+              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">{t("cust_modal_upload_image_label")}</p>
+              <button
+                onClick={() => imageInputRef.current?.click()}
+                className={cn(
+                  "w-full rounded-xl border-2 border-dashed py-8 text-center transition-all duration-200",
+                  custSel.imageFile ? "border-[#800020] bg-[#F5D0D8]/30" : "border-[rgba(128,0,32,0.20)] hover:border-[#800020] hover:bg-[#F5D0D8]/20"
+                )}
+              >
+                {custSel.imageFile ? (
+                  <div>
+                    <p className="text-3xl mb-2">📷</p>
+                    <p className="text-sm text-[#800020] font-semibold truncate px-6">{custSel.imageFile.name}</p>
+                    <p className="text-[11px] text-[#A05068] mt-1">{t("cust_modal_tap_change")}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-3xl mb-2">📤</p>
+                    <p className="text-sm font-semibold text-[#800020]">{t("cust_modal_tap_upload")}</p>
+                    <p className="text-[11px] text-[#A05068] mt-1">{t("cust_modal_formats")}</p>
+                  </div>
+                )}
+              </button>
+              {custSel.imageFile && (
+                <button onClick={() => setCustSel((p) => ({ ...p, imageFile: null }))} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-2 transition-colors">
+                  {t("cust_modal_remove")}
+                </button>
+              )}
+            </div>
           )}
 
-          <input ref={stickerInputRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0] ?? null; setCustSel((p) => ({ ...p, stickerFile: f })); e.target.value = ""; }} />
-          <input ref={imageInputRef}   type="file" accept="image/*" className="hidden"
+          {/* Sticker — button triggers overlay picker */}
+          {showSticker && (
+            <>
+              {custSel.topping === "sticker" && custSel.stickerUrl ? (
+                /* Selected sticker preview */
+                <div className="bg-white rounded-2xl p-4 shadow-warm-sm flex items-center gap-4">
+                  <div className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2 border-[#800020]/20">
+                    <Image src={custSel.stickerUrl} alt="Selected sticker" fill sizes="64px" className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-[#800020] uppercase tracking-wider mb-0.5">Sticker selected</p>
+                    <p className="text-sm font-semibold text-[#2D000A] truncate">
+                      {stickers.find((s) => s.url === custSel.stickerUrl)?.name.replace(/\.[^.]+$/, "") ?? "Sticker"}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setShowStickerPicker(true)}
+                      className="text-xs font-bold text-[#800020] bg-[#F5D0D8] hover:bg-[#F5D0D8]/80 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Change
+                    </button>
+                    <button
+                      onClick={() => setCustSel((p) => ({ ...p, topping: "", stickerUrl: null }))}
+                      className="text-[11px] text-[#800020]/50 hover:text-[#800020] text-center transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Select sticker button */
+                <button
+                  onClick={() => setShowStickerPicker(true)}
+                  className="w-full bg-white rounded-2xl p-4 shadow-warm-sm border-2 border-dashed border-[rgba(128,0,32,0.18)] hover:border-[#800020]/40 hover:bg-[#F5D0D8]/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98]"
+                >
+                  <span className="text-2xl">🎨</span>
+                  <span className="font-bold text-[#800020] text-sm">Select your sticker</span>
+                </button>
+              )}
+
+              {/* Inline sticker grid */}
+              {showStickerPicker && (
+                <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
+                      {stickers.length} Stickers
+                    </p>
+                    <button
+                      onClick={() => setShowStickerPicker(false)}
+                      className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {stickers.map((s) => {
+                      const sel = custSel.stickerUrl === s.url;
+                      return (
+                        <button
+                          key={s.url}
+                          onClick={() => {
+                            setCustSel((p) => ({
+                              ...p,
+                              topping: "sticker",
+                              stickerUrl: s.url,
+                              toppingText: "",
+                              imageFile: null,
+                            }));
+                            setShowStickerPicker(false);
+                          }}
+                          className={cn(
+                            "relative rounded-2xl overflow-hidden border-2 transition-all duration-200 aspect-square active:scale-95",
+                            sel
+                              ? "border-[#800020] ring-2 ring-[#800020]/20"
+                              : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                          )}
+                        >
+                          <Image src={s.url} alt={s.name} fill sizes="100px" className="object-cover" />
+                          {sel && (
+                            <>
+                              <span className="absolute inset-0 bg-[#800020]/10" />
+                              <span className="absolute top-1.5 right-1.5 bg-[#800020] rounded-full p-0.5 shadow">
+                                <Check size={10} className="text-white" strokeWidth={3} />
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0] ?? null; setCustSel((p) => ({ ...p, imageFile: f })); e.target.value = ""; }} />
         </div>
       );
@@ -794,7 +891,8 @@ export default function CakeCustomizerModal({
     return null;
   };
 
-  const previewText = custSel.topping === "write" ? custSel.toppingText : "";
+  const previewText    = custSel.topping === "write"   ? custSel.toppingText       : "";
+  const previewSticker = custSel.topping === "sticker" ? custSel.stickerUrl ?? "" : "";
 
   return (
     <>
@@ -811,36 +909,38 @@ export default function CakeCustomizerModal({
                   className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
                     active ? "border-[#800020] text-[#800020]" : done ? "border-transparent text-[#2D000A]/60 cursor-pointer" : "border-transparent text-[#2D000A]/30 cursor-default")}>
                   <step.Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                  <span className="text-[10px] font-bold tracking-wide">{step.label}</span>
+                  <span className="text-[10px] font-bold tracking-wide">{t("cust_modal_step_" + step.label.toLowerCase())}</span>
                 </button>
               );
             })}
             <button className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
               custStep === 4 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
               <Check size={16} strokeWidth={custStep === 4 ? 2.5 : 2} />
-              <span className="text-[10px] font-bold tracking-wide">Summary</span>
+              <span className="text-[10px] font-bold tracking-wide">{t("cust_modal_step_summary")}</span>
             </button>
           </div>
         </div>
 
         {custStep < 4 && (
           <div className="w-full shrink-0 bg-[#F5D0D8] overflow-hidden">
-            <div className="relative max-w-lg mx-auto flex items-center gap-4 px-5 py-5">
-              <div className="flex-1 min-w-0">
-                <div className="inline-flex items-center bg-[#800020]/10 rounded-full px-2.5 py-1 mb-2.5">
-                  <span className="text-[#800020] text-[10px] font-bold uppercase tracking-widest">Step {custStep + 1} of {STEPS.length}</span>
+            <div className="relative max-w-lg mx-auto px-5 pt-3 pb-2">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="inline-flex items-center bg-[#800020]/10 rounded-full px-2.5 py-1 mb-2">
+                    <span className="text-[#800020] text-[10px] font-bold uppercase tracking-widest">{t("cust_modal_step")} {custStep + 1} {t("cust_modal_of")} {STEPS.length}</span>
+                  </div>
+                  <p className="font-playfair text-xl font-bold text-[#2D000A] leading-tight">{t("cust_modal_step_" + STEPS[custStep].label.toLowerCase())}</p>
+                  <p className="text-[#A05068] text-xs mt-1 font-medium">
+                    {t("cust_modal_step_desc_" + custStep)}
+                  </p>
                 </div>
-                <p className="font-playfair text-2xl font-bold text-[#2D000A] leading-tight">{STEPS[custStep].label}</p>
-                <p className="text-[#A05068] text-xs mt-1 font-medium">
-                  {["Pick your shape","Pick your flavour","Add sprinkles?","Personalise it"][custStep]}
-                </p>
+                <button onClick={onClose} className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors shrink-0 mt-0.5">
+                  <X size={15} />
+                </button>
               </div>
-              <div className="w-40 h-28 shrink-0 flex items-center justify-center">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} />
+              <div className="w-full h-52 bg-white/60 rounded-2xl flex items-center justify-center p-2">
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
               </div>
-              <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors">
-                <X size={15} />
-              </button>
             </div>
           </div>
         )}
@@ -849,7 +949,7 @@ export default function CakeCustomizerModal({
           {custStep === 4 && (
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(128,0,32,0.12)]">
               <div>
-                <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">Review your order</p>
+                <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">{t("cust_modal_review_header")}</p>
                 <h2 className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{product.name}</h2>
               </div>
               <button onClick={onClose} className="p-1.5 rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
@@ -862,23 +962,23 @@ export default function CakeCustomizerModal({
           {custStep < 4 ? (
             <div className="max-w-lg mx-auto flex gap-3">
               <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
-                {custStep === 0 ? "Cancel" : "← Back"}
+                {custStep === 0 ? t("cust_modal_cancel") : t("cust_modal_back")}
               </button>
               <button onClick={handleNext} disabled={!canProceed()}
                 className={cn("flex-[2] font-bold py-4 rounded-2xl text-sm font-playfair tracking-wide transition-all",
                   canProceed() ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/40 text-white/50 cursor-not-allowed")}>
-                {custStep === STEP_LABELS.length - 1 ? "Review Order →" : "Next →"}
+                {custStep === STEP_LABELS.length - 1 ? t("cust_modal_review_btn") : t("cust_modal_next")}
               </button>
             </div>
           ) : (
             <div className="max-w-lg mx-auto flex gap-3">
               <button onClick={handleContinue} disabled={uploading}
                 className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
-                {uploading ? "Uploading…" : "Continue Shopping"}
+                {uploading ? t("cust_modal_uploading") : t("cust_modal_continue")}
               </button>
               <button onClick={handleCheckout} disabled={uploading}
                 className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {uploading ? <><Loader2 size={16} className="animate-spin" /> Uploading…</> : "Checkout →"}
+                {uploading ? <><Loader2 size={16} className="animate-spin" /> {t("cust_modal_uploading")}</> : t("cust_modal_checkout")}
               </button>
             </div>
           )}
@@ -894,11 +994,11 @@ export default function CakeCustomizerModal({
 
           {/* Left panel */}
           <div className="w-64 shrink-0 bg-[#F5D0D8] flex flex-col p-6">
-            <p className="text-[9px] font-bold text-[#A05068] uppercase tracking-widest mb-1">Customising</p>
+            <p className="text-[9px] font-bold text-[#A05068] uppercase tracking-widest mb-1">{t("cust_modal_customising")}</p>
             <h3 className="font-playfair font-bold text-[#2D000A] text-lg leading-tight mb-4 line-clamp-2">{product.name}</h3>
 
             <div className="w-full aspect-square bg-white/60 rounded-2xl flex items-center justify-center p-3 mb-5 shrink-0">
-              <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} />
+              <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
             </div>
 
             <div className="flex-1 space-y-0.5 overflow-y-auto">
@@ -911,7 +1011,7 @@ export default function CakeCustomizerModal({
                       active ? "bg-[#800020] text-white" : done ? "text-[#800020]/70 hover:bg-[#800020]/10 cursor-pointer" : "text-[#800020]/30 cursor-default"
                     )}>
                     <step.Icon size={13} strokeWidth={active ? 2.5 : 2} />
-                    <span className="flex-1">{step.label}</span>
+                    <span className="flex-1">{t("cust_modal_step_" + step.label.toLowerCase())}</span>
                     {done && <Check size={11} strokeWidth={2.5} />}
                   </button>
                 );
@@ -919,13 +1019,13 @@ export default function CakeCustomizerModal({
               <button className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left",
                 custStep === 4 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
                 <Check size={13} strokeWidth={custStep === 4 ? 2.5 : 2} />
-                <span className="flex-1">Summary</span>
+                <span className="flex-1">{t("cust_modal_step_summary")}</span>
               </button>
             </div>
 
             <button onClick={onClose}
               className="mt-4 w-full py-2.5 rounded-xl bg-[#800020]/10 text-[#800020] text-xs font-bold hover:bg-[#800020]/18 transition-colors shrink-0">
-              Cancel
+              {t("cust_modal_cancel")}
             </button>
           </div>
 
@@ -939,23 +1039,23 @@ export default function CakeCustomizerModal({
                 <div className="flex gap-3">
                   <button onClick={handleBack}
                     className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
-                    {custStep === 0 ? "Cancel" : "← Back"}
+                    {custStep === 0 ? t("cust_modal_cancel") : t("cust_modal_back")}
                   </button>
                   <button onClick={handleNext} disabled={!canProceed()}
                     className={cn("flex-[2] font-bold py-3 rounded-2xl text-sm font-playfair tracking-wide transition-all",
                       canProceed() ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/35 text-white/50 cursor-not-allowed")}>
-                    {custStep === STEP_LABELS.length - 1 ? "Review Order →" : "Next →"}
+                    {custStep === STEP_LABELS.length - 1 ? t("cust_modal_review_btn") : t("cust_modal_next")}
                   </button>
                 </div>
               ) : (
                 <div className="flex gap-3">
                   <button onClick={handleContinue} disabled={uploading}
                     className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
-                    {uploading ? "Uploading…" : "Continue Shopping"}
+                    {uploading ? t("cust_modal_uploading") : t("cust_modal_continue")}
                   </button>
                   <button onClick={handleCheckout} disabled={uploading}
                     className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    {uploading ? <><Loader2 size={15} className="animate-spin" /> Uploading…</> : "Checkout →"}
+                    {uploading ? <><Loader2 size={15} className="animate-spin" /> {t("cust_modal_uploading")}</> : t("cust_modal_checkout")}
                   </button>
                 </div>
               )}
