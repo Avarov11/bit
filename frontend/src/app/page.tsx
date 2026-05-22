@@ -19,11 +19,13 @@ function ProductCard({
   added,
   onAdd,
   onCustomize,
+  custPriceRange,
 }: {
   product: DbProduct;
   added: boolean;
   onAdd: () => void;
   onCustomize: () => void;
+  custPriceRange: { min: number; max: number };
 }) {
   const { t } = useLanguage();
   const isCustomizable = product.category !== "Accessories" && product.category !== "Boxes";
@@ -71,7 +73,11 @@ function ProductCard({
           <h3 className="font-playfair font-bold text-[#2D000A] text-sm leading-tight mb-1 line-clamp-1">
             {product.name}
           </h3>
-          <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {product.price}</p>
+          {isCustomizable ? (
+            <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {custPriceRange.min} – {custPriceRange.max}</p>
+          ) : (
+            <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {product.price}</p>
+          )}
           {isCustomizable ? (
             <button
               onClick={onCustomize}
@@ -159,15 +165,25 @@ export default function HomePage() {
   const [heroSlide, setHeroSlide]     = useState(0);
   const touchStartX = useRef(0);
   const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
+  const [pricing,    setPricing]      = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setProducts(data.slice(0, 8));
-      })
+      .then((data) => { if (Array.isArray(data)) setProducts(data.slice(0, 8)); })
+      .catch(() => {});
+    fetch("/api/customizer-pricing")
+      .then((r) => r.json())
+      .then((data) => { if (data && typeof data === "object") setPricing(data); })
       .catch(() => {});
   }, []);
+
+  const custPriceRange = (() => {
+    const bases    = [pricing["shape_cake"] ?? 160, pricing["shape_heart"] ?? 85, pricing["shape_square"] ?? 85];
+    const maxAddon = (pricing["addon_sprinkles"] ?? 5)
+                   + Math.max(pricing["addon_sticker"] ?? 30, pricing["addon_image"] ?? 30, pricing["addon_writing"] ?? 10);
+    return { min: Math.min(...bases), max: Math.max(...bases) + maxAddon };
+  })();
 
   const handleAdd = (p: DbProduct) => {
     addItem({
@@ -463,6 +479,7 @@ export default function HomePage() {
                     added={addedIds.has(p.id)}
                     onAdd={() => handleAdd(p)}
                     onCustomize={() => setCustProduct(p)}
+                    custPriceRange={custPriceRange}
                   />
                 ))}
           </div>

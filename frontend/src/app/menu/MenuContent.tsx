@@ -56,13 +56,25 @@ export default function MenuContent() {
   const [activeSubCategory, setActiveSubCategory] = useState<SubCat | null>(null);
   const [query, setQuery]                         = useState("");
   const [custProduct, setCustProduct]             = useState<DbProduct | null>(null);
+  const [pricing,     setPricing]                 = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setProducts(data); })
       .finally(() => setLoadingProducts(false));
+    fetch("/api/customizer-pricing")
+      .then((r) => r.json())
+      .then((data) => { if (data && typeof data === "object") setPricing(data); })
+      .catch(() => {});
   }, []);
+
+  const custPriceRange = (() => {
+    const bases    = [pricing["shape_cake"] ?? 160, pricing["shape_heart"] ?? 85, pricing["shape_square"] ?? 85];
+    const maxAddon = (pricing["addon_sprinkles"] ?? 5)
+                   + Math.max(pricing["addon_sticker"] ?? 30, pricing["addon_image"] ?? 30, pricing["addon_writing"] ?? 10);
+    return { min: Math.min(...bases), max: Math.max(...bases) + maxAddon };
+  })();
 
   const displayName    = (p: DbProduct) => lang === "ar" ? (p.name_ar ?? p.name) : p.name;
   const displayCatKey  = (p: DbProduct) => p.subcategory ?? p.category;
@@ -122,7 +134,11 @@ export default function MenuContent() {
           <h3 className="font-playfair font-bold text-[#2D000A] text-sm md:text-base leading-tight mb-0.5 line-clamp-1">
             {displayName(product)}
           </h3>
-          <p className="font-bold text-[#800020] text-sm mb-3">QAR {product.price}</p>
+          {isCustomizable(product) ? (
+            <p className="font-bold text-[#800020] text-sm mb-3">QAR {custPriceRange.min} – {custPriceRange.max}</p>
+          ) : (
+            <p className="font-bold text-[#800020] text-sm mb-3">QAR {product.price}</p>
+          )}
           <div className="w-full bg-[#FF6B9D] group-hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-xl text-center tracking-wide transition-colors duration-200">
             {isCustomizable(product) ? t("menu_customise") : t("menu_add_to_cart")}
           </div>

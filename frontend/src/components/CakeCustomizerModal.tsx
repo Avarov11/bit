@@ -125,6 +125,9 @@ const STEPS = [
   { label: "Topping",   Icon: PenLine  },
 ];
 
+const DEFAULT_BASE_PRICES: Record<string, number> = { cake: 160, heart: 85, square: 85 };
+const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30 };
+
 interface CustSel {
   shape: string;
   flavorType: string;
@@ -406,16 +409,41 @@ export default function CakeCustomizerModal({
   const [custStep,   setCustStep]   = useState(0);
   const [custSel,    setCustSel]    = useState<CustSel>(EMPTY_SEL);
   const [uploading,  setUploading]  = useState(false);
-  const [stickers,        setStickers]        = useState<{ name: string; url: string }[]>([]);
+  const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
-  const imageInputRef                           = useRef<HTMLInputElement>(null);
+  const [rawPricing,        setRawPricing]        = useState<Record<string, number>>({});
+  const imageInputRef                             = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/stickers")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setStickers(data); })
       .catch(() => {});
+    fetch("/api/customizer-pricing")
+      .then((r) => r.json())
+      .then((data) => { if (data && typeof data === "object") setRawPricing(data); })
+      .catch(() => {});
   }, []);
+
+  const BASE_PRICES = {
+    cake:   rawPricing["shape_cake"]   ?? DEFAULT_BASE_PRICES.cake,
+    heart:  rawPricing["shape_heart"]  ?? DEFAULT_BASE_PRICES.heart,
+    square: rawPricing["shape_square"] ?? DEFAULT_BASE_PRICES.square,
+  };
+  const ADDON_PRICES = {
+    sprinkles: rawPricing["addon_sprinkles"] ?? DEFAULT_ADDON_PRICES.sprinkles,
+    writing:   rawPricing["addon_writing"]   ?? DEFAULT_ADDON_PRICES.writing,
+    sticker:   rawPricing["addon_sticker"]   ?? DEFAULT_ADDON_PRICES.sticker,
+    image:     rawPricing["addon_image"]     ?? DEFAULT_ADDON_PRICES.image,
+  };
+  const calcPrice = (): number => {
+    const base    = BASE_PRICES[custSel.shape as keyof typeof BASE_PRICES] ?? 0;
+    const spr     = custSel.sprinkles === "yes" ? ADDON_PRICES.sprinkles : 0;
+    const topping = custSel.topping === "write"   ? ADDON_PRICES.writing
+                  : custSel.topping === "sticker" ? ADDON_PRICES.sticker
+                  : custSel.topping === "image"   ? ADDON_PRICES.image : 0;
+    return base + spr + topping;
+  };
 
   // Reset state whenever product changes
   const [lastProduct, setLastProduct] = useState<DbProduct | null>(null);
@@ -472,7 +500,7 @@ export default function CakeCustomizerModal({
       productName:  product.name,
       productImage: product.image_url ?? "",
       quantity:     1,
-      unitPrice:    product.price,
+      unitPrice:    calcPrice(),
       customization: {
         shape:    SHAPES.find((s) => s.id === custSel.shape)?.label,
         flavor:   flavorLabel,
@@ -643,30 +671,65 @@ export default function CakeCustomizerModal({
               </div>
             </div>
           )}
-          {isWhiteType && (
-            <div>
-              <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">{t("cust_modal_choose_colour")}</p>
-              <div className="flex justify-around">
-                {COLOURS.map((col) => {
-                  const sel = custSel.colour === col.id;
-                  return (
-                    <button key={col.id} onClick={() => setCustSel((p) => ({ ...p, colour: col.id, cakeColor: col.id }))} className="flex flex-col items-center gap-3">
-                      <div
-                        className={cn(
-                          "w-20 h-20 rounded-full border-[5px] transition-all duration-200 flex items-center justify-center shadow-warm-sm",
-                          sel ? "border-[#800020] scale-110 shadow-warm-md" : "border-[rgba(128,0,32,0.12)]"
-                        )}
-                        style={{ backgroundColor: col.hex }}
+          {isWhiteType && (() => {
+            const colGradients: Record<string, string> = {
+              white: "linear-gradient(145deg, #FFFEF9 0%, #F5ECE4 52%, #EDE0D4 100%)",
+              pink:  "linear-gradient(145deg, #FFB8CC 0%, #FF6B9D 52%, #E84C88 100%)",
+              blue:  "linear-gradient(145deg, #D6EDFA 0%, #B2C8D8 52%, #8AAFC8 100%)",
+            };
+            const colSub: Record<string, string> = {
+              white: "Classic Pearl",
+              pink:  "Rose Blush",
+              blue:  "Sky Dream",
+            };
+            return (
+              <div>
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-5">{t("cust_modal_choose_colour")}</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {COLOURS.map((col) => {
+                    const sel = custSel.colour === col.id;
+                    return (
+                      <button
+                        key={col.id}
+                        onClick={() => setCustSel((p) => ({ ...p, colour: col.id, cakeColor: col.id }))}
+                        className="flex flex-col items-center gap-3 group"
                       >
-                        {sel && <Check size={22} className="text-[#800020]" strokeWidth={3} />}
-                      </div>
-                      <span className="text-sm font-bold text-[#800020]">{t(col.tKey)}</span>
-                    </button>
-                  );
-                })}
+                        <div className={cn(
+                          "relative w-[78px] h-[78px] rounded-full transition-all duration-300",
+                          sel
+                            ? "scale-110 shadow-[0_0_0_3px_#800020,0_6px_20px_rgba(128,0,32,0.22)]"
+                            : "shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:scale-105 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.18)]"
+                        )}>
+                          <div
+                            className="w-full h-full rounded-full overflow-hidden relative"
+                            style={{ background: colGradients[col.id] ?? col.hex }}
+                          >
+                            {/* Shimmer highlight */}
+                            <div className="absolute top-2 left-3 w-8 h-4 rounded-full bg-white/45 blur-sm pointer-events-none" />
+                            <div className="absolute top-3.5 left-4.5 w-4 h-2 rounded-full bg-white/65 blur-[1.5px] pointer-events-none" />
+                            {/* Selection check */}
+                            {sel && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-[#800020]/10 rounded-full">
+                                <div className="w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center">
+                                  <Check size={13} className="text-[#800020]" strokeWidth={3.5} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <p className={cn("text-sm font-bold transition-colors leading-tight", sel ? "text-[#800020]" : "text-[#2D000A]/80 group-hover:text-[#800020]")}>
+                            {t(col.tKey)}
+                          </p>
+                          <p className="text-[10px] text-[#A05068]/65 mt-0.5 font-medium">{colSub[col.id]}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       );
     }
@@ -938,8 +1001,30 @@ export default function CakeCustomizerModal({
                   <X size={15} />
                 </button>
               </div>
-              <div className="w-full h-52 bg-white/60 rounded-2xl flex items-center justify-center p-2">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+              <div className="w-full h-56 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
+                <div className="absolute inset-0 bg-white" />
+                <div className="absolute inset-0" style={{background:"radial-gradient(ellipse 70% 55% at 50% 52%, rgba(255,230,238,0.55) 0%, transparent 100%)"}} />
+                <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#F8ECF0] to-transparent" />
+                <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-[#800020] to-transparent opacity-25" />
+                <div className="absolute top-3 right-3.5 bg-[#800020]/8 rounded-full px-2.5 py-0.5">
+                  <span className="text-[8px] font-bold text-[#800020]/45 uppercase tracking-[0.18em]">Preview</span>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center p-2 pb-10">
+                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+                </div>
+                {custSel.shape && (
+                  <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-4 py-2.5 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-[#800020]/50 uppercase tracking-wide">Base</span>
+                      <span className="text-[10px] text-[#800020]/40">QAR {BASE_PRICES[custSel.shape as keyof typeof BASE_PRICES]}</span>
+                      {custSel.sprinkles === "yes" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sprinkles} Sprinkles</span>}
+                      {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing} Writing</span>}
+                      {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker} Sticker</span>}
+                      {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image} Image</span>}
+                    </div>
+                    <span className="font-playfair font-bold text-[#800020] text-base shrink-0">QAR {calcPrice()}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -997,8 +1082,25 @@ export default function CakeCustomizerModal({
             <p className="text-[9px] font-bold text-[#A05068] uppercase tracking-widest mb-1">{t("cust_modal_customising")}</p>
             <h3 className="font-playfair font-bold text-[#2D000A] text-lg leading-tight mb-4 line-clamp-2">{product.name}</h3>
 
-            <div className="w-full aspect-square bg-white/60 rounded-2xl flex items-center justify-center p-3 mb-5 shrink-0">
-              <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+            <div className="w-full aspect-square relative rounded-2xl overflow-hidden mb-5 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.10)]">
+              <div className="absolute inset-0 bg-white/60" />
+              <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+              </div>
+              {custSel.shape && (
+                <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)] flex items-center justify-between gap-2">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[8px] font-bold text-[#800020]/40 uppercase tracking-wide leading-none mb-0.5">Total</span>
+                    <div className="flex flex-wrap gap-x-1.5 gap-y-0">
+                      {custSel.sprinkles === "yes" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sprinkles}</span>}
+                      {custSel.topping === "write"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.writing}</span>}
+                      {custSel.topping === "sticker" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sticker}</span>}
+                      {custSel.topping === "image"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.image}</span>}
+                    </div>
+                  </div>
+                  <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 space-y-0.5 overflow-y-auto">
