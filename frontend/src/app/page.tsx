@@ -119,6 +119,7 @@ export default function HomePage() {
   const HERO_SLIDES = [
     {
       image: "/slide1.jpeg",
+      mobileImage: "/slide1phone.jpeg",
       label: t("home_slide1_label"),
       headline: [t("home_slide1_headline_1"), t("home_slide1_headline_2")],
       sub: t("home_slide1_sub"),
@@ -134,6 +135,7 @@ export default function HomePage() {
     },
     {
       image: "/slide2.jpeg",
+      mobileImage: undefined,
       label: t("home_slide2_label"),
       headline: [t("home_slide2_headline_1"), t("home_slide2_headline_2")],
       sub: t("home_slide2_sub"),
@@ -150,6 +152,7 @@ export default function HomePage() {
     },
     {
       image: "/slide3.jpeg",
+      mobileImage: undefined,
       label: t("home_slide3_label"),
       headline: [t("home_slide3_headline_1"), t("home_slide3_headline_2")],
       sub: t("home_slide3_sub"),
@@ -158,6 +161,39 @@ export default function HomePage() {
       steps: null,
       btn: t("home_slide3_btn"),
       href: "/menu?category=Accessories",
+    },
+    {
+      image: "/slide4.jpeg",
+      mobileImage: "/slide4phone.jpeg",
+      label: t("home_slide4_label"),
+      headline: [t("home_slide4_headline_1"), t("home_slide4_headline_2")],
+      sub: t("home_slide4_sub"),
+      tags: [t("home_slide4_tag_1"), t("home_slide4_tag_2"), t("home_slide4_tag_3"), t("home_slide4_tag_4")],
+      stats: [
+        { value: t("home_slide4_stat1_value"), label: t("home_slide4_stat1_label") },
+        { value: t("home_slide4_stat2_value"), label: t("home_slide4_stat2_label") },
+        { value: t("home_slide4_stat3_value"), label: t("home_slide4_stat3_label") },
+      ],
+      steps: null,
+      btn: t("home_slide4_btn"),
+      href: "/menu?category=Bride+to+Be",
+    },
+    {
+      image: "/slide5.jpeg",
+      mobileImage: undefined,
+      label: t("home_slide5_label"),
+      headline: [t("home_slide5_headline_1"), t("home_slide5_headline_2")],
+      sub: t("home_slide5_sub"),
+      tags: null,
+      stats: null,
+      steps: [
+        { n: "🎂", text: t("home_slide5_step_1") },
+        { n: "🎓", text: t("home_slide5_step_2") },
+        { n: "💍", text: t("home_slide5_step_3") },
+        { n: "🎉", text: t("home_slide5_step_4") },
+      ],
+      btn: t("home_slide5_btn"),
+      href: "/menu?category=Gender+Reveal",
     },
   ];
   const [products, setProducts]       = useState<DbProduct[]>([]);
@@ -231,13 +267,30 @@ export default function HomePage() {
               i === heroSlide ? "opacity-100 z-10" : "opacity-0 z-0"
             )}
           >
+            {/* Mobile image — only for slides that have one, hidden on md+ */}
+            {slide.mobileImage && (
+              <Image
+                key={`mobile-${i}-${i === heroSlide ? "active" : "idle"}`}
+                src={slide.mobileImage}
+                alt={slide.label}
+                fill
+                sizes="(max-width: 767px) 100vw, 0px"
+                className={cn("object-cover md:hidden", i === heroSlide && "animate-kenburns")}
+                priority={i === 0}
+              />
+            )}
+            {/* Desktop image — always shown, or full-time if no mobile variant */}
             <Image
-              key={`img-${i}-${i === heroSlide ? "active" : "idle"}`}
+              key={`desktop-${i}-${i === heroSlide ? "active" : "idle"}`}
               src={slide.image}
               alt={slide.label}
               fill
-              sizes="100vw"
-              className={cn("object-cover", i === heroSlide && "animate-kenburns")}
+              sizes={slide.mobileImage ? "(min-width: 768px) 100vw, 0px" : "100vw"}
+              className={cn(
+                "object-cover",
+                slide.mobileImage && "hidden md:block",
+                i === heroSlide && "animate-kenburns"
+              )}
               priority={i === 0}
             />
             {/* Vignette: strong left panel + bottom fade */}
@@ -342,8 +395,13 @@ export default function HomePage() {
                       className="flex items-center gap-2.5 bg-white/6 border border-white/12 backdrop-blur-sm rounded-xl px-3 py-2.5 sm:px-4 sm:py-3"
                     >
                       <span
-                        className="font-playfair font-bold text-[#FF6B9D] shrink-0 leading-none"
-                        style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)" }}
+                        className={cn(
+                          "shrink-0 leading-none",
+                          /^\d/.test(step.n)
+                            ? "font-playfair font-bold text-[#FF6B9D]"
+                            : "text-xl"
+                        )}
+                        style={/^\d/.test(step.n) ? { fontSize: "clamp(1rem, 2vw, 1.25rem)" } : undefined}
                       >
                         {step.n}
                       </span>
@@ -509,7 +567,7 @@ export default function HomePage() {
                 style={{ boxShadow: "0 24px 64px rgba(128,0,32,0.18)" }}
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=700&q=85"
+                  src="/ourstory.jpeg"
                   alt="Our story"
                   fill
                   className="object-cover"
