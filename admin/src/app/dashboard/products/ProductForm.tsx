@@ -262,11 +262,6 @@ export default function ProductForm({ product }: { product?: Product }) {
             onChange={e => set("is_active", e.target.checked)} />
           Active (visible on site)
         </label>
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-          <input type="checkbox" checked={form.is_customizable}
-            onChange={e => set("is_customizable", e.target.checked)} />
-          Customizable
-        </label>
       </div>
 
       {/* Shape selection */}

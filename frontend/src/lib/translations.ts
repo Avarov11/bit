@@ -14,7 +14,7 @@ const en: Record<string, string> = {
     "Premium handcrafted brownies made with love and the finest ingredients. Every bite tells a story of passion and craft.",
   footer_navigate: "Navigate",
   footer_visit: "Visit Us",
-  footer_address: "123 Dessert Lane, Beirut, Lebanon",
+  footer_address: "Doha, Qatar",
   footer_copyright: "© 2024 Biteez. All rights reserved.",
   footer_crafted: "Crafted with love ♥",
   footer_instagram: "Instagram",
@@ -72,7 +72,7 @@ const en: Record<string, string> = {
   checkout_email: "Email Address",
   checkout_pickup_section: "Pickup Details",
   checkout_boutique_name: "Biteez Boutique",
-  checkout_address: "123 Dessert Lane, Beirut, Lebanon",
+  checkout_address: "Doha, Qatar",
   checkout_hours: "Open daily · 9:00 AM – 9:00 PM",
   checkout_pickup_date: "Pickup Date",
   checkout_pickup_time: "Pickup Time",
@@ -113,7 +113,7 @@ const en: Record<string, string> = {
   success_order_number: "Order Number",
   success_pickup_location: "Pickup Location",
   success_boutique_name: "Biteez Boutique",
-  success_address: "123 Dessert Lane, Beirut, Lebanon",
+  success_address: "Doha, Qatar",
   success_pickup_time: "Pickup Time",
   success_email_note:
     "A confirmation will be sent to your email. For any changes call us at",
@@ -270,7 +270,7 @@ const en: Record<string, string> = {
   about_story_tag: "The Beginning",
   about_story_title: "A Sweet Story Worth Telling",
   about_story_body1:
-    "Biteez was born from a simple belief: that the best gifts come from the kitchen. Founded in Beirut, we set out to turn premium brownies into memorable experiences — for birthdays, graduations, weddings, and every moment that deserves to be celebrated in style.",
+    "Biteez was born from a simple belief: that the best gifts come from the kitchen. Founded in Qatar, we set out to turn premium brownies into memorable experiences — for birthdays, graduations, weddings, and every moment that deserves to be celebrated in style.",
   about_story_body2:
     "Every box is handcrafted to order, using only the finest ingredients sourced from around the world. From Belgian chocolate to Iranian pistachio, we obsess over every detail so you don't have to.",
   about_values_tag: "What We Stand For",
@@ -495,7 +495,7 @@ const ar: Record<string, string> = {
     "براونيز فاخرة مصنوعة يدوياً بحب وأجود المكونات. كل قضمة تحكي قصة شغف وإتقان.",
   footer_navigate: "روابط",
   footer_visit: "زورونا",
-  footer_address: "شارع الحلوى ١٢٣، بيروت، لبنان",
+  footer_address: "الدوحة، قطر",
   footer_copyright: "© ٢٠٢٤ بيتيز. جميع الحقوق محفوظة.",
   footer_crafted: "صُنع بكل حب ♥",
   footer_instagram: "إنستغرام",
@@ -553,7 +553,7 @@ const ar: Record<string, string> = {
   checkout_email: "البريد الإلكتروني",
   checkout_pickup_section: "تفاصيل الاستلام",
   checkout_boutique_name: "بوتيك بيتيز",
-  checkout_address: "شارع الحلوى ١٢٣، بيروت، لبنان",
+  checkout_address: "الدوحة، قطر",
   checkout_hours: "مفتوح يومياً · ٩:٠٠ ص – ٩:٠٠ م",
   checkout_pickup_date: "تاريخ الاستلام",
   checkout_pickup_time: "وقت الاستلام",
@@ -592,7 +592,7 @@ const ar: Record<string, string> = {
   success_order_number: "رقم الطلب",
   success_pickup_location: "موقع الاستلام",
   success_boutique_name: "بوتيك بيتيز",
-  success_address: "شارع الحلوى ١٢٣، بيروت، لبنان",
+  success_address: "الدوحة، قطر",
   success_pickup_time: "وقت الاستلام",
   success_email_note:
     "سيُرسل تأكيد إلى بريدك الإلكتروني. لأي تغييرات اتصل بنا على",
@@ -744,7 +744,7 @@ const ar: Record<string, string> = {
   about_story_tag: "البداية",
   about_story_title: "قصة حلوة تستحق أن تُروى",
   about_story_body1:
-    "وُلدت بيتيز من قناعة بسيطة: أن أجمل الهدايا تأتي من المطبخ. انطلقنا من بيروت لنحوّل البراونيز الفاخرة إلى تجارب لا تُنسى — لأعياد الميلاد والتخرج والأفراح وكل لحظة تستحق الاحتفال.",
+    "وُلدت بيتيز من قناعة بسيطة: أن أجمل الهدايا تأتي من المطبخ. انطلقنا من قطر لنحوّل البراونيز الفاخرة إلى تجارب لا تُنسى — لأعياد الميلاد والتخرج والأفراح وكل لحظة تستحق الاحتفال.",
   about_story_body2:
     "كل علبة تُصنع يدوياً حسب الطلب، باستخدام أجود المكونات من حول العالم. من الشوكولاتة البلجيكية إلى الفستق الإيراني، نهتم بكل تفصيل حتى لا تحتاج أن تقلق.",
   about_values_tag: "ما نؤمن به",

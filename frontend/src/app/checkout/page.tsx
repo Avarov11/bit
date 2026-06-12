@@ -85,57 +85,6 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
-  const sendOrderToWhatsApp = (orderNumber: string) => {
-    const phone = "201019383610";
-    const paymentLabel = t("checkout_card_pickup");
-
-    const isDelivery = form.deliveryMethod === "delivery";
-
-    const message = lang === "ar"
-      ? `🛒 *طلب جديد — #${orderNumber}*
-━━━━━━━━━━━━━━
-👤 *بيانات العميل*
-• الاسم: ${form.name}
-• الهاتف: ${form.phone}
-• البريد: ${form.email}
-
-📦 *المنتجات*
-${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
-
-${isDelivery
-  ? `🚚 *التوصيل*\n• العنوان: ${form.address}\n• التاريخ: ${form.pickupDate}\n• الوقت: ${form.pickupTime}`
-  : `📍 *موعد الاستلام*\n• التاريخ: ${form.pickupDate}\n• الوقت: ${form.pickupTime}`}
-
-💳 *طريقة الدفع:* ${paymentLabel}
-${form.notes ? `\n📝 *ملاحظات:* ${form.notes}` : ""}
-💰 *الإجمالي: QAR ${subtotal}*
-
-🕐 *وقت الطلب:* ${new Date().toLocaleString("ar-EG")}
-━━━━━━━━━━━━━━`.trim()
-      : `🛒 *NEW ORDER — #${orderNumber}*
-━━━━━━━━━━━━━━━━━━━━
-👤 *Customer Info*
-• Name: ${form.name}
-• Phone: ${form.phone}
-• Email: ${form.email}
-
-📦 *Order Items*
-${items.map((i) => `• ${i.productName} × ${i.quantity} — QAR ${i.unitPrice * i.quantity}`).join("\n")}
-
-${isDelivery
-  ? `🚚 *Delivery*\n• Address: ${form.address}\n• Date: ${form.pickupDate}\n• Time: ${form.pickupTime}`
-  : `📍 *Pickup Details*\n• Date: ${form.pickupDate}\n• Time: ${form.pickupTime}`}
-
-💳 *Payment:* ${paymentLabel}
-${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
-💰 *TOTAL: QAR ${subtotal}*
-
-🕐 *Order Time:* ${new Date().toLocaleString("en-EG")}
-━━━━━━━━━━━━━━━━━━━━`.trim();
-
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -182,7 +131,6 @@ ${form.notes ? `\n📝 *Notes:* ${form.notes}` : ""}
       body:    JSON.stringify(payload),
     });
 
-    sendOrderToWhatsApp(orderNumber);
     clearCart();
     router.push(
       `/checkout/success?order=${orderNumber}&date=${form.pickupDate}&time=${encodeURIComponent(form.pickupTime)}&name=${encodeURIComponent(form.name)}`

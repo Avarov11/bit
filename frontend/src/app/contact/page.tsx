@@ -172,26 +172,6 @@ export default function ContactPage() {
                       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
                     </svg>
                   </a>
-                  {/* Facebook */}
-                  <a
-                    href="#"
-                    aria-label="Facebook"
-                    className="w-11 h-11 rounded-xl bg-[#FDF0F3] border border-[#F5D0D8]/60 flex items-center justify-center hover:bg-[#F5D0D8]/60 hover:border-[#F5D0D8] transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-[#800020]" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                    </svg>
-                  </a>
-                  {/* TikTok */}
-                  <a
-                    href="#"
-                    aria-label="TikTok"
-                    className="w-11 h-11 rounded-xl bg-[#FDF0F3] border border-[#F5D0D8]/60 flex items-center justify-center hover:bg-[#F5D0D8]/60 hover:border-[#F5D0D8] transition-all duration-200 hover:-translate-y-0.5"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-[#800020]" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
-                    </svg>
-                  </a>
                   {/* WhatsApp */}
                   <a
                     href="https://wa.me/97450000000"

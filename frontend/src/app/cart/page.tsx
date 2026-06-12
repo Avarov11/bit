@@ -65,18 +65,18 @@ function CartCard({ item, onRemove, onQty, t }: {
           <div className="flex items-center gap-2">
             <button
               onClick={() => onQty(item.quantity - 1)}
-              className="w-7 h-7 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] hover:text-[#800020] transition-colors"
+              className="w-10 h-10 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] hover:text-[#800020] transition-colors"
             >
-              <Minus size={11} />
+              <Minus size={14} />
             </button>
-            <span className="w-5 text-center text-sm font-bold text-[#2D000A]">
+            <span className="w-6 text-center text-sm font-bold text-[#2D000A]">
               {item.quantity}
             </span>
             <button
               onClick={() => onQty(item.quantity + 1)}
-              className="w-7 h-7 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] hover:text-[#800020] transition-colors"
+              className="w-10 h-10 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] hover:text-[#800020] transition-colors"
             >
-              <Plus size={11} />
+              <Plus size={14} />
             </button>
           </div>
           <span className="font-playfair font-bold text-[#800020] text-lg">

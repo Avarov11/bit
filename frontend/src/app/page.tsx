@@ -640,26 +640,14 @@ export default function HomePage() {
                 {t("footer_tagline")}
               </p>
               <div className="flex gap-4 mt-6">
-                {(
-                  [
-                    {
-                      key: "footer_instagram",
-                      href: "https://www.instagram.com/biteezqa?igsh=NWVuc2Eya2xqMm1y",
-                    },
-                    { key: "footer_facebook", href: "#" },
-                    { key: "footer_tiktok", href: "#" },
-                  ] as const
-                ).map(({ key, href }) => (
-                  <a
-                    key={key}
-                    href={href}
-                    target={href !== "#" ? "_blank" : undefined}
-                    rel={href !== "#" ? "noopener noreferrer" : undefined}
-                    className="text-[11px] font-semibold tracking-widest text-white/30 uppercase hover:text-[#FF6B9D] transition-colors"
-                  >
-                    {t(key)}
-                  </a>
-                ))}
+                <a
+                  href="https://www.instagram.com/biteezqa?igsh=NWVuc2Eya2xqMm1y"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-semibold tracking-widest text-white/30 uppercase hover:text-[#FF6B9D] transition-colors"
+                >
+                  {t("footer_instagram")}
+                </a>
               </div>
             </div>
 

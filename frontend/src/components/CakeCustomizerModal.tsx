@@ -368,7 +368,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "" }: { shape: st
       <button
         onClick={() => setView(v => v === "side" ? "top" : "side")}
         aria-label={view === "side" ? "View from top" : "View from side"}
-        className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1 shadow-sm text-[#800020] transition-colors"
+        className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm text-[#800020] transition-colors"
       >
         {view === "side" ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
@@ -421,6 +421,12 @@ export default function CakeCustomizerModal({
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const [rawPricing,        setRawPricing]        = useState<Record<string, number>>({});
   const imageInputRef                             = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!product) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [product]);
 
   useEffect(() => {
     const category = product?.category ?? "Birthday";
@@ -1011,8 +1017,8 @@ export default function CakeCustomizerModal({
                     {t("cust_modal_step_desc_" + custStep)}
                   </p>
                 </div>
-                <button onClick={onClose} className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors shrink-0 mt-0.5">
-                  <X size={15} />
+                <button onClick={onClose} className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors shrink-0 mt-0.5">
+                  <X size={16} />
                 </button>
               </div>
               <div className="w-full h-56 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
@@ -1051,13 +1057,13 @@ export default function CakeCustomizerModal({
                 <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">{t("cust_modal_review_header")}</p>
                 <h2 className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{product.name}</h2>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
+              <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
             </div>
           )}
           <div className="max-w-lg mx-auto px-4 py-5 pb-32">{renderStep()}</div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 py-4">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {custStep < 4 ? (
             <div className="max-w-lg mx-auto flex gap-3">
               <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
