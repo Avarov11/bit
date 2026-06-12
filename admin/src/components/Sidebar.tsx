@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X, LayoutDashboard, ShoppingBag, Package, LogOut } from "lucide-react";
+import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const nav = [
@@ -22,6 +22,12 @@ const nav = [
     label: "Products",
     Icon:  Package,
     desc:  "Product catalogue",
+  },
+  {
+    href:  "/dashboard/stickers",
+    label: "Stickers",
+    Icon:  Layers,
+    desc:  "Manage sticker library",
   },
 ];
 

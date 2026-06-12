@@ -423,10 +423,14 @@ export default function CakeCustomizerModal({
   const imageInputRef                             = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/stickers")
+    const category = product?.category ?? "Birthday";
+    fetch(`/api/stickers?category=${encodeURIComponent(category)}`)
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setStickers(data); })
       .catch(() => {});
+  }, [product?.category]);
+
+  useEffect(() => {
     fetch("/api/customizer-pricing")
       .then((r) => r.json())
       .then((data) => { if (data && typeof data === "object") setRawPricing(data); })
