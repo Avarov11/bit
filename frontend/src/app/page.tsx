@@ -199,7 +199,18 @@ export default function HomePage() {
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
   const [heroSlide, setHeroSlide]     = useState(0);
+  const [prevSlide,  setPrevSlide]    = useState<number | null>(null);
   const touchStartX = useRef(0);
+
+  const goToSlide = (next: number | ((s: number) => number)) => {
+    setHeroSlide((cur) => {
+      const n = typeof next === "function" ? next(cur) : next;
+      if (n === cur) return cur;
+      setPrevSlide(cur);
+      setTimeout(() => setPrevSlide(null), 1200);
+      return n;
+    });
+  };
   const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
   const [pricing,    setPricing]      = useState<Record<string, number>>({});
 
@@ -253,8 +264,8 @@ export default function HomePage() {
         onTouchEnd={(e) => {
           const diff = touchStartX.current - e.changedTouches[0].clientX;
           if (Math.abs(diff) > 50) {
-            if (diff > 0) setHeroSlide(s => (s + 1) % HERO_SLIDES.length);
-            else setHeroSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+            if (diff > 0) goToSlide(s => (s + 1) % HERO_SLIDES.length);
+            else goToSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
           }
         }}
       >
@@ -264,7 +275,7 @@ export default function HomePage() {
             key={i}
             className={cn(
               "absolute inset-0 transition-opacity duration-[1200ms]",
-              i === heroSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+              i === heroSlide ? "opacity-100 z-20" : i === prevSlide ? "opacity-100 z-10" : "opacity-0 z-0"
             )}
           >
             {/* Mobile image — only for slides that have one, hidden on md+ */}
@@ -435,7 +446,7 @@ export default function HomePage() {
             {HERO_SLIDES.map((_, i) => (
               <button
                 key={i}
-                onClick={() => setHeroSlide(i)}
+                onClick={() => goToSlide(i)}
                 aria-label={`Slide ${i + 1}`}
                 className="relative rounded-full overflow-hidden transition-all duration-300"
                 style={{
@@ -461,14 +472,14 @@ export default function HomePage() {
             </span>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setHeroSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+                onClick={() => goToSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Previous"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
-                onClick={() => setHeroSlide(s => (s + 1) % HERO_SLIDES.length)}
+                onClick={() => goToSlide(s => (s + 1) % HERO_SLIDES.length)}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Next"
               >
