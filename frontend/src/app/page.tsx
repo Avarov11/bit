@@ -50,6 +50,7 @@ function ProductCard({
               alt={product.name}
               fill
               sizes="224px"
+              priority
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </div>
@@ -281,18 +282,16 @@ export default function HomePage() {
             {/* Mobile image — only for slides that have one, hidden on md+ */}
             {slide.mobileImage && (
               <Image
-                key={`mobile-${i}-${i === heroSlide ? "active" : "idle"}`}
                 src={slide.mobileImage}
                 alt={slide.label}
                 fill
                 sizes="(max-width: 767px) 100vw, 0px"
                 className={cn("object-cover md:hidden", i === heroSlide && "animate-kenburns")}
-                priority={i === 0}
+                priority
               />
             )}
             {/* Desktop image — always shown, or full-time if no mobile variant */}
             <Image
-              key={`desktop-${i}-${i === heroSlide ? "active" : "idle"}`}
               src={slide.image}
               alt={slide.label}
               fill
@@ -302,7 +301,7 @@ export default function HomePage() {
                 slide.mobileImage && "hidden md:block",
                 i === heroSlide && "animate-kenburns"
               )}
-              priority={i === 0}
+              priority
             />
             {/* Vignette: strong left panel + bottom fade */}
             <div
@@ -581,6 +580,7 @@ export default function HomePage() {
                   src="/ourstory.jpeg"
                   alt="Our story"
                   fill
+                  sizes="(max-width: 768px) 90vw, 45vw"
                   className="object-cover"
                 />
               </div>
