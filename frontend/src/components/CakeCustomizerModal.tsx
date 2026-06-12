@@ -408,6 +408,14 @@ export default function CakeCustomizerModal({
   const router    = useRouter();
   const [custStep,   setCustStep]   = useState(0);
   const [custSel,    setCustSel]    = useState<CustSel>(EMPTY_SEL);
+
+  const availableShapes  = product?.allowed_shapes?.length
+    ? SHAPES.filter(s => product.allowed_shapes.includes(s.id))
+    : SHAPES;
+  const availableFlavors = product?.allowed_flavors?.length
+    ? FLAVORS.filter(f => product.allowed_flavors.includes(f.id))
+    : FLAVORS;
+  const allowedToppings  = product?.allowed_toppings ?? ["write", "sticker", "image"];
   const [uploading,  setUploading]  = useState(false);
   const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -583,9 +591,6 @@ export default function CakeCustomizerModal({
     }
 
     if (custStep === 0) {
-      const availableShapes = product.category === "Birthday"
-        ? SHAPES.filter((s) => s.id !== "heart")
-        : SHAPES;
       return (
       <div>
         <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_shape_title")}</h2>
@@ -626,8 +631,8 @@ export default function CakeCustomizerModal({
         <div>
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_flavor_title")}</h2>
           <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_flavor_subtitle")}</p>
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            {FLAVORS.map((f) => (
+          <div className={cn("grid gap-3 mb-5", availableFlavors.length === 1 ? "grid-cols-1 max-w-[50%]" : "grid-cols-2")}>
+            {availableFlavors.map((f) => (
               <OptionCard
                 key={f.id} id={f.id} emoji={f.emoji} label={t(f.tKey)} sub={t(f.subKey)}
                 selected={custSel.flavorType === f.id}
@@ -755,12 +760,13 @@ export default function CakeCustomizerModal({
 
     if (custStep === 3) {
       const shape        = custSel.shape;
-      const showSticker  = shape === "square" || shape === "cake";
-      const showImage    = shape === "cake";
+      const showSticker  = allowedToppings.includes("sticker") && (shape === "square" || shape === "cake");
+      const showImage    = allowedToppings.includes("image")   && shape === "cake";
+      const showWrite    = allowedToppings.includes("write");
       const hasWordLimit = shape === "heart" || shape === "square";
       const limit = hasWordLimit ? 3 : Infinity;
       const count = custSel.toppingText.trim() === "" ? 0 : custSel.toppingText.trim().split(/\s+/).length;
-      const cardCols = showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
+      const cardCols = showWrite && showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
       return (
         <div className="space-y-5">
@@ -770,22 +776,26 @@ export default function CakeCustomizerModal({
           </div>
 
           {/* Write + Image option cards */}
-          <div className={cn("grid gap-3", cardCols)}>
-            <OptionCard
-              id="write" emoji="✍️" label={t("cust_modal_write")}
-              sub={hasWordLimit ? t("cust_modal_write_max3") : t("cust_modal_write_no_limit")}
-              selected={custSel.topping === "write"}
-              onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
-            />
-            {showImage && (
-              <OptionCard
-                id="image" emoji="📷" label={t("cust_modal_image")}
-                sub={t("cust_modal_image_sub")}
-                selected={custSel.topping === "image"}
-                onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}
-              />
-            )}
-          </div>
+          {(showWrite || showImage) && (
+            <div className={cn("grid gap-3", cardCols)}>
+              {showWrite && (
+                <OptionCard
+                  id="write" emoji="✍️" label={t("cust_modal_write")}
+                  sub={hasWordLimit ? t("cust_modal_write_max3") : t("cust_modal_write_no_limit")}
+                  selected={custSel.topping === "write"}
+                  onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
+                />
+              )}
+              {showImage && (
+                <OptionCard
+                  id="image" emoji="📷" label={t("cust_modal_image")}
+                  sub={t("cust_modal_image_sub")}
+                  selected={custSel.topping === "image"}
+                  onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}
+                />
+              )}
+            </div>
+          )}
 
           {/* Write textarea */}
           {custSel.topping === "write" && (

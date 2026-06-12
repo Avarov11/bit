@@ -1,11 +1,10 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/types";
 
 type FormData = Omit<Product, "id" | "created_at" | "updated_at">;
 
-const CATEGORIES = ["Customized", "Accessories", "Boxes"] as const;
 const SUBCATEGORIES: Record<string, string[]> = {
   Customized:  ["Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal"],
   Accessories: ["Candles", "Balloons"],
@@ -13,22 +12,55 @@ const SUBCATEGORIES: Record<string, string[]> = {
 };
 const TAGS = ["Bestseller", "Signature", "New", "Custom"] as const;
 
+const ALL_SHAPES = [
+  { id: "cake",   label: "Full Cake",       icon: "🎂" },
+  { id: "heart",  label: "Heart",           icon: "❤️" },
+  { id: "square", label: "Square",          icon: "🟫" },
+];
+
+const ALL_FLAVORS = [
+  { id: "chocolate", label: "Chocolate",       icon: "🍫" },
+  { id: "white",     label: "White Chocolate", icon: "🤍" },
+];
+
+const ALL_TOPPINGS = [
+  { id: "write",   label: "Writing",      icon: "✍️" },
+  { id: "sticker", label: "Sticker",      icon: "🎨" },
+  { id: "image",   label: "Image Upload", icon: "📷" },
+];
+
 const EMPTY: FormData = {
   name: "", name_ar: "", description: "", description_ar: "",
   category: "Customized", subcategory: null,
   price: 0, image_url: "", tag: null,
   is_customizable: false, is_active: true, sort_order: 0,
+  allowed_shapes:   ["cake", "heart", "square"],
+  allowed_flavors:  ["chocolate", "white"],
+  allowed_toppings: ["write", "sticker", "image"],
 };
 
 export default function ProductForm({ product }: { product?: Product }) {
   const router  = useRouter();
   const isEdit  = !!product;
-  const [form, setForm]         = useState<FormData>(product ? { ...product } : EMPTY);
+  const [form, setForm]         = useState<FormData>(product ? {
+    ...product,
+    allowed_shapes:   product.allowed_shapes   ?? ["cake", "heart", "square"],
+    allowed_flavors:  product.allowed_flavors  ?? ["chocolate", "white"],
+    allowed_toppings: product.allowed_toppings ?? ["write", "sticker", "image"],
+  } : EMPTY);
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setCategories(data); })
+      .catch(() => {});
+  }, []);
 
   function set(field: keyof FormData, value: unknown) {
     setForm(f => ({ ...f, [field]: value }));
@@ -107,7 +139,7 @@ export default function ProductForm({ product }: { product?: Product }) {
           <select value={form.category}
             onChange={e => { set("category", e.target.value); set("subcategory", null); }}
             className="input">
-            {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            {categories.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
         <Field label="Subcategory">
@@ -236,6 +268,120 @@ export default function ProductForm({ product }: { product?: Product }) {
           Customizable
         </label>
       </div>
+
+      {/* Shape selection */}
+      <Field label="Available Shapes">
+        <p className="text-xs text-gray-400 mb-3">Choose which shapes customers can pick for this product.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {ALL_SHAPES.map(({ id, label, icon }) => {
+            const checked = (form.allowed_shapes ?? []).includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? (form.allowed_shapes ?? []).filter(s => s !== id)
+                    : [...(form.allowed_shapes ?? []), id];
+                  set("allowed_shapes", next);
+                }}
+                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
+                  checked
+                    ? "border-[#800020] bg-[#800020]/5"
+                    : "border-gray-200 bg-gray-50 opacity-50"
+                }`}
+              >
+                {/* Checkmark */}
+                {checked && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-2xl">{icon}</span>
+                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {(form.allowed_shapes ?? []).length === 0 && (
+          <p className="text-xs text-red-500 mt-2">Select at least one shape.</p>
+        )}
+      </Field>
+
+      {/* Flavor selection */}
+      <Field label="Available Flavors">
+        <p className="text-xs text-gray-400 mb-3">Choose which flavors customers can pick.</p>
+        <div className="grid grid-cols-2 gap-3">
+          {ALL_FLAVORS.map(({ id, label, icon }) => {
+            const checked = (form.allowed_flavors ?? []).includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? (form.allowed_flavors ?? []).filter(f => f !== id)
+                    : [...(form.allowed_flavors ?? []), id];
+                  set("allowed_flavors", next);
+                }}
+                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
+                  checked ? "border-[#800020] bg-[#800020]/5" : "border-gray-200 bg-gray-50 opacity-50"
+                }`}
+              >
+                {checked && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-2xl">{icon}</span>
+                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {(form.allowed_flavors ?? []).length === 0 && (
+          <p className="text-xs text-red-500 mt-2">Select at least one flavor.</p>
+        )}
+      </Field>
+
+      {/* Topping selection */}
+      <Field label="Available Toppings">
+        <p className="text-xs text-gray-400 mb-3">Choose which topping options customers can add.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {ALL_TOPPINGS.map(({ id, label, icon }) => {
+            const checked = (form.allowed_toppings ?? []).includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? (form.allowed_toppings ?? []).filter(t => t !== id)
+                    : [...(form.allowed_toppings ?? []), id];
+                  set("allowed_toppings", next);
+                }}
+                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
+                  checked ? "border-[#800020] bg-[#800020]/5" : "border-gray-200 bg-gray-50 opacity-50"
+                }`}
+              >
+                {checked && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-2xl">{icon}</span>
+                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 

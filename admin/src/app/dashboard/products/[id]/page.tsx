@@ -2,6 +2,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { notFound } from "next/navigation";
 import ProductForm from "../ProductForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditProductPage({ params }: { params: { id: string } }) {
   const { data: product } = await supabaseAdmin
     .from("products")

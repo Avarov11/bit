@@ -65,6 +65,9 @@ export interface Product {
   is_customizable: boolean;
   is_active: boolean;
   sort_order: number;
+  allowed_shapes: string[];
+  allowed_flavors: string[];
+  allowed_toppings: string[];
   created_at: string;
   updated_at: string;
 }

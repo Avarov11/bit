@@ -12,4 +12,7 @@ export interface DbProduct {
   is_customizable: boolean;
   is_active: boolean;
   sort_order: number;
+  allowed_shapes: string[];
+  allowed_flavors: string[];
+  allowed_toppings: string[];
 }
