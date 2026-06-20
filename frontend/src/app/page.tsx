@@ -287,7 +287,9 @@ export default function HomePage() {
                 fill
                 sizes="(max-width: 767px) 100vw, 0px"
                 className={cn("object-cover md:hidden", i === heroSlide && "animate-kenburns")}
-                priority
+                priority={i === 0}
+                loading={i === 0 ? "eager" : "lazy"}
+                quality={85}
               />
             )}
             {/* Desktop image — always shown, or full-time if no mobile variant */}
@@ -301,7 +303,9 @@ export default function HomePage() {
                 slide.mobileImage && "hidden md:block",
                 i === heroSlide && "animate-kenburns"
               )}
-              priority
+              priority={i === 0}
+              loading={i === 0 ? "eager" : "lazy"}
+              quality={85}
             />
             {/* Vignette: strong left panel + bottom fade */}
             <div
