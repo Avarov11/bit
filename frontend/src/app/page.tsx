@@ -288,7 +288,6 @@ export default function HomePage() {
                 sizes="(max-width: 767px) 100vw, 0px"
                 className={cn("object-cover md:hidden", i === heroSlide && "animate-kenburns")}
                 priority={i === 0}
-                loading={i === 0 ? "eager" : "lazy"}
                 quality={85}
               />
             )}
@@ -304,7 +303,6 @@ export default function HomePage() {
                 i === heroSlide && "animate-kenburns"
               )}
               priority={i === 0}
-              loading={i === 0 ? "eager" : "lazy"}
               quality={85}
             />
             {/* Vignette: strong left panel + bottom fade */}
