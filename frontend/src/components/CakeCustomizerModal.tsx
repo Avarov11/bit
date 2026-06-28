@@ -193,16 +193,16 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
         )}
       </div>
     ) : null;
-    // eslint-disable-next-line @next/next/no-img-element
     sideContent = (
       <div className="relative w-full h-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
         {photoOverlay}
       </div>
     );
-    // eslint-disable-next-line @next/next/no-img-element
     topContent = (
       <div className="relative w-full h-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={topImg} alt="Full Cake top view" className="w-full h-full object-contain" />
         {photoOverlay}
       </div>

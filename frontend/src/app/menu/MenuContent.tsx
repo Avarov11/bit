@@ -56,25 +56,13 @@ export default function MenuContent() {
   const [activeSubCategory, setActiveSubCategory] = useState<SubCat | null>(null);
   const [query, setQuery]                         = useState("");
   const [custProduct, setCustProduct]             = useState<DbProduct | null>(null);
-  const [pricing,     setPricing]                 = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setProducts(data); })
       .finally(() => setLoadingProducts(false));
-    fetch("/api/customizer-pricing")
-      .then((r) => r.json())
-      .then((data) => { if (data && typeof data === "object") setPricing(data); })
-      .catch(() => {});
   }, []);
-
-  const custPriceRange = (() => {
-    const bases    = [pricing["shape_cake"] ?? 160, pricing["shape_heart"] ?? 85, pricing["shape_square"] ?? 85];
-    const maxAddon = (pricing["addon_sprinkles"] ?? 5)
-                   + Math.max(pricing["addon_sticker"] ?? 30, pricing["addon_image"] ?? 30, pricing["addon_writing"] ?? 10);
-    return { min: Math.min(...bases), max: Math.max(...bases) + maxAddon };
-  })();
 
   const displayName    = (p: DbProduct) => lang === "ar" ? (p.name_ar ?? p.name) : p.name;
   const displayCatKey  = (p: DbProduct) => p.subcategory ?? p.category;
