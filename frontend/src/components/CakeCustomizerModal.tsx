@@ -24,33 +24,8 @@ async function uploadToOrders(file: File, folder: string): Promise<string | null
 const SHAPES = [
   {
     id: "cake", label: "Full Cake",
-    svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
-        <defs>
-          <linearGradient id="sh-ck-body" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"  stopColor="#4A0F1C" />
-            <stop offset="45%" stopColor="#7A1F35" />
-            <stop offset="100%" stopColor="#4A0F1C" />
-          </linearGradient>
-          <linearGradient id="sh-ck-top" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#9B2845" />
-            <stop offset="100%" stopColor="#C04060" />
-          </linearGradient>
-        </defs>
-        <ellipse cx="38" cy="73" rx="34" ry="4" fill="#800020" opacity="0.18" />
-        <rect x="4" y="48" width="60" height="18" fill="url(#sh-ck-body)" />
-        <polygon points="64,48 74,39 74,57 64,66" fill="#800020" />
-        <polygon points="4,48 64,48 74,39 14,39" fill="url(#sh-ck-top)" />
-        <rect x="4" y="44" width="60" height="8" fill="white" />
-        <polygon points="64,44 74,35 74,43 64,52" fill="white" opacity="0.75" />
-        <polygon points="4,44 64,44 74,35 14,35" fill="white" opacity="0.88" />
-        {[10,20,30,40,50,60].map((x,i) => (
-          <rect key={x} x={x-3} y={44} width={6} height={6+(i%2)*6} rx={3} fill="white" opacity="0.88" />
-        ))}
-        {[12,24,36,48,60].map(x => <circle key={x} cx={x} cy={58} r={1.8} fill="white" opacity="0.65" />)}
-        <line x1="4" y1="48" x2="4" y2="66" stroke="white" strokeWidth="2" opacity="0.2" />
-      </svg>
-    ),
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes/brown1.png",
+    svg: null,
   },
   {
     id: "heart", label: "Heart",
@@ -154,13 +129,13 @@ const EMPTY_SEL: CustSel = {
 
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
-function CakePreview({ shape, colorId, text = "", stickerUrl = "" }: { shape: string; colorId: string; text?: string; stickerUrl?: string }) {
+function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
   const [view, setView] = useState<"side"|"top">("side");
 
   useEffect(() => { setView("side"); }, [shape]);
   useEffect(() => {
-    if (text || stickerUrl) setView("top");
-  }, [!!text, !!stickerUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (text || stickerUrl || imageUrl) setView("top");
+  }, [!!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fixed brownie body — white/cream, never changes
   const bc = { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" };
@@ -183,73 +158,54 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "" }: { shape: st
   let topContent: JSX.Element;
 
   if (!shape || shape === "cake") {
-    // Rectangle brownie slab — front 140×66, perspective shift (+18,−16), centered in 260×200
-    sideContent = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="cp-rf" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={bc.dark}   />
-            <stop offset="45%"  stopColor={bc.mid}    />
-            <stop offset="100%" stopColor={bc.dark}   />
-          </linearGradient>
-          <linearGradient id="cp-rr" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={bc.dark}   />
-            <stop offset="100%" stopColor={bc.shadow} />
-          </linearGradient>
-          <linearGradient id="cp-rt" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={sc.lo} />
-            <stop offset="100%" stopColor={sc.hi} />
-          </linearGradient>
-          <clipPath id="sc-rs"><polygon points="57,94 189,94 207,79 75,79" /></clipPath>
-        </defs>
-        <ellipse cx="130" cy="188" rx="78" ry="6" fill="rgba(128,0,32,0.13)" />
-        <polygon points="51,180 191,180 209,164 69,164" fill={plate} />
-        <polygon points="51,176 191,176 209,160 69,160" fill={plateLip} />
-        <rect x="51" y="108" width="140" height="66" fill="url(#cp-rf)" />
-        <polygon points="191,108 209,92 209,158 191,174" fill="url(#cp-rr)" />
-        <polygon points="51,108 191,108 209,92 69,92" fill="url(#cp-rt)" />
-        <path d="M 63,102 C 78,98 93,103 108,99 C 123,95 138,100 153,96 C 167,93 180,97 197,94" stroke={sc.hi} strokeWidth="4" fill="none" strokeLinecap="round" opacity={0.75} />
-        <path d="M 68,97 C 83,93 98,98 113,94 C 128,90 143,95 158,91 C 173,87 186,92 202,89" stroke={sc.hi} strokeWidth="3" fill="none" strokeLinecap="round" opacity={0.6} />
-        <polygon points="191,108 209,92 209,102 191,120" fill={sc.hi} opacity={0.55} />
-        <path d="M 51,108 L 191,108 C 185,130 174,130 168,108 C 162,138 151,138 145,108 C 139,126 128,126 122,108 C 116,142 105,142 99,108 C 93,132 82,132 76,108 C 70,134 57,134 51,108 Z" fill={sc.hi} opacity={0.88} />
-        <path d="M 51,108 L 191,108 C 185,118 174,118 168,108 C 162,128 151,128 145,108 C 139,118 128,118 122,108 C 116,132 105,132 99,108 C 93,122 82,122 76,108 C 70,124 57,124 51,108 Z" fill="white" opacity={0.28} />
+    const BASE = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes";
+    const colorToFile: Record<string, { s: string; t: string }> = {
+      brown:  { s: "brown1.png",  t: "brown2.png"  },
+      beige:  { s: "beige1.png",  t: "beige2.png"  }, // beige1.png: upload to bucket if missing
+      black:  { s: "black1.png",  t: "black2.png"  },
+      pink:   { s: "red1.png",    t: "red2.png"    },
+      blue:   { s: "blue1.png",   t: "blue2.png"   },
+      white:  { s: "white1.png",  t: "white2.png"  },
+    };
+    const files = colorToFile[colorId] ?? colorToFile["brown"];
+    const sideImg = `${BASE}/${files.s}`;
+    const topImg  = `${BASE}/${files.t}`;
+    // Preload both images so view-switch is instant
+    if (typeof window !== "undefined") {
+      [sideImg, topImg].forEach(src => { const i = new window.Image(); i.src = src; });
+    }
 
-        {[66,100,130,162,186].map(x => (
-          <circle key={x} cx={x} cy={142} r={3.5} fill="white" opacity="0.62" />
-        ))}
-        <line x1="51" y1="108" x2="51" y2="174" stroke="white" strokeWidth="2.5" opacity="0.25" />
-        {stickerUrl && <image href={stickerUrl} x="90" y="78" width="78" height="18" clipPath="url(#sc-rs)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="130" y="87" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="10" fontFamily="Georgia, serif">{text}</text>
-          <text x="129" y="86" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="10" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
+    const photoOverlay = (text || stickerUrl || imageUrl) ? (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
+        )}
+        {stickerUrl && !imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
+        )}
+        {text && (
+          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
+            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
+            {text}
+          </p>
+        )}
+      </div>
+    ) : null;
+    // eslint-disable-next-line @next/next/no-img-element
+    sideContent = (
+      <div className="relative w-full h-full">
+        <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
+        {photoOverlay}
+      </div>
     );
+    // eslint-disable-next-line @next/next/no-img-element
     topContent = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="ct-rtg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={sc.hi} />
-            <stop offset="100%" stopColor={sc.lo} />
-          </linearGradient>
-          <clipPath id="sc-rt"><rect x="56" y="58" width="148" height="84" rx="2" /></clipPath>
-        </defs>
-        <rect x="42" y="44" width="176" height="112" rx="6" fill={plate} />
-        <rect x="48" y="50" width="164" height="100" rx="4" fill="white" />
-        <rect x="54" y="56" width="152" height="88" rx="2" fill="url(#ct-rtg)" />
-        <ellipse cx="104" cy="76" rx="34" ry="12" fill="white" opacity="0.17" transform="rotate(-15,104,76)" />
-        {[58,78,98,118,138,158,178,196].map((x,i) => (
-          <rect key={x} x={x-3} y={56} width={6} height={4+(i%3)*3} rx={3} fill="white" opacity={0.82} />
-        ))}
-        {[68,102,136,170,200].map(x => (
-          <circle key={x} cx={x} cy={132} r={3.5} fill="white" opacity={0.62} />
-        ))}
-        {stickerUrl && <image href={stickerUrl} x="74" y="60" width="112" height="80" clipPath="url(#sc-rt)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="14" fontFamily="Georgia, serif">{text}</text>
-          <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="14" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
+      <div className="relative w-full h-full">
+        <img src={topImg} alt="Full Cake top view" className="w-full h-full object-contain" />
+        {photoOverlay}
+      </div>
     );
   } else if (shape === "heart") {
     const HP  = "M130,176 C104,158 58,128 58,95 C58,68 76,54 100,54 C114,54 124,63 130,75 C136,63 146,54 160,54 C184,54 202,68 202,95 C202,128 156,158 130,176Z";
@@ -480,6 +436,16 @@ export default function CakeCustomizerModal({
     }
   }
 
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  useEffect(() => {
+    if (custSel.topping === "image" && custSel.imageFile) {
+      const url = URL.createObjectURL(custSel.imageFile);
+      setPreviewImageUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setPreviewImageUrl("");
+  }, [custSel.imageFile, custSel.topping]);
+
   if (!product) return null;
 
   const canProceed = (): boolean => {
@@ -628,7 +594,12 @@ export default function CakeCustomizerModal({
                     <Check size={10} className="text-white" strokeWidth={3} />
                   </span>
                 )}
-                <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
+                {shape.photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={shape.photo} alt={shape.label} className="w-full h-36 md:h-40 object-cover" />
+                ) : (
+                  <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
+                )}
                 <div className="p-3 md:p-4">
                   <p className="font-playfair font-bold text-[#2D000A] text-sm md:text-base">{t("cust_modal_shape_" + shape.id)}</p>
                 </div>
@@ -1027,7 +998,7 @@ export default function CakeCustomizerModal({
                   <X size={16} />
                 </button>
               </div>
-              <div className="w-full h-56 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
+              <div className="w-full h-80 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
                 <div className="absolute inset-0 bg-white" />
                 <div className="absolute inset-0" style={{background:"radial-gradient(ellipse 70% 55% at 50% 52%, rgba(255,230,238,0.55) 0%, transparent 100%)"}} />
                 <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#F8ECF0] to-transparent" />
@@ -1035,8 +1006,8 @@ export default function CakeCustomizerModal({
                 <div className="absolute top-3 right-3.5 bg-[#800020]/8 rounded-full px-2.5 py-0.5">
                   <span className="text-[8px] font-bold text-[#800020]/45 uppercase tracking-[0.18em]">Preview</span>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center p-2 pb-10">
-                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+                <div className="absolute inset-0 flex items-center justify-center pb-10">
+                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
                 </div>
                 {custSel.shape && (
                   <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-4 py-2.5 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
@@ -1111,7 +1082,7 @@ export default function CakeCustomizerModal({
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden mb-5 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 bg-white/60" />
               <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} />
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
               </div>
               {custSel.shape && (
                 <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)] flex items-center justify-between gap-2">

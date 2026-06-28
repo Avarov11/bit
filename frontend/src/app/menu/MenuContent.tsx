@@ -134,11 +134,6 @@ export default function MenuContent() {
           <h3 className="font-playfair font-bold text-[#2D000A] text-sm md:text-base leading-tight mb-0.5 line-clamp-1">
             {displayName(product)}
           </h3>
-          {isCustomizable(product) ? (
-            <p className="font-bold text-[#800020] text-sm mb-3">QAR {custPriceRange.min} – {custPriceRange.max}</p>
-          ) : (
-            <p className="font-bold text-[#800020] text-sm mb-3">QAR {product.price}</p>
-          )}
           <div className="w-full bg-[#FF6B9D] group-hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-xl text-center tracking-wide transition-colors duration-200">
             {isCustomizable(product) ? t("menu_customise") : t("menu_add_to_cart")}
           </div>
