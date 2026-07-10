@@ -299,7 +299,7 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       {/* Views + sprinkle overlay isolated so they can never reach the nav buttons */}
       <div className="absolute inset-0 overflow-hidden">
         {views[idx]}
-        <SprinkleOverlay key={animKey} active={sprinkles === "yes"} />
+        <SprinkleOverlay key={"sp-" + animKey} active={sprinkles === "yes"} />
       </div>
       {/* Nav buttons are siblings of the inner container — no stacking conflict */}
       <button
