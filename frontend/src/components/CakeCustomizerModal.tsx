@@ -107,11 +107,17 @@ const SPRINKLES: SP[] = (() => {
     const a=r()*Math.PI*2, d=110+r()*90;
     return { id, x:8+r()*84, y:8+r()*84, rot:r()*360,
       color:SP_COLORS[Math.floor(r()*SP_COLORS.length)],
-      w:7+r()*5, h:3+r()*2, delay:r()*0.55, sx:Math.cos(a)*d, sy:Math.sin(a)*d };
+      w:7+r()*5, h:3+r()*2, delay:r()*0.3, sx:Math.cos(a)*d, sy:Math.sin(a)*d };
   });
 })();
 function SprinkleOverlay({ active }: { active: boolean }) {
-  if (!active) return null;
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    setVisible(true);
+    const t = setTimeout(() => setVisible(false), 1650);
+    return () => clearTimeout(t);
+  }, []);
+  if (!active || !visible) return null;
   return (
     <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:1}}>
       {SPRINKLES.map(s=>(
@@ -120,7 +126,7 @@ function SprinkleOverlay({ active }: { active: boolean }) {
           width:s.w, height:s.h, backgroundColor:s.color, borderRadius:2,
           pointerEvents:"none",
           "--sx":`${s.sx}px`, "--sy":`${s.sy}px`, "--rot":`${s.rot}deg`,
-          animation:`sp-fly .8s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
+          animation:`sp-fly 1.2s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
           opacity:0,
         } as React.CSSProperties}/>
       ))}
