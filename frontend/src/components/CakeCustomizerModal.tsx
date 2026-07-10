@@ -110,25 +110,21 @@ const SPRINKLES: SP[] = (() => {
       w:7+r()*5, h:3+r()*2, delay:r()*0.55, sx:Math.cos(a)*d, sy:Math.sin(a)*d };
   });
 })();
-const SP_CSS = `@keyframes sp-fly{from{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(0deg) scale(0)}70%{opacity:.9}to{opacity:.85;transform:translate(0,0) rotate(var(--rot)) scale(1)}}@media(prefers-reduced-motion:reduce){.sp-pt{animation:none!important;opacity:.85!important;transform:rotate(var(--rot)) scale(1)!important}}`;
-
 function SprinkleOverlay({ active }: { active: boolean }) {
   if (!active) return null;
   return (
-    <>
-      <style>{SP_CSS}</style>
-      <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
-        {SPRINKLES.map(s=>(
-          <span key={s.id} className="sp-pt" style={{
-            position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
-            width:s.w, height:s.h, backgroundColor:s.color, borderRadius:2,
-            "--sx":`${s.sx}px`, "--sy":`${s.sy}px`, "--rot":`${s.rot}deg`,
-            animation:`sp-fly .8s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
-            opacity:0,
-          } as React.CSSProperties}/>
-        ))}
-      </div>
-    </>
+    <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:1}}>
+      {SPRINKLES.map(s=>(
+        <span key={s.id} className="sp-pt" style={{
+          position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
+          width:s.w, height:s.h, backgroundColor:s.color, borderRadius:2,
+          pointerEvents:"none",
+          "--sx":`${s.sx}px`, "--sy":`${s.sy}px`, "--rot":`${s.rot}deg`,
+          animation:`sp-fly .8s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
+          opacity:0,
+        } as React.CSSProperties}/>
+      ))}
+    </div>
   );
 }
 
@@ -289,10 +285,11 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
         onClick={() => setViewIdx(i => (i + 1) % viewCount)}
         aria-label="Next view"
         className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm text-[#800020] transition-colors"
+        style={{zIndex:2}}
       >
         <ChevronRight size={16} />
       </button>
-      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5">
+      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5" style={{zIndex:2}}>
         {Array.from({ length: viewCount }, (_, i) => (
           <button key={i} onClick={() => setViewIdx(i)}
             className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? "bg-[#800020]" : "bg-[#800020]/30"}`} />

@@ -56,6 +56,17 @@ body {
   .btn-press:active { transform: scale(0.96); }
 }
 
+/* ─── Sprinkle animation ─────────────────────────────────── */
+@keyframes sp-fly {
+  from { opacity: 0; transform: translate(var(--sx), var(--sy)) rotate(0deg) scale(0); }
+  70%  { opacity: 0.9; }
+  to   { opacity: 0.85; transform: translate(0, 0) rotate(var(--rot)) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-pt { animation: none !important; opacity: 0.85 !important;
+            transform: rotate(var(--rot)) scale(1) !important; }
+}
+
 /* ─── Arabic font override ───────────────────────────────── */
 body.font-arabic {
   font-family: var(--font-cairo), "Cairo", sans-serif;
