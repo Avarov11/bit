@@ -969,7 +969,7 @@ export default function CakeCustomizerModal({
                   <X size={16} />
                 </button>
               </div>
-              <div className="w-full h-80 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
+              <div className="w-full h-52 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
                 <div className="absolute inset-0 bg-white" />
                 <div className="absolute inset-0" style={{background:"radial-gradient(ellipse 70% 55% at 50% 52%, rgba(255,230,238,0.55) 0%, transparent 100%)"}} />
                 <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#F8ECF0] to-transparent" />
