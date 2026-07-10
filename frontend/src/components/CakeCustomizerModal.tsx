@@ -34,30 +34,8 @@ const SHAPES = [
   },
   {
     id: "square", label: "Square",
-    svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
-        <defs>
-          <linearGradient id="sh-sq-body" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"  stopColor="#4A0F1C" />
-            <stop offset="45%" stopColor="#7A1F35" />
-            <stop offset="100%" stopColor="#4A0F1C" />
-          </linearGradient>
-        </defs>
-        <ellipse cx="40" cy="76" rx="26" ry="4" fill="#800020" opacity="0.18" />
-        <rect x="10" y="38" width="36" height="36" fill="url(#sh-sq-body)" />
-        <polygon points="46,38 60,26 60,62 46,74" fill="#800020" />
-        <polygon points="10,38 46,38 60,26 24,26" fill="#9B2845" />
-        <rect x="10" y="34" width="36" height="8" fill="white" />
-        <polygon points="46,34 60,22 60,30 46,42" fill="white" opacity="0.75" />
-        <polygon points="10,34 46,34 60,22 24,22" fill="white" opacity="0.88" />
-        <polygon points="14,36 46,36 58,24 26,24" fill="#9B2845" opacity="0.7" />
-        {[15,23,31,39,45].map((x,i) => (
-          <rect key={x} x={x-3} y={34} width={6} height={5+(i%2)*7} rx={3} fill="white" opacity="0.88" />
-        ))}
-        {[18,30,42].map(x => <circle key={x} cx={x} cy={60} r={2} fill="white" opacity="0.65" />)}
-        <line x1="10" y1="38" x2="10" y2="74" stroke="white" strokeWidth="2" opacity="0.2" />
-      </svg>
-    ),
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square/1br.png",
+    svg: null,
   },
 ];
 
@@ -124,21 +102,6 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
   useEffect(() => {
     if (shape === "cake" && (text || stickerUrl || imageUrl)) setViewIdx(1);
   }, [shape, !!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const bc = { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" };
-
-  const saucePal: Record<string, { hi: string; lo: string }> = {
-    "":     { hi: "#FFFCF8", lo: "#EDE0D4" },
-    brown:  { hi: "#C07830", lo: "#9A5818" },
-    white:  { hi: "#FFFCF8", lo: "#EDE0D4" },
-    pink:   { hi: "#FAD8DF", lo: "#D49AA8" },
-    blue:   { hi: "#D8EEF8", lo: "#A8C8DC" },
-    beige:  { hi: "#F0DEC0", lo: "#C8A068" },
-    black:  { hi: "#2A2A2A", lo: "#0D0D0D" },
-  };
-  const sc = saucePal[colorId] ?? saucePal[""];
-  const plate = "#800020";
-  const plateLip = "#5C1422";
 
   let views: JSX.Element[] = [];
 
@@ -229,74 +192,46 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       </div>
     ));
   } else {
-    // Square — SVG (shapes square bucket not yet populated)
-    const squareSide = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="cp-sqf" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={bc.dark}   />
-            <stop offset="45%"  stopColor={bc.mid}    />
-            <stop offset="100%" stopColor={bc.dark}   />
-          </linearGradient>
-          <linearGradient id="cp-sqr" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={bc.dark}   />
-            <stop offset="100%" stopColor={bc.shadow} />
-          </linearGradient>
-          <linearGradient id="cp-sqt" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor={sc.lo} />
-            <stop offset="100%" stopColor={sc.hi} />
-          </linearGradient>
-          <clipPath id="sc-ss"><polygon points="66,80 166,80 188,60 88,60" /></clipPath>
-        </defs>
-        <ellipse cx="122" cy="193" rx="72" ry="6" fill="rgba(128,0,32,0.13)" />
-        <polygon points="56,182 166,182 188,162 78,162" fill={plate} />
-        <polygon points="56,178 166,178 188,158 78,158" fill={plateLip} />
-        <rect x="56" y="96" width="110" height="80" fill="url(#cp-sqf)" />
-        <polygon points="166,96 188,76 188,156 166,176" fill="url(#cp-sqr)" />
-        <polygon points="56,96 166,96 188,76 78,76" fill="url(#cp-sqt)" />
-        <path d="M 66,89 C 80,85 94,90 108,86 C 122,82 136,87 150,83 C 162,80 172,85 182,82" stroke={sc.hi} strokeWidth="4" fill="none" strokeLinecap="round" opacity={0.75} />
-        <path d="M 70,83 C 84,79 98,84 112,80 C 126,76 140,81 154,77 C 165,74 175,79 184,76" stroke={sc.hi} strokeWidth="3" fill="none" strokeLinecap="round" opacity={0.6} />
-        <polygon points="166,96 188,76 188,86 166,108" fill={sc.hi} opacity={0.55} />
-        <path d="M 56,96 L 166,96 C 160,116 154,116 148,96 C 142,122 136,122 130,96 C 124,112 118,112 112,96 C 106,124 100,124 94,96 C 88,116 82,116 76,96 C 70,120 64,120 56,96 Z" fill={sc.hi} opacity={0.88} />
-        <path d="M 56,96 L 166,96 C 160,106 154,106 148,96 C 142,112 136,112 130,96 C 124,104 118,104 112,96 C 106,114 100,114 94,96 C 88,108 82,108 76,96 C 70,112 64,112 56,96 Z" fill="white" opacity={0.28} />
-        {[68,96,124,152].map(x => (
-          <circle key={x} cx={x} cy={140} r={3.5} fill="white" opacity="0.62" />
-        ))}
-        <line x1="56" y1="96" x2="56" y2="176" stroke="white" strokeWidth="2.5" opacity="0.25" />
-        {stickerUrl && <image href={stickerUrl} x="94" y="62" width="74" height="20" clipPath="url(#sc-ss)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="123" y="72" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
-          <text x="122" y="71" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="11" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
-    );
-    const squareTop = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="ct-sqg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={sc.hi} />
-            <stop offset="100%" stopColor={sc.lo} />
-          </linearGradient>
-          <clipPath id="sc-st"><rect x="72" y="48" width="116" height="104" rx="2" /></clipPath>
-        </defs>
-        <rect x="58" y="34" width="144" height="132" rx="6" fill={plate} />
-        <rect x="64" y="40" width="132" height="120" rx="4" fill="white" />
-        <rect x="70" y="46" width="120" height="108" rx="2" fill="url(#ct-sqg)" />
-        <ellipse cx="106" cy="70" rx="28" ry="12" fill="white" opacity="0.17" transform="rotate(-20,106,70)" />
-        {[74,92,110,128,146,164,182].map((x, i) => (
-          <rect key={x} x={x-3} y={46} width={6} height={6+(i%3)*3} rx={3} fill="white" opacity={0.85} />
-        ))}
-        {[82,110,138,166].map(x => (
-          <circle key={x} cx={x} cy={144} r={3.5} fill="white" opacity={0.62} />
-        ))}
-        {stickerUrl && <image href={stickerUrl} x="84" y="52" width="92" height="96" clipPath="url(#sc-st)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-          <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
-    );
-    views = [squareSide, squareTop];
+    // Square — photos from shape square bucket
+    const BASE_S = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square";
+    const squareColorToFile: Record<string, [string, string, string]> = {
+      brown: ["1br.png", "2br.png", "3br.png"],
+      beige: ["1be.png", "2be.png", "3be.png"],
+      black: ["1bl.png", "2bl.png", "3bl.png"],
+      pink:  ["1pi.png", "2pi.png", "3pi.png"],
+      blue:  ["1bb.png", "2bb.png", "3bb.png"],
+      white: ["1wh.png", "2wh.png", "3wh.png"],
+    };
+    const sFiles = squareColorToFile[colorId] ?? squareColorToFile["brown"];
+    const sImgs = sFiles.map(f => `${BASE_S}/${f}`);
+    if (typeof window !== "undefined") {
+      sImgs.forEach(src => { const i = new window.Image(); i.src = src; });
+    }
+    const photoOverlay = (text || stickerUrl || imageUrl) ? (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
+        )}
+        {stickerUrl && !imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
+        )}
+        {text && (
+          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
+            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
+            {text}
+          </p>
+        )}
+      </div>
+    ) : null;
+    views = sImgs.map((src, i) => (
+      <div key={i} className="relative w-full h-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={`Square brownie view ${i + 1}`} className="w-full h-full object-contain" />
+        {photoOverlay}
+      </div>
+    ));
   }
 
   const viewCount = views.length;
@@ -575,8 +510,10 @@ export default function CakeCustomizerModal({
                   </span>
                 )}
                 {shape.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={shape.photo} alt={shape.label} className="w-full h-36 md:h-40 object-cover" />
+                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] flex items-center justify-center p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={shape.photo} alt={shape.label} className="w-full h-full object-contain" />
+                  </div>
                 ) : (
                   <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
                 )}
