@@ -24,17 +24,17 @@ async function uploadToOrders(file: File, folder: string): Promise<string | null
 const SHAPES = [
   {
     id: "cake", label: "Full Cake",
-    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes/brown1.png",
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes/brown1.png?v=2",
     svg: null,
   },
   {
     id: "heart", label: "Heart",
-    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart/1br.png",
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart/1br.png?v=2",
     svg: null,
   },
   {
     id: "square", label: "Square",
-    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square/1br.png",
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square/1br.png?v=2",
     svg: null,
   },
 ];
@@ -116,8 +116,8 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       white:  { s: "white1.png",  t: "white2.png"  },
     };
     const files = colorToFile[colorId] ?? colorToFile["brown"];
-    const sideImg = `${BASE}/${files.s}`;
-    const topImg  = `${BASE}/${files.t}`;
+    const sideImg = `${BASE}/${files.s}?v=2`;
+    const topImg  = `${BASE}/${files.t}?v=2`;
     if (typeof window !== "undefined") {
       [sideImg, topImg].forEach(src => { const i = new window.Image(); i.src = src; });
     }
@@ -162,7 +162,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       white: ["1wh.png",    "2wh.png", "3wh.png"],
     };
     const hFiles = heartColorToFile[colorId] ?? heartColorToFile["brown"];
-    const hImgs = hFiles.map(f => `${BASE_H}/${f}`);
+    const hImgs = hFiles.map(f => `${BASE_H}/${f}?v=2`);
     if (typeof window !== "undefined") {
       hImgs.forEach(src => { const i = new window.Image(); i.src = src; });
     }
@@ -203,7 +203,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       white: ["1wh.png", "2wh.png", "3wh.png"],
     };
     const sFiles = squareColorToFile[colorId] ?? squareColorToFile["brown"];
-    const sImgs = sFiles.map(f => `${BASE_S}/${f}`);
+    const sImgs = sFiles.map(f => `${BASE_S}/${f}?v=2`);
     if (typeof window !== "undefined") {
       sImgs.forEach(src => { const i = new window.Image(); i.src = src; });
     }
