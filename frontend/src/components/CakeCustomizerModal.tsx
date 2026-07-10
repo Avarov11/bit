@@ -125,7 +125,7 @@ function SprinkleOverlay({ active }: { active: boolean }) {
   }, []);
   if (!active || !visible) return null;
   return (
-    <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:1}}>
+    <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
       {SPRINKLES.map(s=>(
         <span key={s.id} className="sp-pt" style={{
           position:"absolute",
@@ -296,17 +296,20 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
 
   return (
     <div className="relative w-full h-full">
-      {views[idx]}
-      <SprinkleOverlay key={animKey} active={sprinkles === "yes"} />
+      {/* Views + sprinkle overlay isolated so they can never reach the nav buttons */}
+      <div className="absolute inset-0 overflow-hidden">
+        {views[idx]}
+        <SprinkleOverlay key={animKey} active={sprinkles === "yes"} />
+      </div>
+      {/* Nav buttons are siblings of the inner container — no stacking conflict */}
       <button
         onClick={() => setViewIdx(i => (i + 1) % viewCount)}
         aria-label="Next view"
         className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm text-[#800020] transition-colors"
-        style={{zIndex:2}}
       >
         <ChevronRight size={16} />
       </button>
-      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5" style={{zIndex:2}}>
+      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5">
         {Array.from({ length: viewCount }, (_, i) => (
           <button key={i} onClick={() => setViewIdx(i)}
             className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
