@@ -75,11 +75,6 @@ function ProductCard({
             {product.name}
           </h3>
           {isCustomizable ? (
-            <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {custPriceRange.min} – {custPriceRange.max}</p>
-          ) : (
-            <p className="font-bold text-[#2D000A] text-sm mb-3">QAR {product.price}</p>
-          )}
-          {isCustomizable ? (
             <button
               onClick={onCustomize}
               className="w-full block text-center bg-[#FF6B9D] hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-full transition-all duration-200"
