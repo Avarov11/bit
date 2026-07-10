@@ -100,7 +100,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
 
   useEffect(() => { setViewIdx(0); }, [shape]);
   useEffect(() => {
-    if (shape === "cake" && (text || stickerUrl || imageUrl)) setViewIdx(1);
+    if (text || stickerUrl || imageUrl) setViewIdx(1);
   }, [shape, !!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   let views: JSX.Element[] = [];
@@ -143,7 +143,6 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       <div key="s" className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
-        {photoOverlay}
       </div>,
       <div key="t" className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -188,7 +187,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       <div key={i} className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={`Heart brownie view ${i + 1}`} className="w-full h-full object-contain" />
-        {photoOverlay}
+        {i === 1 ? photoOverlay : null}
       </div>
     ));
   } else {
@@ -229,7 +228,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
       <div key={i} className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={`Square brownie view ${i + 1}`} className="w-full h-full object-contain" />
-        {photoOverlay}
+        {i === 1 ? photoOverlay : null}
       </div>
     ));
   }
