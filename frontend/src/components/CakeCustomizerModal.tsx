@@ -100,21 +100,27 @@ function mkRand(seed: number) {
   return () => { s = (Math.imul(1664525, s) + 1013904223) >>> 0; return s / 0x100000000; };
 }
 const SP_COLORS = ["#FF6B9D","#FFD166","#74C2E1","#C77DFF","#FF9443","#06D6A0"];
-interface SP { id:number; x:number; y:number; rot:number; color:string; w:number; h:number; delay:number; sx:number; sy:number }
+interface SP { id:number; x:number; startY:number; rise:number; drift:number; rot:number; color:string; w:number; h:number; delay:number }
 const SPRINKLES: SP[] = (() => {
   const r = mkRand(7331);
-  return Array.from({length:22},(_,id)=>{
-    const a=r()*Math.PI*2, d=110+r()*90;
-    return { id, x:8+r()*84, y:8+r()*84, rot:r()*360,
-      color:SP_COLORS[Math.floor(r()*SP_COLORS.length)],
-      w:7+r()*5, h:3+r()*2, delay:r()*0.3, sx:Math.cos(a)*d, sy:Math.sin(a)*d };
-  });
+  return Array.from({length:26},(_,id)=>({
+    id,
+    x:      5  + r() * 90,
+    startY: 88 + r() * 14,
+    rise:   -(200 + r() * 130),
+    drift:  (r() - 0.5) * 70,
+    rot:    (r() - 0.5) * 400,
+    color:  SP_COLORS[Math.floor(r() * SP_COLORS.length)],
+    w:      7  + r() * 5,
+    h:      3  + r() * 2,
+    delay:  r() * 0.6,
+  }));
 })();
 function SprinkleOverlay({ active }: { active: boolean }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), 1650);
+    const t = setTimeout(() => setVisible(false), 4000);
     return () => clearTimeout(t);
   }, []);
   if (!active || !visible) return null;
@@ -122,11 +128,16 @@ function SprinkleOverlay({ active }: { active: boolean }) {
     <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:1}}>
       {SPRINKLES.map(s=>(
         <span key={s.id} className="sp-pt" style={{
-          position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
-          width:s.w, height:s.h, backgroundColor:s.color, borderRadius:2,
+          position:"absolute",
+          left:`${s.x}%`,
+          top:`${s.startY}%`,
+          width:s.w, height:s.h,
+          backgroundColor:s.color, borderRadius:2,
           pointerEvents:"none",
-          "--sx":`${s.sx}px`, "--sy":`${s.sy}px`, "--rot":`${s.rot}deg`,
-          animation:`sp-fly 1.2s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
+          "--rise":`${s.rise}px`,
+          "--drift":`${s.drift}px`,
+          "--rot":`${s.rot}deg`,
+          animation:`sp-rise 3.2s ease-in-out ${s.delay.toFixed(3)}s forwards`,
           opacity:0,
         } as React.CSSProperties}/>
       ))}

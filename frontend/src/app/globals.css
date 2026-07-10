@@ -57,11 +57,11 @@ body {
 }
 
 /* ─── Sprinkle animation ─────────────────────────────────── */
-@keyframes sp-fly {
-  0%   { opacity: 0;    transform: translate(var(--sx), var(--sy)) rotate(0deg) scale(0); }
-  38%  { opacity: 0.9;  transform: translate(0, 0) rotate(var(--rot)) scale(1); }
-  65%  { opacity: 0.85; transform: translate(0, 0) rotate(var(--rot)) scale(1); }
-  100% { opacity: 0;    transform: translate(0, 0) rotate(var(--rot)) scale(1); }
+@keyframes sp-rise {
+  0%   { opacity: 0;   transform: translateY(0px) translateX(0px) rotate(0deg) scale(0.7); }
+  10%  { opacity: 0.9; }
+  80%  { opacity: 0.9; }
+  100% { opacity: 0;   transform: translateY(var(--rise)) translateX(var(--drift)) rotate(var(--rot)) scale(1.1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .sp-pt { animation: none !important; opacity: 0 !important; }
