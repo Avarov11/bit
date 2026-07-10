@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2 } from "lucide-react";
@@ -93,15 +93,60 @@ const EMPTY_SEL: CustSel = {
   sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
 };
 
+// ─── Sprinkle overlay ────────────────────────────────────────────────────────
+
+function mkRand(seed: number) {
+  let s = seed >>> 0;
+  return () => { s = (Math.imul(1664525, s) + 1013904223) >>> 0; return s / 0x100000000; };
+}
+const SP_COLORS = ["#FF6B9D","#FFD166","#74C2E1","#C77DFF","#FF9443","#06D6A0"];
+interface SP { id:number; x:number; y:number; rot:number; color:string; w:number; h:number; delay:number; sx:number; sy:number }
+const SPRINKLES: SP[] = (() => {
+  const r = mkRand(7331);
+  return Array.from({length:22},(_,id)=>{
+    const a=r()*Math.PI*2, d=110+r()*90;
+    return { id, x:8+r()*84, y:8+r()*84, rot:r()*360,
+      color:SP_COLORS[Math.floor(r()*SP_COLORS.length)],
+      w:7+r()*5, h:3+r()*2, delay:r()*0.55, sx:Math.cos(a)*d, sy:Math.sin(a)*d };
+  });
+})();
+const SP_CSS = `@keyframes sp-fly{from{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(0deg) scale(0)}70%{opacity:.9}to{opacity:.85;transform:translate(0,0) rotate(var(--rot)) scale(1)}}@media(prefers-reduced-motion:reduce){.sp-pt{animation:none!important;opacity:.85!important;transform:rotate(var(--rot)) scale(1)!important}}`;
+
+function SprinkleOverlay({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <>
+      <style>{SP_CSS}</style>
+      <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none"}}>
+        {SPRINKLES.map(s=>(
+          <span key={s.id} className="sp-pt" style={{
+            position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
+            width:s.w, height:s.h, backgroundColor:s.color, borderRadius:2,
+            "--sx":`${s.sx}px`, "--sy":`${s.sy}px`, "--rot":`${s.rot}deg`,
+            animation:`sp-fly .8s cubic-bezier(.34,1.56,.64,1) ${s.delay.toFixed(3)}s forwards`,
+            opacity:0,
+          } as React.CSSProperties}/>
+        ))}
+      </div>
+    </>
+  );
+}
+
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
-function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
+function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; sprinkles?: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
   const [viewIdx, setViewIdx] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const prevSpr = useRef("");
 
   useEffect(() => { setViewIdx(0); }, [shape]);
   useEffect(() => {
     if (text || stickerUrl || imageUrl) setViewIdx(1);
   }, [shape, !!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (sprinkles === "yes" && prevSpr.current !== "yes") setAnimKey(k => k + 1);
+    prevSpr.current = sprinkles;
+  }, [sprinkles]);
 
   let views: JSX.Element[] = [];
 
@@ -239,6 +284,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
   return (
     <div className="relative w-full h-full">
       {views[idx]}
+      <SprinkleOverlay key={animKey} active={sprinkles === "yes"} />
       <button
         onClick={() => setViewIdx(i => (i + 1) % viewCount)}
         aria-label="Next view"
@@ -915,7 +961,7 @@ export default function CakeCustomizerModal({
                   <span className="text-[8px] font-bold text-[#800020]/45 uppercase tracking-[0.18em]">Preview</span>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center pb-10">
-                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
+                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
                 </div>
                 {custSel.shape && (
                   <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-4 py-2.5 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
@@ -990,7 +1036,7 @@ export default function CakeCustomizerModal({
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden mb-5 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 bg-white/60" />
               <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
               </div>
               {custSel.shape && (
                 <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)] flex items-center justify-between gap-2">
