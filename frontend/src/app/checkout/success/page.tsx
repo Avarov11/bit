@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, MapPin, Clock, ArrowRight, Home } from "lucide-react";
+import { MapPin, Clock, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 function SuccessContent() {
@@ -26,9 +26,14 @@ function SuccessContent() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: "#F5D0D8" }}>
       <div className="w-full max-w-md text-center">
-        {/* Icon */}
-        <div className="w-20 h-20 rounded-full bg-[#F5D0D8] flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-[#800020] fill-[#F5D0D8]" />
+        {/* Confirmation image */}
+        <div className="w-56 h-56 rounded-3xl overflow-hidden mx-auto mb-6 shadow-warm-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/products/confirm.jpeg"
+            alt="Order confirmed"
+            className="w-full h-full object-cover"
+          />
         </div>
 
         {/* Heading */}
