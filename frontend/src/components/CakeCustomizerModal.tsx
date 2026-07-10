@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2 } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -29,20 +29,8 @@ const SHAPES = [
   },
   {
     id: "heart", label: "Heart",
-    svg: (
-      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-24">
-        <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
-          fill="#800020" transform="translate(0,7)" opacity="0.35" />
-        <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
-          fill="white" transform="translate(0,3)" />
-        <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
-          fill="#7A1F35" />
-        <path d="M40,68 C24,58 8,44 8,30 C8,16 17,10 28,10 C34,10 38,15 40,20 C42,15 46,10 52,10 C63,10 72,16 72,30 C72,44 56,58 40,68Z"
-          fill="#9B2845" transform="translate(40,39) scale(0.84) translate(-40,-39)" />
-        <path d="M21,19 C16,25 13,33 14,39" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.28" />
-        {[31,40,49].map(x => <circle key={x} cx={x} cy={53} r={1.8} fill="white" opacity="0.75" />)}
-      </svg>
-    ),
+    photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart/1br.png",
+    svg: null,
   },
   {
     id: "square", label: "Square",
@@ -130,17 +118,15 @@ const EMPTY_SEL: CustSel = {
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
 function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
-  const [view, setView] = useState<"side"|"top">("side");
+  const [viewIdx, setViewIdx] = useState(0);
 
-  useEffect(() => { setView("side"); }, [shape]);
+  useEffect(() => { setViewIdx(0); }, [shape]);
   useEffect(() => {
-    if (text || stickerUrl || imageUrl) setView("top");
-  }, [!!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (shape === "cake" && (text || stickerUrl || imageUrl)) setViewIdx(1);
+  }, [shape, !!text, !!stickerUrl, !!imageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fixed brownie body — white/cream, never changes
   const bc = { top: "#FFFCF8", mid: "#EDE0D4", dark: "#C0B0A2", shadow: "#9C9088" };
 
-  // Sauce/frosting on top — driven by colorId
   const saucePal: Record<string, { hi: string; lo: string }> = {
     "":     { hi: "#FFFCF8", lo: "#EDE0D4" },
     brown:  { hi: "#C07830", lo: "#9A5818" },
@@ -154,14 +140,13 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
   const plate = "#800020";
   const plateLip = "#5C1422";
 
-  let sideContent: JSX.Element;
-  let topContent: JSX.Element;
+  let views: JSX.Element[] = [];
 
   if (!shape || shape === "cake") {
     const BASE = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes";
     const colorToFile: Record<string, { s: string; t: string }> = {
       brown:  { s: "brown1.png",  t: "brown2.png"  },
-      beige:  { s: "beige1.png",  t: "beige2.png"  }, // beige1.png: upload to bucket if missing
+      beige:  { s: "beige1.png",  t: "beige2.png"  },
       black:  { s: "black1.png",  t: "black2.png"  },
       pink:   { s: "red1.png",    t: "red2.png"    },
       blue:   { s: "blue1.png",   t: "blue2.png"   },
@@ -170,11 +155,9 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
     const files = colorToFile[colorId] ?? colorToFile["brown"];
     const sideImg = `${BASE}/${files.s}`;
     const topImg  = `${BASE}/${files.t}`;
-    // Preload both images so view-switch is instant
     if (typeof window !== "undefined") {
       [sideImg, topImg].forEach(src => { const i = new window.Image(); i.src = src; });
     }
-
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -193,69 +176,61 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
         )}
       </div>
     ) : null;
-    sideContent = (
-      <div className="relative w-full h-full">
+    views = [
+      <div key="s" className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
         {photoOverlay}
-      </div>
-    );
-    topContent = (
-      <div className="relative w-full h-full">
+      </div>,
+      <div key="t" className="relative w-full h-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={topImg} alt="Full Cake top view" className="w-full h-full object-contain" />
         {photoOverlay}
-      </div>
-    );
+      </div>,
+    ];
   } else if (shape === "heart") {
-    const HP  = "M130,176 C104,158 58,128 58,95 C58,68 76,54 100,54 C114,54 124,63 130,75 C136,63 146,54 160,54 C184,54 202,68 202,95 C202,128 156,158 130,176Z";
-    const HTP = "M130,161 C104,143 58,113 58,80 C58,53 76,39 100,39 C114,39 124,48 130,60 C136,48 146,39 160,39 C184,39 202,53 202,80 C202,113 156,143 130,161Z";
-    sideContent = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="cp-hg" cx="34%" cy="28%" r="66%">
-            <stop offset="0%"   stopColor={sc.hi} />
-            <stop offset="100%" stopColor={sc.lo} />
-          </radialGradient>
-          <clipPath id="sc-hs"><path d="M130,182 C104,164 58,134 58,101 C58,74 76,60 100,60 C114,60 124,69 130,81 C136,69 146,60 160,60 C184,60 202,74 202,101 C202,134 156,164 130,182Z" /></clipPath>
-        </defs>
-        <ellipse cx="130" cy="192" rx="74" ry="6" fill="rgba(128,0,32,0.12)" />
-        <path d={HP} fill={bc.shadow} transform="translate(0,22)" />
-        <path d={HP} fill={bc.dark}   transform="translate(0,14)" />
-        <path d={HP} fill="white"         transform="translate(0,8)" />
-        <path d={HP} fill="url(#cp-hg)"   transform="translate(0,6)" />
-        <path d={HP} fill="white"         transform="translate(0,2)" />
-        <path d={HP} fill="url(#cp-hg)" transform="translate(130,115) scale(0.88) translate(-130,-115)" />
-        <ellipse cx="96" cy="75" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,75)" />
-        {stickerUrl && <image href={stickerUrl} x="90" y="75" width="80" height="80" clipPath="url(#sc-hs)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="131" y="121" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-          <text x="130" y="120" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
-    );
-    topContent = (
-      <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="ct-hg" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stopColor={sc.hi} />
-            <stop offset="100%" stopColor={sc.lo} />
-          </radialGradient>
-          <clipPath id="sc-ht"><path d="M130,161 C104,143 58,113 58,80 C58,53 76,39 100,39 C114,39 124,48 130,60 C136,48 146,39 160,39 C184,39 202,53 202,80 C202,113 156,143 130,161Z" /></clipPath>
-        </defs>
-        <path d={HTP} fill={plate} transform="translate(4,5)" />
-        <path d={HTP} fill="none" stroke="white" strokeWidth="14" />
-        <path d={HTP} fill="url(#ct-hg)" />
-        <ellipse cx="96" cy="68" rx="22" ry="10" fill="white" opacity="0.18" transform="rotate(-30,96,68)" />
-        {stickerUrl && <image href={stickerUrl} x="80" y="50" width="100" height="100" clipPath="url(#sc-ht)" preserveAspectRatio="xMidYMid meet" opacity="0.95" />}
-        {text && <>
-          <text x="131" y="101" textAnchor="middle" dominantBaseline="middle" fill="rgba(45,0,10,0.40)" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-          <text x="130" y="100" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontWeight="bold" fontSize="18" fontFamily="Georgia, serif">{text}</text>
-        </>}
-      </svg>
-    );
+    const BASE_H = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart";
+    const heartColorToFile: Record<string, [string, string, string]> = {
+      brown: ["1br.png",    "2br.png", "3br.png"],
+      beige: ["1be.png",    "2be.png", "3be.png"],
+      black: ["1bl.png",    "2bl.png", "3bl.png"],
+      pink:  ["1pi.png",    "2pi.png", "3pi.png"],
+      blue:  ["1%20bb.png", "2bb.png", "3bb.png"],
+      white: ["1wh.png",    "2wh.png", "3wh.png"],
+    };
+    const hFiles = heartColorToFile[colorId] ?? heartColorToFile["brown"];
+    const hImgs = hFiles.map(f => `${BASE_H}/${f}`);
+    if (typeof window !== "undefined") {
+      hImgs.forEach(src => { const i = new window.Image(); i.src = src; });
+    }
+    const photoOverlay = (text || stickerUrl || imageUrl) ? (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
+        )}
+        {stickerUrl && !imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
+        )}
+        {text && (
+          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
+            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
+            {text}
+          </p>
+        )}
+      </div>
+    ) : null;
+    views = hImgs.map((src, i) => (
+      <div key={i} className="relative w-full h-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={`Heart brownie view ${i + 1}`} className="w-full h-full object-contain" />
+        {photoOverlay}
+      </div>
+    ));
   } else {
-    sideContent = (
+    // Square — SVG (shapes square bucket not yet populated)
+    const squareSide = (
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cp-sqf" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -284,7 +259,6 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
         <polygon points="166,96 188,76 188,86 166,108" fill={sc.hi} opacity={0.55} />
         <path d="M 56,96 L 166,96 C 160,116 154,116 148,96 C 142,122 136,122 130,96 C 124,112 118,112 112,96 C 106,124 100,124 94,96 C 88,116 82,116 76,96 C 70,120 64,120 56,96 Z" fill={sc.hi} opacity={0.88} />
         <path d="M 56,96 L 166,96 C 160,106 154,106 148,96 C 142,112 136,112 130,96 C 124,104 118,104 112,96 C 106,114 100,114 94,96 C 88,108 82,108 76,96 C 70,112 64,112 56,96 Z" fill="white" opacity={0.28} />
-
         {[68,96,124,152].map(x => (
           <circle key={x} cx={x} cy={140} r={3.5} fill="white" opacity="0.62" />
         ))}
@@ -296,7 +270,7 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
         </>}
       </svg>
     );
-    topContent = (
+    const squareTop = (
       <svg viewBox="0 0 260 200" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="ct-sqg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -322,21 +296,27 @@ function CakePreview({ shape, colorId, text = "", stickerUrl = "", imageUrl = ""
         </>}
       </svg>
     );
+    views = [squareSide, squareTop];
   }
+
+  const viewCount = views.length;
+  const idx = Math.min(viewIdx, viewCount - 1);
 
   return (
     <div className="relative w-full h-full">
-      {view === "side" ? sideContent : topContent}
+      {views[idx]}
       <button
-        onClick={() => setView(v => v === "side" ? "top" : "side")}
-        aria-label={view === "side" ? "View from top" : "View from side"}
+        onClick={() => setViewIdx(i => (i + 1) % viewCount)}
+        aria-label="Next view"
         className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm text-[#800020] transition-colors"
       >
-        {view === "side" ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        <ChevronRight size={16} />
       </button>
       <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1.5">
-        <button onClick={() => setView("side")} className={`w-1.5 h-1.5 rounded-full transition-colors ${view === "side" ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
-        <button onClick={() => setView("top")} className={`w-1.5 h-1.5 rounded-full transition-colors ${view === "top" ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
+        {Array.from({ length: viewCount }, (_, i) => (
+          <button key={i} onClick={() => setViewIdx(i)}
+            className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? "bg-[#800020]" : "bg-[#800020]/30"}`} />
+        ))}
       </div>
     </div>
   );
