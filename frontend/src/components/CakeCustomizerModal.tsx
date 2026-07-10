@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2 } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -63,17 +63,18 @@ const CAKE_COLORS = [
   { id: "blue",  label: "Blue",  hex: "#B2C8D8" },
 ];
 
-const STEP_LABELS = ["Shape", "Flavour", "Sprinkles", "Topping"];
+const STEP_LABELS = ["Shape", "Flavour", "Sprinkles", "Topping", "Extras"];
 
 const STEPS = [
   { label: "Shape",     Icon: Box      },
   { label: "Flavour",   Icon: ChefHat  },
   { label: "Sprinkles", Icon: Sparkles },
   { label: "Topping",   Icon: PenLine  },
+  { label: "Extras",    Icon: Gift     },
 ];
 
 const DEFAULT_BASE_PRICES: Record<string, number> = { cake: 160, heart: 85, square: 85 };
-const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30 };
+const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25 };
 
 interface CustSel {
   shape: string;
@@ -86,11 +87,14 @@ interface CustSel {
   toppingText: string;
   stickerUrl: string | null;
   imageFile: File | null;
+  candles: boolean;
+  balloons: boolean;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
   sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
+  candles: false, balloons: false,
 };
 
 // ─── Sprinkle overlay ────────────────────────────────────────────────────────
@@ -198,11 +202,11 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       </div>
     ) : null;
     views = [
-      <div key="s" className="relative w-full h-full">
+      <div key="s" className="relative w-full h-full flex items-center justify-center p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
       </div>,
-      <div key="t" className="relative w-full h-full">
+      <div key="t" className="relative w-full h-full flex items-center justify-center p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={topImg} alt="Full Cake top view" className="w-full h-full object-contain" />
         {photoOverlay}
@@ -242,7 +246,7 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       </div>
     ) : null;
     views = hImgs.map((src, i) => (
-      <div key={i} className="relative w-full h-full">
+      <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={`Heart brownie view ${i + 1}`} className="w-full h-full object-contain" />
         {i === 1 ? photoOverlay : null}
@@ -283,7 +287,7 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       </div>
     ) : null;
     views = sImgs.map((src, i) => (
-      <div key={i} className="relative w-full h-full">
+      <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={`Square brownie view ${i + 1}`} className="w-full h-full object-contain" />
         {i === 1 ? photoOverlay : null}
@@ -392,6 +396,8 @@ export default function CakeCustomizerModal({
     writing:   rawPricing["addon_writing"]   ?? DEFAULT_ADDON_PRICES.writing,
     sticker:   rawPricing["addon_sticker"]   ?? DEFAULT_ADDON_PRICES.sticker,
     image:     rawPricing["addon_image"]     ?? DEFAULT_ADDON_PRICES.image,
+    candles:   rawPricing["addon_candles"]   ?? DEFAULT_ADDON_PRICES.candles,
+    balloons:  rawPricing["addon_balloons"]  ?? DEFAULT_ADDON_PRICES.balloons,
   };
   const calcPrice = (): number => {
     const base    = BASE_PRICES[custSel.shape as keyof typeof BASE_PRICES] ?? 0;
@@ -399,7 +405,9 @@ export default function CakeCustomizerModal({
     const topping = custSel.topping === "write"   ? ADDON_PRICES.writing
                   : custSel.topping === "sticker" ? ADDON_PRICES.sticker
                   : custSel.topping === "image"   ? ADDON_PRICES.image : 0;
-    return base + spr + topping;
+    const extras  = (custSel.candles ? ADDON_PRICES.candles : 0)
+                  + (custSel.balloons ? ADDON_PRICES.balloons : 0);
+    return base + spr + topping + extras;
   };
 
   // Reset state whenever product changes
@@ -439,10 +447,11 @@ export default function CakeCustomizerModal({
       if (custSel.topping === "image")   return custSel.imageFile !== null;
       return false;
     }
+    if (custStep === 4) return true; // Extras is optional
     return true;
   };
 
-  const handleNext = () => { if (custStep < 4) setCustStep((s) => s + 1); };
+  const handleNext = () => { if (custStep < 5) setCustStep((s) => s + 1); };
   const handleBack = () => {
     if (custStep > 0) setCustStep((s) => s - 1);
     else onClose();
@@ -455,6 +464,8 @@ export default function CakeCustomizerModal({
     const cakeColorLabel = CAKE_COLORS.find((c) => c.id === custSel.cakeColor)?.label;
     const toppingsList: string[] = [];
     if (custSel.sprinkles === "yes") toppingsList.push("Sprinkles");
+    if (custSel.candles)  toppingsList.push("Candles");
+    if (custSel.balloons) toppingsList.push("Balloons");
 
     const stickerUrl = custSel.topping === "sticker" ? custSel.stickerUrl ?? undefined : undefined;
     let imageUrl:   string | undefined;
@@ -518,6 +529,66 @@ export default function CakeCustomizerModal({
 
   const renderStep = () => {
     if (custStep === 4) {
+      const toggle = (key: "candles" | "balloons") =>
+        setCustSel((p) => ({ ...p, [key]: !p[key] }));
+      return (
+        <div>
+          <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Extras</h2>
+          <p className="text-[#A05068] text-sm mb-6">Add a little something extra — totally optional 🎉</p>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Candles */}
+            <button
+              onClick={() => toggle("candles")}
+              className={cn(
+                "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+                custSel.candles ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+              )}
+            >
+              {custSel.candles && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
+                  <Check size={10} className="text-white" strokeWidth={3} />
+                </span>
+              )}
+              <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
+                <span className="text-5xl">🕯️</span>
+              </div>
+              <div className="p-3">
+                <p className="font-playfair font-bold text-[#2D000A] text-sm">Candles</p>
+                <p className="text-[#A05068] text-[11px] mt-0.5">Add birthday candles</p>
+              </div>
+            </button>
+
+            {/* Balloons */}
+            <button
+              onClick={() => toggle("balloons")}
+              className={cn(
+                "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+                custSel.balloons ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+              )}
+            >
+              {custSel.balloons && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
+                  <Check size={10} className="text-white" strokeWidth={3} />
+                </span>
+              )}
+              <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
+                <span className="text-5xl">🎈</span>
+              </div>
+              <div className="p-3">
+                <p className="font-playfair font-bold text-[#2D000A] text-sm">Balloons</p>
+                <p className="text-[#A05068] text-[11px] mt-0.5">Add decorative balloons</p>
+              </div>
+            </button>
+          </div>
+
+          {!custSel.candles && !custSel.balloons && (
+            <p className="text-center text-[#A05068]/60 text-xs mt-5">Tap to select, or skip to continue</p>
+          )}
+        </div>
+      );
+    }
+
+    if (custStep === 5) {
       const shapeName  = t("cust_modal_shape_" + custSel.shape) || "—";
       const flavorName = custSel.flavorType === "chocolate"
         ? t("cust_modal_choc_" + custSel.flavor) || "—"
@@ -544,6 +615,8 @@ export default function CakeCustomizerModal({
                 : "—"
               }
             />
+            <SummaryRow label="Candles"  value={custSel.candles  ? `🕯️ Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
+            <SummaryRow label="Balloons" value={custSel.balloons ? `🎈 Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
           </div>
         </div>
       );
@@ -929,7 +1002,10 @@ export default function CakeCustomizerModal({
     <>
       {/* ══ MOBILE panel ═══════════════════════════════════════════════════════ */}
       <div className="md:hidden fixed inset-0 z-40 flex flex-col" style={{ backgroundColor: "#F5D0D8" }}>
-        <div className="h-16 shrink-0" />
+        {/* Navbar spacer */}
+        <div className="h-14 shrink-0" />
+
+        {/* Step tabs */}
         <div className="shrink-0 bg-[#F5D0D8]/97 backdrop-blur-md border-b border-[rgba(128,0,32,0.12)] overflow-x-auto scrollbar-hide">
           <div className="flex">
             {STEPS.map((step, i) => {
@@ -937,88 +1013,95 @@ export default function CakeCustomizerModal({
               const done   = i < custStep;
               return (
                 <button key={step.label} onClick={() => { if (done) setCustStep(i); }}
-                  className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
+                  className={cn("flex flex-col items-center gap-1 px-5 pt-2.5 pb-2 shrink-0 border-b-2 transition-all duration-200",
                     active ? "border-[#800020] text-[#800020]" : done ? "border-transparent text-[#2D000A]/60 cursor-pointer" : "border-transparent text-[#2D000A]/30 cursor-default")}>
-                  <step.Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                  <step.Icon size={15} strokeWidth={active ? 2.5 : 2} />
                   <span className="text-[10px] font-bold tracking-wide">{t("cust_modal_step_" + step.label.toLowerCase())}</span>
                 </button>
               );
             })}
-            <button className={cn("flex flex-col items-center gap-1 px-5 pt-3 pb-2.5 shrink-0 border-b-2 transition-all duration-200",
-              custStep === 4 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
-              <Check size={16} strokeWidth={custStep === 4 ? 2.5 : 2} />
+            <button className={cn("flex flex-col items-center gap-1 px-5 pt-2.5 pb-2 shrink-0 border-b-2 transition-all duration-200",
+              custStep === 5 ? "border-[#800020] text-[#800020]" : "border-transparent text-[#2D000A]/30 cursor-default")}>
+              <Check size={15} strokeWidth={custStep === 5 ? 2.5 : 2} />
               <span className="text-[10px] font-bold tracking-wide">{t("cust_modal_step_summary")}</span>
             </button>
           </div>
         </div>
 
-        {custStep < 4 && (
-          <div className="w-full shrink-0 bg-[#F5D0D8] overflow-hidden">
-            <div className="relative max-w-lg mx-auto px-5 pt-3 pb-2">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="inline-flex items-center bg-[#800020]/10 rounded-full px-2.5 py-1 mb-2">
-                    <span className="text-[#800020] text-[10px] font-bold uppercase tracking-widest">{t("cust_modal_step")} {custStep + 1} {t("cust_modal_of")} {STEPS.length}</span>
+        {/* Main area — flex so preview + options fill the remaining screen */}
+        <div className="flex-1 flex flex-col min-h-0">
+
+          {custStep < 5 && (
+            <div className="shrink-0 px-4 pt-2 pb-1">
+              {/* Compact step header */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center bg-[#800020]/10 rounded-full px-2 py-0.5 mb-1">
+                    <span className="text-[#800020] text-[9px] font-bold uppercase tracking-widest">{t("cust_modal_step")} {custStep + 1} {t("cust_modal_of")} {STEPS.length}</span>
                   </div>
-                  <p className="font-playfair text-xl font-bold text-[#2D000A] leading-tight">{t("cust_modal_step_" + STEPS[custStep].label.toLowerCase())}</p>
-                  <p className="text-[#A05068] text-xs mt-1 font-medium">
-                    {t("cust_modal_step_desc_" + custStep)}
-                  </p>
+                  <p className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{t("cust_modal_step_" + STEPS[custStep].label.toLowerCase())}</p>
+                  <p className="text-[#A05068] text-[11px] font-medium">{t("cust_modal_step_desc_" + custStep)}</p>
                 </div>
-                <button onClick={onClose} className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 hover:bg-black/20 transition-colors shrink-0 mt-0.5">
-                  <X size={16} />
+                <button onClick={onClose} className="w-9 h-9 rounded-full bg-black/10 flex items-center justify-center text-[#2D000A]/50 shrink-0">
+                  <X size={15} />
                 </button>
               </div>
-              <div className="w-full h-52 relative rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.13),0_2px_8px_rgba(0,0,0,0.06)]">
+
+              {/* Preview card — scales with viewport height */}
+              <div className="w-full relative rounded-2xl overflow-hidden shadow-[0_6px_30px_rgba(0,0,0,0.12)]" style={{ height: "34dvh" }}>
                 <div className="absolute inset-0 bg-white" />
                 <div className="absolute inset-0" style={{background:"radial-gradient(ellipse 70% 55% at 50% 52%, rgba(255,230,238,0.55) 0%, transparent 100%)"}} />
-                <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#F8ECF0] to-transparent" />
-                <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-[#800020] to-transparent opacity-25" />
-                <div className="absolute top-3 right-3.5 bg-[#800020]/8 rounded-full px-2.5 py-0.5">
+                <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-[#F8ECF0] to-transparent" />
+                <div className="absolute top-2 right-3 bg-[#800020]/8 rounded-full px-2 py-0.5">
                   <span className="text-[8px] font-bold text-[#800020]/45 uppercase tracking-[0.18em]">Preview</span>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center pb-10">
+                <div className="absolute inset-0 flex items-center justify-center pb-8">
                   <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
                 </div>
                 {custSel.shape && (
-                  <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-4 py-2.5 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
+                  <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold text-[#800020]/50 uppercase tracking-wide">Base</span>
                       <span className="text-[10px] text-[#800020]/40">QAR {BASE_PRICES[custSel.shape as keyof typeof BASE_PRICES]}</span>
-                      {custSel.sprinkles === "yes" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sprinkles} Sprinkles</span>}
-                      {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing} Writing</span>}
-                      {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker} Sticker</span>}
-                      {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image} Image</span>}
+                      {custSel.sprinkles === "yes" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sprinkles}</span>}
+                      {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing}</span>}
+                      {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker}</span>}
+                      {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image}</span>}
+                      {custSel.candles   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} 🕯️</span>}
+                      {custSel.balloons  && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} 🎈</span>}
                     </div>
-                    <span className="font-playfair font-bold text-[#800020] text-base shrink-0">QAR {calcPrice()}</span>
+                    <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto">
-          {custStep === 4 && (
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(128,0,32,0.12)]">
-              <div>
-                <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">{t("cust_modal_review_header")}</p>
-                <h2 className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{product.name}</h2>
-              </div>
-              <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
-            </div>
           )}
-          <div className="max-w-lg mx-auto px-4 py-5 pb-32">{renderStep()}</div>
+
+          {/* Scrollable step content */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {custStep === 5 && (
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[rgba(128,0,32,0.12)]">
+                <div>
+                  <p className="text-[10px] font-bold text-[#2D000A]/60 uppercase tracking-widest mb-0.5">{t("cust_modal_review_header")}</p>
+                  <h2 className="font-playfair text-lg font-bold text-[#2D000A] leading-tight">{product.name}</h2>
+                </div>
+                <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full text-[#2D000A]/60 hover:text-[#2D000A] transition-colors"><X size={20} /></button>
+              </div>
+            )}
+            <div className="max-w-lg mx-auto px-4 py-4 pb-28">{renderStep()}</div>
+          </div>
+
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {custStep < 4 ? (
+        {/* Bottom buttons */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5D0D8]/97 backdrop-blur-md border-t border-[rgba(128,0,32,0.12)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {custStep < 5 ? (
             <div className="max-w-lg mx-auto flex gap-3">
-              <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97]">
+              <button onClick={handleBack} className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-3.5 rounded-2xl text-sm transition-all active:scale-[0.97]">
                 {custStep === 0 ? t("cust_modal_cancel") : t("cust_modal_back")}
               </button>
               <button onClick={handleNext} disabled={!canProceed()}
-                className={cn("flex-[2] font-bold py-4 rounded-2xl text-sm font-playfair tracking-wide transition-all",
+                className={cn("flex-[2] font-bold py-3.5 rounded-2xl text-sm font-playfair tracking-wide transition-all",
                   canProceed() ? "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm active:scale-[0.97]" : "bg-[#FF6B9D]/40 text-white/50 cursor-not-allowed")}>
                 {custStep === STEP_LABELS.length - 1 ? t("cust_modal_review_btn") : t("cust_modal_next")}
               </button>
@@ -1026,11 +1109,11 @@ export default function CakeCustomizerModal({
           ) : (
             <div className="max-w-lg mx-auto flex gap-3">
               <button onClick={handleContinue} disabled={uploading}
-                className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
+                className="flex-1 bg-white/70 hover:bg-white text-[#800020] font-bold py-3.5 rounded-2xl text-sm transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
                 {uploading ? t("cust_modal_uploading") : t("cust_modal_continue")}
               </button>
               <button onClick={handleCheckout} disabled={uploading}
-                className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-4 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                className="flex-[2] bg-[#FF6B9D] hover:bg-[#2D000A] text-white font-bold py-3.5 rounded-2xl font-playfair text-base tracking-wide transition-all shadow-warm-sm active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 {uploading ? <><Loader2 size={16} className="animate-spin" /> {t("cust_modal_uploading")}</> : t("cust_modal_checkout")}
               </button>
             </div>
@@ -1064,6 +1147,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.image}</span>}
+                      {custSel.candles   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} 🕯️</span>}
+                      {custSel.balloons  && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} 🎈</span>}
                     </div>
                   </div>
                   <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
@@ -1087,8 +1172,8 @@ export default function CakeCustomizerModal({
                 );
               })}
               <button className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left",
-                custStep === 4 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
-                <Check size={13} strokeWidth={custStep === 4 ? 2.5 : 2} />
+                custStep === 5 ? "bg-[#800020] text-white" : "text-[#800020]/30 cursor-default")}>
+                <Check size={13} strokeWidth={custStep === 5 ? 2.5 : 2} />
                 <span className="flex-1">{t("cust_modal_step_summary")}</span>
               </button>
             </div>
@@ -1105,7 +1190,7 @@ export default function CakeCustomizerModal({
               {renderStep()}
             </div>
             <div className="shrink-0 px-8 py-5 border-t border-[rgba(128,0,32,0.08)] bg-[#FDFAF8]">
-              {custStep < 4 ? (
+              {custStep < 5 ? (
                 <div className="flex gap-3">
                   <button onClick={handleBack}
                     className="flex-1 bg-white border border-[rgba(128,0,32,0.12)] text-[#800020] font-bold py-3 rounded-2xl text-sm hover:border-[#800020] transition-all active:scale-[0.97]">
