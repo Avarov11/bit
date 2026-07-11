@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const amountStr   = Number(subtotal).toFixed(2);
     const callbackUrl = `${SITE_URL}/api/payment-callback`;
 
-    const productdetail = items.map((item, i) => ({
+    const productdetail = items.map((item) => ({
       order_id: orderNumber,
       itemname:  item.productName,
       amount:    item.unitPrice.toFixed(2),
