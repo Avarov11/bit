@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
 
     const merchantId = process.env.SADAD_MERCHANT_ID!;
     const secretKey  = process.env.SADAD_SECRET_KEY!;
-    const website    = process.env.SADAD_WEBSITE ?? "DEFAULT";
     const baseUrl    = process.env.NEXT_PUBLIC_SITE_URL!;
 
     const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
@@ -56,7 +55,6 @@ export async function POST(req: NextRequest) {
     // Build postData in the exact key order the PHP library uses
     const postData: Record<string, unknown> = {
       merchant_id:                     merchantId,
-      WEBSITE:                         website,
       SADAD_WEBCHECKOUT_PAGE_LANGUAGE: "ENG",
       ORDER_ID:                        orderNumber,
       TXN_AMOUNT:                      Number(subtotal).toFixed(2),
