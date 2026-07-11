@@ -36,12 +36,12 @@ export async function createInvoice(
     items: SadadItem[];
     remarks?: string;
   }
-): Promise<{ shareUrl: string; invoiceId: number }> {
+): Promise<{ invoiceId: number; invoiceNo: string; shareUrl: string | null }> {
   const res = await fetch(`${API}/invoices/createInvoice`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: accessToken, // no "Bearer" prefix per Sadad docs
+      Authorization: accessToken,
     },
     body: JSON.stringify({
       countryCode:    974,
@@ -54,9 +54,15 @@ export async function createInvoice(
     }),
   });
   const json = await res.json();
-  if (!json.shareUrl)
+  // Response is an array — take first element
+  const inv = Array.isArray(json) ? json[0] : json;
+  if (!inv || inv.error)
     throw new Error(`Sadad createInvoice failed: ${JSON.stringify(json)}`);
-  return { shareUrl: json.shareUrl as string, invoiceId: json.id as number };
+  return {
+    invoiceId: inv.id as number,
+    invoiceNo: inv.invoiceno as string,
+    shareUrl:  (inv.shareUrl ?? inv.invoice_customer_share_url ?? null) as string | null,
+  };
 }
 
 /** Get invoice by ID to check payment status */

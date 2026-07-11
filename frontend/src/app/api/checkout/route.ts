@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     // Step 1 — authenticate
     const accessToken = await login();
 
-    // Step 2 — create invoice, get payment URL
-    const { shareUrl, invoiceId } = await createInvoice(accessToken, {
+    // Step 2 — create invoice
+    const { invoiceId, invoiceNo, shareUrl } = await createInvoice(accessToken, {
       cellnumber: order.customer_phone ?? "",
       clientname: order.customer_name  ?? "",
       amount:     Number(subtotal),
@@ -39,7 +39,15 @@ export async function POST(req: NextRequest) {
       remarks: `Order #${orderNumber}`,
     });
 
-    return NextResponse.json({ paymentUrl: shareUrl, orderNumber, invoiceId });
+    // Build payment URL — shareUrl may be a short code or full URL
+    const payBase = process.env.SADAD_SANDBOX === "true"
+      ? "https://sandbox.sadad.qa"
+      : "https://sadad.qa";
+    const paymentUrl = shareUrl
+      ? (shareUrl.startsWith("http") ? shareUrl : `${payBase}/pay/${shareUrl}`)
+      : `${payBase}/invoice/${invoiceNo}`;
+
+    return NextResponse.json({ paymentUrl, orderNumber, invoiceId });
   } catch (err) {
     const msg = err instanceof Error ? err.message : JSON.stringify(err);
     console.error("[checkout]", msg);
