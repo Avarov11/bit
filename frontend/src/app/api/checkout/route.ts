@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { login, createInvoice } from "@/lib/sadad";
+import { login, createInvoice, getInvoice } from "@/lib/sadad";
 
 export const dynamic = "force-dynamic";
 
@@ -39,12 +39,21 @@ export async function POST(req: NextRequest) {
       remarks: `Order #${orderNumber}`,
     });
 
-    // Build payment URL — shareUrl may be a short code or full URL
-    const payBase = process.env.SADAD_SANDBOX === "true"
-      ? "https://sandbox.sadad.qa"
-      : "https://sadad.qa";
-    const paymentUrl = shareUrl
-      ? (shareUrl.startsWith("http") ? shareUrl : `${payBase}/pay/${shareUrl}`)
+    // Step 3 — fetch full invoice to find payment URL
+    const fullInvoice = await getInvoice(accessToken, invoiceId);
+    console.log("[checkout] invoice fields:", Object.keys(fullInvoice));
+    console.log("[checkout] invoice data:", JSON.stringify(fullInvoice));
+
+    const urlField =
+      (fullInvoice.shareUrl as string | undefined) ??
+      (fullInvoice.invoice_customer_share_url as string | undefined) ??
+      (fullInvoice.paymentUrl as string | undefined) ??
+      (fullInvoice.payUrl as string | undefined) ??
+      shareUrl;
+
+    const payBase = "https://sadad.qa";
+    const paymentUrl = urlField
+      ? (urlField.startsWith("http") ? urlField : `${payBase}/pay/${urlField}`)
       : `${payBase}/invoice/${invoiceNo}`;
 
     return NextResponse.json({ paymentUrl, orderNumber, invoiceId });
