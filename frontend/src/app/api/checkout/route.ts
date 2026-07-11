@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
     const refreshToken = await getRefreshToken();
     const accessToken = await getAccessToken(refreshToken);
 
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
+
     // Create invoice — ref_Number ties back to our order
     const invoiceId = await createInvoice(accessToken, {
       ref_Number: orderNumber,
@@ -39,6 +41,8 @@ export async function POST(req: NextRequest) {
       customer_Name: order.customer_name ?? "",
       customer_Mobile: order.customer_phone ?? "",
       customer_Email: order.customer_email ?? "",
+      returnUrl: `${baseUrl}/checkout/success`,
+      cancelUrl: `${baseUrl}/checkout/fail`,
       items: (
         items as Array<{ productName: string; unitPrice: number; quantity: number }>
       ).map((item) => ({

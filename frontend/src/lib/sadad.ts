@@ -41,6 +41,8 @@ export interface SadadInvoiceInput {
   customer_Mobile: string;
   customer_Email: string;
   items: SadadItem[];
+  returnUrl?: string;
+  cancelUrl?: string;
 }
 
 export async function createInvoice(
@@ -54,7 +56,13 @@ export async function createInvoice(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      Invoices: [{ ...data, lang: "en", currency_Code: "QAR" }],
+      Invoices: [{
+        ...data,
+        lang: "en",
+        currency_Code: "QAR",
+        ...(data.returnUrl && { returnUrl: data.returnUrl }),
+        ...(data.cancelUrl && { cancelUrl: data.cancelUrl }),
+      }],
     }),
   });
   const json = await res.json();
