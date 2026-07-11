@@ -89,7 +89,11 @@ export async function POST(req: NextRequest) {
       orderNumber,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = err instanceof Error
+      ? err.message
+      : (err && typeof err === "object" && "message" in err)
+        ? String((err as Record<string, unknown>).message)
+        : JSON.stringify(err);
     console.error("[sadad-pay]", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
