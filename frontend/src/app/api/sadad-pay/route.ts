@@ -75,8 +75,13 @@ export async function POST(req: NextRequest) {
     const checksumPayload = { postData, secretKey };
     const checksumhash = makeChecksumhash(checksumPayload, secretKey, merchantId);
 
+    const isTest = process.env.SADAD_TEST_MODE === "true";
+    const paymentUrl = isTest
+      ? "https://test.sadadqa.com/jslib/callapi.php"
+      : "https://sadadqa.com/jslib/callapi.php";
+
     return NextResponse.json({
-      paymentUrl:  "https://sadadqa.com/jslib/callapi.php",
+      paymentUrl,
       fields:      postData,
       checksumhash,
       orderNumber,
