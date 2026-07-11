@@ -132,13 +132,13 @@ export default function CheckoutPage() {
           const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(apiErr ?? "checkout failed");
         }
-        const { form: sadadForm } = await res.json();
+        const { formHtml } = await res.json();
         // Inject the HTML form returned by Sadad and auto-submit it
         const container = document.createElement("div");
-        container.innerHTML = sadadForm as string;
+        container.innerHTML = formHtml as string;
         document.body.appendChild(container);
         const formEl = container.querySelector("form") as HTMLFormElement | null;
-        if (!formEl) throw new Error("No form in Sadad response");
+        if (!formEl) throw new Error("No form found in SADAD response");
         formEl.submit();
       } catch (err) {
         setPlacing(false);

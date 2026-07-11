@@ -7,7 +7,7 @@ import { AlertCircle, RotateCcw, Home } from "lucide-react";
 
 function FailContent() {
   const p = useSearchParams();
-  const order = p.get("order");
+  const order = p.get("order") ?? p.get("orderId");
 
   return (
     <main
@@ -27,7 +27,7 @@ function FailContent() {
         </h1>
         <p className="text-[#800020]/55 text-sm leading-relaxed mb-8">
           Your payment could not be processed. No charge has been made.
-          Please try again or choose Cash on Pickup at checkout.
+          Please try again or choose Cash on Pickup.
         </p>
 
         {order && (
@@ -45,11 +45,11 @@ function FailContent() {
             Home
           </Link>
           <Link
-            href="/checkout"
+            href="/cart"
             className="flex-1 inline-flex items-center justify-center gap-2 bg-[#800020] hover:bg-[#2D000A] text-white font-semibold py-3.5 rounded-2xl transition-all duration-300 shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
           >
             <RotateCcw size={16} />
-            Try Again
+            Back to Cart
           </Link>
         </div>
       </div>
