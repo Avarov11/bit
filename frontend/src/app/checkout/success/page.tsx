@@ -1,32 +1,69 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Clock, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
 
+interface OrderInfo {
+  orderNumber: string;
+  customerName: string;
+  pickupDate: string;
+  pickupTime: string;
+}
+
 function SuccessContent() {
   const { t } = useLanguage();
   const { clearCart } = useCartStore();
   const p = useSearchParams();
-  const order = p.get("order") ?? "000000";
 
-  // Clear cart when arriving on success page (covers both Sadad callback and cash flow)
-  useEffect(() => { clearCart(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const date = p.get("date") ?? "";
-  const time = p.get("time") ?? "";
-  const name = p.get("name") ?? "there";
+  const invoiceId = p.get("invoice_id");
+
+  // For Sadad payments: resolved from API after redirect
+  const [apiOrder, setApiOrder] = useState<OrderInfo | null>(null);
+  const [apiLoading, setApiLoading] = useState(!!invoiceId);
+
+  useEffect(() => {
+    clearCart();
+    if (invoiceId) {
+      fetch(`/api/payment-status?invoice_id=${invoiceId}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.orderNumber) {
+            setApiOrder({
+              orderNumber: d.orderNumber,
+              customerName: d.customerName ?? "",
+              pickupDate: d.pickupDate ?? "",
+              pickupTime: d.pickupTime ?? "",
+            });
+          }
+        })
+        .catch(console.error)
+        .finally(() => setApiLoading(false));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cash flow falls back to URL params; Sadad flow uses API data
+  const order    = apiOrder?.orderNumber  ?? p.get("order") ?? "000000";
+  const date     = apiOrder?.pickupDate   ?? p.get("date")  ?? "";
+  const time     = apiOrder?.pickupTime   ?? p.get("time")  ?? "";
+  const name     = apiOrder?.customerName ?? p.get("name")  ?? "there";
 
   const formattedDate = date
     ? new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
       })
     : "";
+
+  if (apiLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5D0D8" }}>
+        <div className="w-8 h-8 rounded-full border-2 border-[#800020] border-t-transparent animate-spin" />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: "#F5D0D8" }}>
