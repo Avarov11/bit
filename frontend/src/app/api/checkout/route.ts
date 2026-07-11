@@ -12,60 +12,51 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { order, items, subtotal } = await req.json();
+    const { order, subtotal } = await req.json();
 
+    // Save order to Supabase before redirecting to payment
     const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
-
     const sb = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     const { error } = await sb.from("orders").insert({
       ...order,
-      order_number: orderNumber,
+      order_number:   orderNumber,
       payment_method: "sadad_online",
-      status: "pending_payment",
+      status:         "pending_payment",
     });
     if (error) throw error;
 
-    // Sadad auth
+    // Step 1 — refresh token
     const refreshToken = await getRefreshToken();
+
+    // Step 2 — access token
     const accessToken = await getAccessToken(refreshToken);
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL!;
-
-    // Create invoice — ref_Number ties back to our order
+    // Step 3 — create invoice
     const invoiceId = await createInvoice(accessToken, {
-      ref_Number: orderNumber,
-      amount: Number(subtotal).toFixed(2),
-      customer_Name: order.customer_name ?? "",
+      ref_Number:      orderNumber,
+      amount:          Number(subtotal).toFixed(2),
+      customer_Name:   order.customer_name  ?? "",
       customer_Mobile: order.customer_phone ?? "",
-      customer_Email: order.customer_email ?? "",
-      returnUrl: `${baseUrl}/checkout/success`,
-      cancelUrl: `${baseUrl}/checkout/fail`,
-      items: (
-        items as Array<{ productName: string; unitPrice: number; quantity: number }>
-      ).map((item) => ({
-        name: item.productName,
-        quantity: item.quantity,
-        amount: item.unitPrice,
-      })),
+      customer_Email:  order.customer_email ?? "",
     });
 
-    // Get payment key
+    // Step 4 — get key from invoice
     const invoice = await getInvoiceById(accessToken, invoiceId);
     const key = invoice.key as string;
-    const paymentUrl = getPaymentUrl(key);
+    if (!key) throw new Error(`No key in invoice response: ${JSON.stringify(invoice)}`);
 
-    return NextResponse.json({ paymentUrl, orderNumber, invoiceId });
+    // Step 5 — return payment URL for client redirect
+    return NextResponse.json({
+      paymentUrl: getPaymentUrl(key),
+      orderNumber,
+      invoiceId,
+    });
   } catch (err) {
-    const msg =
-      err instanceof Error
-        ? err.message
-        : err && typeof err === "object" && "message" in err
-        ? String((err as Record<string, unknown>).message)
-        : JSON.stringify(err);
-    console.error("[sadad-checkout]", msg);
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("[checkout]", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
