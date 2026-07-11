@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { order, items, subtotal } = await req.json();
+    const { order, subtotal } = await req.json();
+    const items = order.items as Array<{ productName: string; unitPrice: number; quantity: number }>;
 
     // Save order as pending_payment before redirecting
     const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
@@ -30,13 +31,11 @@ export async function POST(req: NextRequest) {
       cellnumber: order.customer_phone ?? "",
       clientname: order.customer_name  ?? "",
       amount:     Number(subtotal),
-      items: (items as Array<{ productName: string; unitPrice: number; quantity: number }>).map(
-        (i) => ({
-          description: i.productName,
-          quantity:    i.quantity,
-          amount:      i.unitPrice,
-        })
-      ),
+      items: items.map((i) => ({
+        description: i.productName,
+        quantity:    i.quantity,
+        amount:      i.unitPrice,
+      })),
       remarks: `Order #${orderNumber}`,
     });
 
