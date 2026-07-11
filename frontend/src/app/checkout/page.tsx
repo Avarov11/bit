@@ -123,17 +123,40 @@ export default function CheckoutPage() {
     // ── Online payment via Sadad ────────────────────────────────────────────
     if (form.payment === "online") {
       try {
-        const res = await fetch("/api/checkout", {
+        const res = await fetch("/api/sadad-pay", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({ order: orderBase, items: orderBase.items, subtotal }),
         });
         if (!res.ok) {
           const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(apiErr ?? "checkout failed");
+          throw new Error(apiErr ?? "sadad-pay failed");
         }
-        const { paymentUrl } = await res.json();
-        window.location.href = paymentUrl; // redirect to Sadad payment page
+        const { paymentUrl, fields, checksumhash } = await res.json();
+
+        const f = document.createElement("form");
+        f.method = "POST";
+        f.action = paymentUrl;
+        f.style.display = "none";
+
+        const append = (name: string, value: string) => {
+          const inp = document.createElement("input");
+          inp.type = "hidden"; inp.name = name; inp.value = value;
+          f.appendChild(inp);
+        };
+
+        Object.entries(fields as Record<string, unknown>).forEach(([k, v]) => {
+          if (k === "productdetail") return;
+          append(k, String(v));
+        });
+
+        (fields.productdetail as Array<Record<string, string>>).forEach((prod, i) => {
+          Object.entries(prod).forEach(([k, v]) => append(`productdetail[${i}][${k}]`, v));
+        });
+
+        append("checksumhash", checksumhash);
+        document.body.appendChild(f);
+        f.submit();
       } catch (err) {
         setPlacing(false);
         alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
