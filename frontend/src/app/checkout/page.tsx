@@ -128,7 +128,10 @@ export default function CheckoutPage() {
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({ order: orderBase, items: orderBase.items, subtotal }),
         });
-        if (!res.ok) throw new Error("sadad-pay failed");
+        if (!res.ok) {
+          const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(apiErr ?? "sadad-pay failed");
+        }
         const { paymentUrl, fields, checksumhash } = await res.json();
 
         // Build and auto-submit a hidden form to Sadad's payment page
@@ -156,9 +159,9 @@ export default function CheckoutPage() {
 
         document.body.appendChild(f);
         f.submit(); // browser leaves our site → Sadad payment page
-      } catch {
+      } catch (err) {
         setPlacing(false);
-        alert("Could not connect to payment gateway. Please try again.");
+        alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
       }
       return;
     }

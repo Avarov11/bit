@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+
 // AES-128-CBC, IV and salt logic ported from Sadad's PHP library
 const IV = "@@@@&&&&####$$$$";
 const SALT_CHARS = "AbcDE123IJKLMNQRSTUVWXYZaBCdefghijklmn123opq45rs67tuv89wxyz0FGH45OP89";
@@ -87,7 +89,8 @@ export async function POST(req: NextRequest) {
       orderNumber,
     });
   } catch (err) {
-    console.error("[sadad-pay]", err);
-    return NextResponse.json({ error: "Failed to initiate payment" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[sadad-pay]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
