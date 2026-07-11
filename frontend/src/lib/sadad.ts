@@ -5,54 +5,47 @@ export function generateSadadChecksum(
   secretKey: string,
   merchantId: string
 ): string {
-  // Step 1: Copy params, remove checksumhash if present
-  const paramsCopy = { ...params }
-  delete paramsCopy['checksumhash']
+  // Step 1: Get values only, trimmed, excluding checksumhash
+  const values = Object.entries(params)
+    .filter(([k]) => k !== 'checksumhash')
+    .map(([, v]) => String(v).trim())
 
-  // Step 2: Build checksumData (skip productdetail keys)
-  const processedValues: string[] = []
-  Object.entries(paramsCopy).forEach(([key, val]) => {
-    if (key !== 'productdetail') {
-      processedValues.push(String(val).trim())
-    }
-  })
-
-  const checksumData = {
-    postData:  paramsCopy,
-    secretKey: secretKey,
-  }
-
-  // Step 3: Generate 4-char random salt
+  // Step 2: Generate 4-char random salt
   const saltChars = 'AbcDE123IJKLMN67QRSTUVWXYZaBCdefghijklmn123opq45rs67tuv89wxyz0FGH45OP89'
   let salt = ''
   for (let i = 0; i < 4; i++) {
     salt += saltChars[Math.floor(Math.random() * saltChars.length)]
   }
 
-  // Step 4: SHA256 hash of JSON + salt
-  const jsonString = JSON.stringify(checksumData)
-  const finalString = jsonString + '|' + salt
-  const hash = crypto.createHash('sha256').update(finalString).digest('hex')
+  // Step 3: SHA256 of (values joined by |) + | + salt
+  const valuesString  = values.join('|')
+  const finalString   = valuesString + '|' + salt
+
+  console.log('[sadad] values array:', values)
+  console.log('[sadad] valuesString:', valuesString)
+  console.log('[sadad] finalString:', finalString)
+  console.log('[sadad] salt:', salt)
+
+  const hash       = crypto.createHash('sha256').update(finalString).digest('hex')
   const hashString = hash + salt
 
-  // Step 5: AES-128-CBC encrypt
+  console.log('[sadad] hash:', hash)
+  console.log('[sadad] hashString:', hashString)
+
+  // Step 4: AES-128-CBC encrypt — key = first 16 chars of (secretKey + merchantId)
   const encryptionKey = secretKey + merchantId
   const iv = '@@@@&&&&####$$$$'
+
+  console.log('[sadad] encryptionKey:', encryptionKey)
+  console.log('[sadad] encryptionKey length:', encryptionKey.length)
+
   const keyBuffer = Buffer.from(encryptionKey, 'utf8').slice(0, 16)
   const ivBuffer  = Buffer.from(iv, 'utf8')
   const cipher    = crypto.createCipheriv('aes-128-cbc', keyBuffer, ivBuffer)
   let encrypted   = cipher.update(hashString, 'utf8', 'base64')
   encrypted      += cipher.final('base64')
 
-  console.log('[sadad] checksumData JSON:', JSON.stringify(checksumData))
-  console.log('[sadad] finalString:', finalString)
-  console.log('[sadad] hash:', hash)
-  console.log('[sadad] hashString:', hashString)
-  console.log('[sadad] encryptionKey:', encryptionKey)
-  console.log('[sadad] checksumhash result:', encrypted)
-
-  // suppress unused-var lint warning
-  void processedValues
+  console.log('[sadad] final checksumhash:', encrypted)
 
   return encrypted
 }
