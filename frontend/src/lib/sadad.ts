@@ -36,35 +36,59 @@ export async function initiateSadadPayment(orderData: {
 
   console.log('[sadad] generateChecksum payload:', JSON.stringify(checksumPayload))
 
-  const checksumRes = await fetch(
-    'https://api.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+  const attempts = [
     {
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'secretkey':    secretKey,
-        'Origin':       website,
-      },
-      body: JSON.stringify(checksumPayload),
+      label:   'A1: secretkey + Origin (no https)',
+      url:     'https://api.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'Origin': website },
+    },
+    {
+      label:   'A2: secretkey + Origin https://',
+      url:     'https://api.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'Origin': `https://${website}` },
+    },
+    {
+      label:   'A3: secretkey + sadadid + Origin https://',
+      url:     'https://api.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'sadadid': merchantId, 'Origin': `https://${website}` },
+    },
+    {
+      label:   'A4a: sandbox api-s.sadadqatar.com',
+      url:     'https://api-s.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'Origin': `https://${website}` },
+    },
+    {
+      label:   'A4b: sandbox.sadadqa.com',
+      url:     'https://sandbox.sadadqa.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'Origin': `https://${website}` },
+    },
+    {
+      label:   'A4c: api-test.sadadqatar.com',
+      url:     'https://api-test.sadadqatar.com/api-v4/userbusinesses/generateChecksum',
+      headers: { 'Content-Type': 'application/json', 'secretkey': secretKey, 'Origin': `https://${website}` },
+    },
+  ]
+
+  let checksumhash = ''
+  for (const attempt of attempts) {
+    try {
+      const res  = await fetch(attempt.url, { method: 'POST', headers: attempt.headers as Record<string,string>, body: JSON.stringify(checksumPayload) })
+      const text = await res.text()
+      console.log(`[sadad] ${attempt.label} → HTTP ${res.status}:`, text)
+      const json = JSON.parse(text) as { checksum?: string }
+      if (json.checksum) {
+        checksumhash = json.checksum
+        console.log('[sadad] SUCCESS with', attempt.label, '— checksum:', checksumhash)
+        break
+      }
+    } catch (e) {
+      console.log(`[sadad] ${attempt.label} → ERROR:`, e)
     }
-  )
-
-  const checksumText = await checksumRes.text()
-  console.log('[sadad] generateChecksum raw response:', checksumText)
-
-  let checksumJson: { checksum?: string }
-  try {
-    checksumJson = JSON.parse(checksumText)
-  } catch {
-    throw new Error('generateChecksum response not JSON: ' + checksumText)
   }
 
-  if (!checksumJson.checksum) {
-    throw new Error('generateChecksum returned no checksum: ' + checksumText)
+  if (!checksumhash) {
+    throw new Error('All generateChecksum attempts failed — check logs above')
   }
-
-  const checksumhash = checksumJson.checksum
-  console.log('[sadad] checksumhash:', checksumhash)
 
   // Step 2 — POST same params + checksumhash to callapi.php
   const body = new URLSearchParams()
