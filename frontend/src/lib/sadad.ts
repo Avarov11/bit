@@ -58,8 +58,10 @@ export async function createInvoice(
   const inv = Array.isArray(json) ? json[0] : json;
   if (!inv || inv.error)
     throw new Error(`Sadad createInvoice failed: ${JSON.stringify(json)}`);
-  console.log("[sadad] createInvoice keys:", Object.keys(inv));
-  console.log("[sadad] createInvoice full:", JSON.stringify(inv));
+  // Log each field individually so nothing gets truncated
+  for (const [k, v] of Object.entries(inv)) {
+    console.log(`[sadad] inv.${k} =`, JSON.stringify(v));
+  }
   return inv as Record<string, unknown>;
 }
 
