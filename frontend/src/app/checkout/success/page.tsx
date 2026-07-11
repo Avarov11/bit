@@ -1,15 +1,20 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Clock, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCartStore } from "@/store/cartStore";
 
 function SuccessContent() {
   const { t } = useLanguage();
+  const { clearCart } = useCartStore();
   const p = useSearchParams();
   const order = p.get("order") ?? "000000";
+
+  // Clear cart when arriving on success page (covers both Sadad callback and cash flow)
+  useEffect(() => { clearCart(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const date = p.get("date") ?? "";
   const time = p.get("time") ?? "";
   const name = p.get("name") ?? "there";

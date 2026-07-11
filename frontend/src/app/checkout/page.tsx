@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MapPin, Clock, CreditCard, Truck } from "lucide-react";
+import { ChevronLeft, MapPin, Clock, CreditCard, Truck, Banknote } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -63,10 +63,11 @@ export default function CheckoutPage() {
     deliveryMethod: "pickup",
     address: "",
     pickupDate: "", pickupTime: "",
-    payment: "card", notes: "",
+    payment: "online", notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placing, setPlacing] = useState(false);
+  const paymentFailed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("payment") === "failed";
 
   const set = (key: string, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -90,14 +91,10 @@ export default function CheckoutPage() {
     if (!validate()) return;
     setPlacing(true);
 
-    const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Extract sticker/image URLs from any customized item
     const stickerUrl = items.map(i => i.customization?.stickerUrl).find(Boolean) ?? null;
     const imageUrl   = items.map(i => i.customization?.imageUrl).find(Boolean) ?? null;
 
-    const payload = {
-      order_number:     orderNumber,
+    const orderBase = {
       customer_name:    form.name,
       customer_phone:   form.phone,
       customer_email:   form.email || null,
@@ -105,7 +102,6 @@ export default function CheckoutPage() {
       delivery_address: form.deliveryMethod === "delivery" ? form.address : null,
       pickup_date:      form.pickupDate,
       pickup_time:      form.pickupTime,
-      payment_method:   form.payment,
       sticker_url:      stickerUrl,
       image_url:        imageUrl,
       items: items.map((i) => ({
@@ -122,15 +118,58 @@ export default function CheckoutPage() {
       total:        subtotal,
       notes:        form.notes || null,
       language:     lang,
-      status:       "pending",
     };
 
+    // ── Online payment via Sadad ────────────────────────────────────────────
+    if (form.payment === "online") {
+      try {
+        const res = await fetch("/api/sadad-pay", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ order: orderBase, items: orderBase.items, subtotal }),
+        });
+        if (!res.ok) throw new Error("sadad-pay failed");
+        const { paymentUrl, fields, checksumhash } = await res.json();
+
+        // Build and auto-submit a hidden form to Sadad's payment page
+        const f = document.createElement("form");
+        f.method = "POST";
+        f.action = paymentUrl;
+        f.style.display = "none";
+
+        const append = (name: string, value: string) => {
+          const inp = document.createElement("input");
+          inp.type = "hidden"; inp.name = name; inp.value = value;
+          f.appendChild(inp);
+        };
+
+        Object.entries(fields as Record<string, unknown>).forEach(([k, v]) => {
+          if (k === "productdetail") return;
+          append(k, String(v));
+        });
+
+        (fields.productdetail as Array<Record<string, string>>).forEach((prod, i) => {
+          Object.entries(prod).forEach(([k, v]) => append(`productdetail[${i}][${k}]`, v));
+        });
+
+        append("checksumhash", checksumhash);
+
+        document.body.appendChild(f);
+        f.submit(); // browser leaves our site → Sadad payment page
+      } catch {
+        setPlacing(false);
+        alert("Could not connect to payment gateway. Please try again.");
+      }
+      return;
+    }
+
+    // ── Cash on pickup ──────────────────────────────────────────────────────
+    const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
     await fetch("/api/orders", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(payload),
+      body:    JSON.stringify({ ...orderBase, order_number: orderNumber, payment_method: "cash", status: "pending" }),
     });
-
     clearCart();
     router.push(
       `/checkout/success?order=${orderNumber}&date=${form.pickupDate}&time=${encodeURIComponent(form.pickupTime)}&name=${encodeURIComponent(form.name)}`
@@ -176,6 +215,14 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {paymentFailed && (
+        <div className="max-w-6xl mx-auto px-6 md:px-12 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">
+            ⚠️ Payment was not completed. Please try again or choose Cash on Pickup.
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
@@ -331,14 +378,32 @@ export default function CheckoutPage() {
               </Section>
 
               <Section title={t("checkout_payment_section")}>
-                <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-[#800020] bg-[#F5D0D8] shadow-warm-xs">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-[#800020] text-white">
-                    <CreditCard size={16} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#800020]">{t("checkout_card_pickup")}</p>
-                    <p className="text-xs text-[#A05068] mt-0.5">Visa · Mastercard · AMEX</p>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {([
+                    { id: "online", label: "Pay Online",     sub: "Visa · Mastercard · AMEX", Icon: CreditCard },
+                    { id: "cash",   label: "Cash on Pickup", sub: "Pay when you collect",      Icon: Banknote  },
+                  ] as const).map(({ id, label, sub, Icon }) => (
+                    <button
+                      key={id} type="button" onClick={() => set("payment", id)}
+                      className={cn(
+                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
+                        form.payment === id
+                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
+                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                        form.payment === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
+                      )}>
+                        <Icon size={16} />
+                      </div>
+                      <div>
+                        <p className={cn("text-sm font-semibold", form.payment === id ? "text-[#800020]" : "text-[#2D000A]")}>{label}</p>
+                        <p className="text-xs text-[#A05068] mt-0.5">{sub}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </Section>
 
