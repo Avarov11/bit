@@ -32,20 +32,25 @@ export function generateSadadChecksum(
   console.log('[sadad] hash:', hash)
   console.log('[sadad] hashString:', hashString)
 
-  // Step 4: AES-128-CBC encrypt — key = first 16 chars of (secretKey + merchantId)
-  const encryptionKey = secretKey + merchantId
-  const iv = '@@@@&&&&####$$$$'
+  // Step 4: AES-128-CBC encrypt — try all key combinations and log each
+  const iv = Buffer.from('@@@@&&&&####$$$$', 'utf8')
 
-  console.log('[sadad] encryptionKey:', encryptionKey)
-  console.log('[sadad] encryptionKey length:', encryptionKey.length)
+  function encrypt(hs: string, keyBuf: Buffer): string {
+    const c = crypto.createCipheriv('aes-128-cbc', keyBuf, iv)
+    return c.update(hs, 'utf8', 'base64') + c.final('base64')
+  }
 
-  const keyBuffer = Buffer.from(encryptionKey, 'utf8').slice(0, 16)
-  const ivBuffer  = Buffer.from(iv, 'utf8')
-  const cipher    = crypto.createCipheriv('aes-128-cbc', keyBuffer, ivBuffer)
-  let encrypted   = cipher.update(hashString, 'utf8', 'base64')
-  encrypted      += cipher.final('base64')
+  const key1 = Buffer.from(secretKey, 'utf8')                                  // secretKey only (16 chars)
+  const key2 = Buffer.from((merchantId + secretKey).slice(0, 16), 'utf8')      // merchantId + secretKey
+  const key3 = Buffer.from((secretKey + merchantId).slice(0, 16), 'utf8')      // secretKey + merchantId
 
-  console.log('[sadad] final checksumhash:', encrypted)
+  console.log('[sadad] checksum with secretKey only:', encrypt(hashString, key1))
+  console.log('[sadad] checksum with merchantId+secretKey:', encrypt(hashString, key2))
+  console.log('[sadad] checksum with secretKey+merchantId:', encrypt(hashString, key3))
+
+  // Use secretKey only — it is exactly 16 chars, ideal for AES-128
+  const encrypted = encrypt(hashString, key1)
+  console.log('[sadad] final checksumhash (key1):', encrypted)
 
   return encrypted
 }
