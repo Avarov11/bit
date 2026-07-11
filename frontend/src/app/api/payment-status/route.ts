@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { login, getInvoice } from "@/lib/sadad";
+import { login, getInvoiceById } from "@/lib/sadad";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     }
 
     const accessToken = await login();
-    const invoice = await getInvoice(accessToken, Number(invoiceId));
+    const invoice = await getInvoiceById(accessToken, Number(invoiceId));
 
     // Sadad invoice status: invoicestatusId 3 = paid, check name too
     const statusName = String(

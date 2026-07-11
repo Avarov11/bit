@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { login, createInvoice } from "@/lib/sadad";
+import { login, createInvoice, getInvoiceById, buildPaymentUrl } from "@/lib/sadad";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     // Step 1 — authenticate
     const accessToken = await login();
 
-    // Step 2 — create invoice (returns full raw invoice object)
+    // Step 2 — create invoice on api-sandbox.sadad.qa
     const inv = await createInvoice(accessToken, {
       cellnumber: order.customer_phone ?? "",
       clientname: order.customer_name  ?? "",
@@ -40,20 +40,17 @@ export async function POST(req: NextRequest) {
     });
 
     const invoiceId = inv.id as number;
-    const invoiceNo = inv.invoiceno as string;
 
-    // Find payment URL — check every possible field name
-    const urlField =
-      (inv.shareUrl as string | undefined) ??
-      (inv.invoice_customer_share_url as string | undefined) ??
-      (inv.paymentUrl as string | undefined) ??
-      (inv.payUrl as string | undefined) ??
-      (inv.url as string | undefined);
+    // Step 3 — fetch invoice from apisandbox.sadadpay.net to get the "key"
+    const invoiceData = await getInvoiceById(accessToken, invoiceId);
+    const key = invoiceData.key as string | undefined;
+    if (!key) {
+      throw new Error(`Sadad getbyid returned no key: ${JSON.stringify(invoiceData)}`);
+    }
 
-    const payBase = "https://sadad.qa";
-    const paymentUrl = urlField
-      ? (urlField.startsWith("http") ? urlField : `${payBase}/pay/${urlField}`)
-      : `${payBase}/invoice/${invoiceNo}`;
+    // Step 4 — build payment URL: https://sandbox.sadadpay.net/pay/{key}
+    const paymentUrl = buildPaymentUrl(key);
+    console.log("[checkout] paymentUrl:", paymentUrl);
 
     return NextResponse.json({ paymentUrl, orderNumber, invoiceId });
   } catch (err) {

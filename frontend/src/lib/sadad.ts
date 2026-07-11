@@ -1,11 +1,22 @@
-const API =
+const SADAD_API =
   process.env.SADAD_SANDBOX === "true"
     ? "https://api-sandbox.sadad.qa/api"
     : "https://api-s.sadad.qa/api";
 
+// Invoice query + payment redirect lives on sadadpay.net
+const SADADPAY_API =
+  process.env.SADAD_SANDBOX === "true"
+    ? "https://apisandbox.sadadpay.net/api"
+    : "https://api.sadadpay.net/api";
+
+const SADADPAY_PAY =
+  process.env.SADAD_SANDBOX === "true"
+    ? "https://sandbox.sadadpay.net/pay"
+    : "https://sadadpay.net/pay";
+
 /** Step 1 — login with sadadId + secretKey + domain → accessToken */
 export async function login(): Promise<string> {
-  const res = await fetch(`${API}/userbusinesses/login`, {
+  const res = await fetch(`${SADAD_API}/userbusinesses/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -26,7 +37,7 @@ export interface SadadItem {
   amount: number;
 }
 
-/** Step 2 — create invoice → { shareUrl, invoiceId } */
+/** Step 2 — create invoice, returns the raw invoice object (includes numeric id) */
 export async function createInvoice(
   accessToken: string,
   data: {
@@ -37,7 +48,7 @@ export async function createInvoice(
     remarks?: string;
   }
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API}/invoices/createInvoice`, {
+  const res = await fetch(`${SADAD_API}/invoices/createInvoice`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -54,25 +65,31 @@ export async function createInvoice(
     }),
   });
   const json = await res.json();
-  // Response is an array — take first element
   const inv = Array.isArray(json) ? json[0] : json;
   if (!inv || inv.error)
     throw new Error(`Sadad createInvoice failed: ${JSON.stringify(json)}`);
-  // Log each field individually so nothing gets truncated
-  for (const [k, v] of Object.entries(inv)) {
-    console.log(`[sadad] inv.${k} =`, JSON.stringify(v));
-  }
+  console.log("[sadad] createInvoice id:", inv.id, "invoiceno:", inv.invoiceno);
   return inv as Record<string, unknown>;
 }
 
-/** Get invoice by ID to check payment status */
-export async function getInvoice(
+/**
+ * Step 3 — fetch the invoice from sadadpay.net to get the "key" needed for the
+ * payment redirect URL.  Also used by payment-status to check invoicestatusId.
+ */
+export async function getInvoiceById(
   accessToken: string,
   invoiceId: number
 ): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API}/invoices/${invoiceId}`, {
-    headers: { Authorization: accessToken },
-  });
+  const res = await fetch(
+    `${SADADPAY_API}/Invoice/getbyid?id=${invoiceId}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
   const json = await res.json();
+  console.log("[sadad] getbyid response:", JSON.stringify(json));
   return json as Record<string, unknown>;
+}
+
+/** Build the hosted payment page URL from the invoice key */
+export function buildPaymentUrl(key: string): string {
+  return `${SADADPAY_PAY}/${key}`;
 }
