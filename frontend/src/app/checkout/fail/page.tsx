@@ -7,7 +7,7 @@ import { AlertCircle, RotateCcw, Home } from "lucide-react";
 
 function FailContent() {
   const p = useSearchParams();
-  const invoiceId = p.get("invoice_id");
+  const order = p.get("order");
 
   return (
     <main
@@ -15,7 +15,6 @@ function FailContent() {
       style={{ backgroundColor: "#F5D0D8" }}
     >
       <div className="w-full max-w-md text-center">
-        {/* Icon */}
         <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
           <AlertCircle size={40} className="text-red-500" />
         </div>
@@ -31,13 +30,12 @@ function FailContent() {
           Please try again or choose Cash on Pickup at checkout.
         </p>
 
-        {invoiceId && (
+        {order && (
           <p className="text-[#A05068] text-xs mb-6">
-            Reference: <span className="font-mono">{invoiceId}</span>
+            Order reference: <span className="font-mono font-semibold">#{order}</span>
           </p>
         )}
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/"
@@ -63,10 +61,7 @@ export default function FailPage() {
   return (
     <Suspense
       fallback={
-        <main
-          className="min-h-screen flex items-center justify-center"
-          style={{ backgroundColor: "#F5D0D8" }}
-        >
+        <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5D0D8" }}>
           <div className="w-8 h-8 rounded-full border-2 border-[#800020] border-t-transparent animate-spin" />
         </main>
       }

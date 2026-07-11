@@ -1,92 +1,114 @@
-const SADAD_API =
-  process.env.SADAD_SANDBOX === "true"
-    ? "https://api-sandbox.sadad.qa/api"
-    : "https://api-s.sadad.qa/api";
+const BASE        = "https://sadadqa.com";
+const MERCHANT_ID = process.env.SADAD_MERCHANT_ID!;
+const SECRET_KEY  = process.env.SADAD_SECRET_KEY!;
+const WEBSITE     = process.env.SADAD_DOMAIN ?? "biteezcustomer.vercel.app";
+const SITE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? "https://biteezcustomer.vercel.app";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://biteezcustomer.vercel.app";
+export interface ProductDetail {
+  order_id: string;
+  itemname:  string;
+  amount:    string;
+  quantity:  number;
+  type:      string;
+}
 
-/** Step 1 — login with sadadId + secretKey + domain → accessToken */
-export async function login(): Promise<string> {
-  const res = await fetch(`${SADAD_API}/userbusinesses/login`, {
-    method: "POST",
+/** Format a Date as "YYYY-MM-DD HH:mm:ss" (Sadad txnDate format) */
+export function formatTxnDate(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} `
+       + `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** Step 1 — ask Sadad to generate the checksumhash */
+export async function generateChecksum(params: {
+  ORDER_ID:     string;
+  TXN_AMOUNT:   string;
+  CALLBACK_URL: string;
+  txnDate:      string;
+  productdetail: ProductDetail[];
+}): Promise<string> {
+  const res = await fetch(`${BASE}/api/Checksum/generate`, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sadadId:   Number(process.env.SADAD_MERCHANT_ID),
-      secretKey: process.env.SADAD_SECRET_KEY,
-      domain:    process.env.SADAD_DOMAIN ?? "biteezcustomer.vercel.app",
+    body:    JSON.stringify({
+      merchant_id:   MERCHANT_ID,
+      ORDER_ID:      params.ORDER_ID,
+      WEBSITE,
+      TXN_AMOUNT:    params.TXN_AMOUNT,
+      CALLBACK_URL:  params.CALLBACK_URL,
+      txnDate:       params.txnDate,
+      productdetail: params.productdetail,
+      secretkey:     SECRET_KEY,
     }),
   });
+  if (!res.ok) throw new Error(`Sadad checksum generate HTTP ${res.status}`);
   const json = await res.json();
-  if (!json.accessToken)
-    throw new Error(`Sadad login failed: ${JSON.stringify(json)}`);
-  return json.accessToken as string;
+  console.log("[sadad] checksum response:", JSON.stringify(json));
+  if (!json.checksumhash) throw new Error(`No checksumhash: ${JSON.stringify(json)}`);
+  return json.checksumhash as string;
 }
 
-export interface SadadItem {
-  description: string;
-  quantity: number;
-  amount: number;
-}
-
-/** Step 2 — create invoice; pass success/webhook URLs so Sadad populates shareUrl */
-export async function createInvoice(
-  accessToken: string,
-  data: {
-    cellnumber: string;
-    clientname: string;
-    amount: number;
-    items: SadadItem[];
-    remarks?: string;
-    orderNumber?: string;
-  }
-): Promise<Record<string, unknown>> {
-  const res = await fetch(`${SADAD_API}/invoices/createInvoice`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: accessToken,
-    },
-    body: JSON.stringify({
-      countryCode:               974,
-      cellnumber:                data.cellnumber,
-      clientname:                data.clientname,
-      invoicedetails:            data.items,
-      status:                    2,
-      remarks:                   data.remarks ?? "",
-      amount:                    data.amount,
-      // Provide these so Sadad populates shareUrl / invoice_customer_share_url
-      invoice_webhook_url:       `${SITE_URL}/api/sadad-webhook`,
-      invoice_thankyou_page_url: `${SITE_URL}/checkout/success`,
-    }),
+/** Step 2 — POST to callapi.php; returns the HTML form string from response.msg */
+export async function getSadadForm(params: {
+  ORDER_ID:      string;
+  TXN_AMOUNT:    string;
+  CUST_ID:       string;
+  EMAIL:         string;
+  MOBILE_NO:     string;
+  txnDate:       string;
+  productdetail: ProductDetail[];
+  checksumhash:  string;
+}): Promise<string> {
+  const body = new URLSearchParams();
+  body.append("merchant_id",  MERCHANT_ID);
+  body.append("ORDER_ID",     params.ORDER_ID);
+  body.append("WEBSITE",      WEBSITE);
+  body.append("TXN_AMOUNT",   params.TXN_AMOUNT);
+  body.append("CUST_ID",      params.CUST_ID);
+  body.append("EMAIL",        params.EMAIL);
+  body.append("MOBILE_NO",    params.MOBILE_NO);
+  body.append("CALLBACK_URL", `${SITE_URL}/api/payment-callback`);
+  body.append("txnDate",      params.txnDate);
+  params.productdetail.forEach((item, i) => {
+    body.append(`productdetail[${i}][order_id]`,  item.order_id);
+    body.append(`productdetail[${i}][itemname]`,  item.itemname);
+    body.append(`productdetail[${i}][amount]`,    item.amount);
+    body.append(`productdetail[${i}][quantity]`,  String(item.quantity));
+    body.append(`productdetail[${i}][type]`,      item.type);
   });
-  const json = await res.json();
-  const inv = Array.isArray(json) ? json[0] : json;
-  if (!inv || inv.error)
-    throw new Error(`Sadad createInvoice failed: ${JSON.stringify(json)}`);
+  body.append("checksumhash", params.checksumhash);
 
-  // Log every field so we can see what Sadad actually returns
-  console.log("[sadad] createInvoice fields:");
-  for (const [k, v] of Object.entries(inv)) {
-    console.log(`  ${k}: ${JSON.stringify(v)}`);
-  }
-  return inv as Record<string, unknown>;
+  const res = await fetch(`${BASE}/jslib/callapi.php`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body:    body.toString(),
+  });
+  if (!res.ok) throw new Error(`Sadad callapi.php HTTP ${res.status}`);
+  const json = await res.json();
+  console.log("[sadad] callapi status:", json.status, "msg length:", String(json.msg ?? "").length);
+  if (json.status === "failed") throw new Error(`Sadad callapi failed: ${JSON.stringify(json)}`);
+  if (!json.msg) throw new Error(`No form HTML from Sadad: ${JSON.stringify(json)}`);
+  return json.msg as string;
 }
 
-/**
- * Fetch an invoice by its numeric id. Tries the main Sadad API first
- * (using query-param form since path-param returns 401).
- */
-export async function getInvoiceById(
-  accessToken: string,
-  invoiceId: number
-): Promise<Record<string, unknown>> {
-  // Try GET /api/invoices/getbyid?id={invoiceId}
-  const res = await fetch(
-    `${SADAD_API}/invoices/getbyid?id=${invoiceId}`,
-    { headers: { Authorization: accessToken } }
-  );
-  const json = await res.json();
-  console.log("[sadad] getbyid response:", JSON.stringify(json));
-  return json as Record<string, unknown>;
+/** Verify the checksumhash that Sadad sends to the callback URL */
+export async function verifyChecksum(params: {
+  ORDER_ID:     string;
+  STATUS:       string;
+  TXNAMOUNT:    string;
+  checksumhash: string;
+}): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE}/api/Checksum/verify`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ ...params, merchant_id: MERCHANT_ID, secretkey: SECRET_KEY }),
+    });
+    const json = await res.json();
+    console.log("[sadad] checksum verify:", JSON.stringify(json));
+    return json.isValid === true || json.status === "success" || json.checksumhash === params.checksumhash;
+  } catch (err) {
+    console.error("[sadad] checksum verify error:", err);
+    return false;
+  }
 }

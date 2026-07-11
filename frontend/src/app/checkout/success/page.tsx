@@ -1,69 +1,29 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Clock, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
 
-interface OrderInfo {
-  orderNumber: string;
-  customerName: string;
-  pickupDate: string;
-  pickupTime: string;
-}
-
 function SuccessContent() {
   const { t } = useLanguage();
   const { clearCart } = useCartStore();
   const p = useSearchParams();
 
-  const invoiceId = p.get("invoice_id");
+  useEffect(() => { clearCart(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // For Sadad payments: resolved from API after redirect
-  const [apiOrder, setApiOrder] = useState<OrderInfo | null>(null);
-  const [apiLoading, setApiLoading] = useState(!!invoiceId);
-
-  useEffect(() => {
-    clearCart();
-    if (invoiceId) {
-      fetch(`/api/payment-status?invoice_id=${invoiceId}`)
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.orderNumber) {
-            setApiOrder({
-              orderNumber: d.orderNumber,
-              customerName: d.customerName ?? "",
-              pickupDate: d.pickupDate ?? "",
-              pickupTime: d.pickupTime ?? "",
-            });
-          }
-        })
-        .catch(console.error)
-        .finally(() => setApiLoading(false));
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Cash flow falls back to URL params; Sadad flow uses API data
-  const order    = apiOrder?.orderNumber  ?? p.get("order") ?? "000000";
-  const date     = apiOrder?.pickupDate   ?? p.get("date")  ?? "";
-  const time     = apiOrder?.pickupTime   ?? p.get("time")  ?? "";
-  const name     = apiOrder?.customerName ?? p.get("name")  ?? "there";
+  const order = p.get("order") ?? "000000";
+  const date  = p.get("date")  ?? "";
+  const time  = p.get("time")  ?? "";
+  const name  = p.get("name")  ?? "there";
 
   const formattedDate = date
     ? new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
         weekday: "long", day: "numeric", month: "long", year: "numeric",
       })
     : "";
-
-  if (apiLoading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5D0D8" }}>
-        <div className="w-8 h-8 rounded-full border-2 border-[#800020] border-t-transparent animate-spin" />
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: "#F5D0D8" }}>
@@ -78,7 +38,6 @@ function SuccessContent() {
           />
         </div>
 
-        {/* Heading */}
         <p data-i18n="success_order_confirmed" className="text-[#800020]/70 font-semibold tracking-[0.3em] uppercase text-xs mb-2">
           {t("success_order_confirmed")}
         </p>
@@ -96,9 +55,7 @@ function SuccessContent() {
             <span data-i18n="success_order_number" className="text-[#A05068] text-sm">
               {t("success_order_number")}
             </span>
-            <span className="font-playfair font-bold text-[#800020] text-lg">
-              #{order}
-            </span>
+            <span className="font-playfair font-bold text-[#800020] text-lg">#{order}</span>
           </div>
 
           <div className="space-y-3">
@@ -128,26 +85,19 @@ function SuccessContent() {
                   <p data-i18n="success_pickup_time" className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-0.5">
                     {t("success_pickup_time")}
                   </p>
-                  {formattedDate && (
-                    <p className="text-[#2D000A] text-sm font-semibold">{formattedDate}</p>
-                  )}
-                  {time && (
-                    <p className="text-[#A05068] text-xs">{decodeURIComponent(time)}</p>
-                  )}
+                  {formattedDate && <p className="text-[#2D000A] text-sm font-semibold">{formattedDate}</p>}
+                  {time && <p className="text-[#A05068] text-xs">{decodeURIComponent(time)}</p>}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Note */}
         <div className="bg-white/50 border border-[rgba(128,0,32,0.10)] rounded-xl px-4 py-3 mb-8 text-xs text-[#800020]/70 leading-relaxed">
           ✉️ &nbsp;
-          <span data-i18n="success_email_note">{t("success_email_note")}</span>{" "}
-          <span className="font-semibold">+961 1 234 567</span>.
+          <span data-i18n="success_email_note">{t("success_email_note")}</span>
         </div>
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/"

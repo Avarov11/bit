@@ -120,7 +120,7 @@ export default function CheckoutPage() {
       language:     lang,
     };
 
-    // ── Online payment via Sadad REST API ──────────────────────────────────
+    // ── Online payment via Sadad Web Checkout 2.1 ──────────────────────────
     if (form.payment === "online") {
       try {
         const res = await fetch("/api/checkout", {
@@ -132,8 +132,14 @@ export default function CheckoutPage() {
           const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(apiErr ?? "checkout failed");
         }
-        const { paymentUrl } = await res.json();
-        window.location.href = paymentUrl;
+        const { form: sadadForm } = await res.json();
+        // Inject the HTML form returned by Sadad and auto-submit it
+        const container = document.createElement("div");
+        container.innerHTML = sadadForm as string;
+        document.body.appendChild(container);
+        const formEl = container.querySelector("form") as HTMLFormElement | null;
+        if (!formEl) throw new Error("No form in Sadad response");
+        formEl.submit();
       } catch (err) {
         setPlacing(false);
         alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
