@@ -65,23 +65,25 @@ export async function initiateSadadPayment(orderData: {
 
   const txnDate = new Date().toISOString().replace('T', ' ').slice(0, 19)
 
+  // Only these 6 fields in this exact order go into the checksum
   const params: Record<string, string> = {
-    merchant_id:                      merchantId,
-    WEBSITE:                          website,
-    SADAD_WEBCHECKOUT_PAGE_LANGUAGE:  'ENG',
-    ORDER_ID:                         orderData.orderId,
-    TXN_AMOUNT:                       orderData.amount,
-    CUST_ID:                          orderData.customerId,
-    EMAIL:                            orderData.customerEmail,
-    MOBILE_NO:                        orderData.customerMobile,
-    CALLBACK_URL:                     callbackUrl,
-    txnDate:                          txnDate,
+    merchant_id:  merchantId,
+    ORDER_ID:     orderData.orderId,
+    TXN_AMOUNT:   orderData.amount,
+    WEBSITE:      website,
+    CALLBACK_URL: callbackUrl,
+    txnDate:      txnDate,
   }
 
   const checksumhash = generateSadadChecksum(params, secretKey, merchantId)
 
+  // Build full form body: checksum params + extra fields + product detail
   const body = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => body.append(k, v))
+  body.append('SADAD_WEBCHECKOUT_PAGE_LANGUAGE', 'ENG')
+  body.append('CUST_ID',    orderData.customerId)
+  body.append('EMAIL',      orderData.customerEmail)
+  body.append('MOBILE_NO',  orderData.customerMobile)
   body.append('productdetail[0][order_id]', orderData.orderId)
   body.append('productdetail[0][itemname]', orderData.itemName)
   body.append('productdetail[0][amount]',   orderData.amount)
