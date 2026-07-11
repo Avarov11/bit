@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { login, createInvoice, getInvoice } from "@/lib/sadad";
+import { login, createInvoice } from "@/lib/sadad";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     // Step 1 — authenticate
     const accessToken = await login();
 
-    // Step 2 — create invoice
-    const { invoiceId, invoiceNo, shareUrl } = await createInvoice(accessToken, {
+    // Step 2 — create invoice (returns full raw invoice object)
+    const inv = await createInvoice(accessToken, {
       cellnumber: order.customer_phone ?? "",
       clientname: order.customer_name  ?? "",
       amount:     Number(subtotal),
@@ -39,17 +39,16 @@ export async function POST(req: NextRequest) {
       remarks: `Order #${orderNumber}`,
     });
 
-    // Step 3 — fetch full invoice to find payment URL
-    const fullInvoice = await getInvoice(accessToken, invoiceId);
-    console.log("[checkout] invoice fields:", Object.keys(fullInvoice));
-    console.log("[checkout] invoice data:", JSON.stringify(fullInvoice));
+    const invoiceId = inv.id as number;
+    const invoiceNo = inv.invoiceno as string;
 
+    // Find payment URL — check every possible field name
     const urlField =
-      (fullInvoice.shareUrl as string | undefined) ??
-      (fullInvoice.invoice_customer_share_url as string | undefined) ??
-      (fullInvoice.paymentUrl as string | undefined) ??
-      (fullInvoice.payUrl as string | undefined) ??
-      shareUrl;
+      (inv.shareUrl as string | undefined) ??
+      (inv.invoice_customer_share_url as string | undefined) ??
+      (inv.paymentUrl as string | undefined) ??
+      (inv.payUrl as string | undefined) ??
+      (inv.url as string | undefined);
 
     const payBase = "https://sadad.qa";
     const paymentUrl = urlField

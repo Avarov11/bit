@@ -36,7 +36,7 @@ export async function createInvoice(
     items: SadadItem[];
     remarks?: string;
   }
-): Promise<{ invoiceId: number; invoiceNo: string; shareUrl: string | null }> {
+): Promise<Record<string, unknown>> {
   const res = await fetch(`${API}/invoices/createInvoice`, {
     method: "POST",
     headers: {
@@ -58,11 +58,9 @@ export async function createInvoice(
   const inv = Array.isArray(json) ? json[0] : json;
   if (!inv || inv.error)
     throw new Error(`Sadad createInvoice failed: ${JSON.stringify(json)}`);
-  return {
-    invoiceId: inv.id as number,
-    invoiceNo: inv.invoiceno as string,
-    shareUrl:  (inv.shareUrl ?? inv.invoice_customer_share_url ?? null) as string | null,
-  };
+  console.log("[sadad] createInvoice keys:", Object.keys(inv));
+  console.log("[sadad] createInvoice full:", JSON.stringify(inv));
+  return inv as Record<string, unknown>;
 }
 
 /** Get invoice by ID to check payment status */
