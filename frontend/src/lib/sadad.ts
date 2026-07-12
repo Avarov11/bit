@@ -24,11 +24,12 @@ export function buildSadadForm(orderData: {
   const website     = 'biteezcustomer.vercel.app'
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment-callback`
   const txnDate     = new Date().toISOString().replace('T', ' ').slice(0, 19)
+  const cleanMobile = orderData.customerMobile.replace(/\+/g, '').replace(/\s/g, '').replace(/-/g, '')
 
   const params: Record<string, string> = {
     CALLBACK_URL:                    callbackUrl,
     EMAIL:                           orderData.customerEmail,
-    MOBILE_NO:                       orderData.customerMobile,
+    MOBILE_NO:                       cleanMobile,
     ORDER_ID:                        orderData.orderId,
     SADAD_WEBCHECKOUT_PAGE_LANGUAGE: 'ENG',
     TXN_AMOUNT:                      orderData.amount,
@@ -47,7 +48,7 @@ export function buildSadadForm(orderData: {
 <form action="https://sadadqa.com/webpurchase" method="post" name="gosadad" id="sadad_form">
   <input type="hidden" name="CALLBACK_URL" value="${callbackUrl}">
   <input type="hidden" name="EMAIL" value="${orderData.customerEmail}">
-  <input type="hidden" name="MOBILE_NO" value="${orderData.customerMobile}">
+  <input type="hidden" name="MOBILE_NO" value="${cleanMobile}">
   <input type="hidden" name="ORDER_ID" value="${orderData.orderId}">
   <input type="hidden" name="SADAD_WEBCHECKOUT_PAGE_LANGUAGE" value="ENG">
   <input type="hidden" name="TXN_AMOUNT" value="${orderData.amount}">
