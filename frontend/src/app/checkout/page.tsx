@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, MapPin, Clock, CreditCard, Truck, Banknote } from "lucide-react";
@@ -44,7 +44,26 @@ export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
   const { t, lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [sadadHtml, setSadadHtml] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "",
+    deliveryMethod: "pickup",
+    address: "",
+    pickupDate: "", pickupTime: "",
+    payment: "online", notes: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [placing, setPlacing] = useState(false);
+  const sadadRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (sadadHtml && sadadRef.current) {
+      const form = sadadRef.current.querySelector("form") as HTMLFormElement | null;
+      if (form) form.submit();
+    }
+  }, [sadadHtml]);
 
   const subtotal = useMemo(
     () => items.reduce((s, i) => s + i.unitPrice * i.quantity, 0),
@@ -57,16 +76,6 @@ export default function CheckoutPage() {
     d.setDate(d.getDate() + 14);
     return d.toISOString().split("T")[0];
   }, []);
-
-  const [form, setForm] = useState({
-    name: "", phone: "", email: "",
-    deliveryMethod: "pickup",
-    address: "",
-    pickupDate: "", pickupTime: "",
-    payment: "online", notes: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [placing, setPlacing] = useState(false);
   const paymentFailed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("payment") === "failed";
 
   const set = (key: string, value: string) => {
@@ -120,26 +129,50 @@ export default function CheckoutPage() {
       language:     lang,
     };
 
-    // ── Online payment via Sadad Web Checkout 2.1 ──────────────────────────
+    // ── Online payment via SADAD Web Checkout (SHA256 signature) ─────────
     if (form.payment === "online") {
       try {
+        const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
+
+        // Save order to Supabase as pending_payment
+        const saveRes = await fetch("/api/orders", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({
+            ...orderBase,
+            order_number:   orderNumber,
+            payment_method: "sadad_online",
+            status:         "pending_payment",
+          }),
+        });
+        if (!saveRes.ok) {
+          const { error: saveErr } = await saveRes.json().catch(() => ({ error: saveRes.statusText }));
+          throw new Error(saveErr ?? "Failed to save order");
+        }
+
+        const itemName =
+          items.length === 1
+            ? items[0].productName
+            : `Biteez Order (${items.length} items)`;
+
+        // Build the SADAD form
         const res = await fetch("/api/checkout", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ order: orderBase, subtotal }),
+          body:    JSON.stringify({
+            orderId:        orderNumber,
+            amount:         subtotal.toFixed(2),
+            customerEmail:  form.email,
+            customerMobile: form.phone,
+            itemName,
+          }),
         });
         if (!res.ok) {
           const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
           throw new Error(apiErr ?? "checkout failed");
         }
         const { formHtml } = await res.json();
-        // Inject the HTML form returned by Sadad and auto-submit it
-        const container = document.createElement("div");
-        container.innerHTML = formHtml as string;
-        document.body.appendChild(container);
-        const formEl = container.querySelector("form") as HTMLFormElement | null;
-        if (!formEl) throw new Error("No form found in SADAD response");
-        formEl.submit();
+        setSadadHtml(formHtml as string);
       } catch (err) {
         setPlacing(false);
         alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
@@ -164,6 +197,19 @@ export default function CheckoutPage() {
     return (
       <main className="min-h-screen pt-20 flex items-center justify-center" style={{ backgroundColor: "#F5D0D8" }}>
         <div className="w-8 h-8 rounded-full border-2 border-[#800020] border-t-transparent animate-spin" />
+      </main>
+    );
+  }
+
+  if (sadadHtml) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: "#F5D0D8" }}>
+        <div className="text-center mb-6">
+          <div className="w-10 h-10 border-2 border-[#800020] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="font-playfair text-2xl font-bold text-[#2D000A] mb-2">Redirecting to payment...</p>
+          <p className="text-[#800020]/60 text-sm">Please wait, you are being redirected to SADAD secure payment.</p>
+        </div>
+        <div ref={sadadRef} dangerouslySetInnerHTML={{ __html: sadadHtml }} />
       </main>
     );
   }

@@ -40,6 +40,9 @@ export function buildSadadForm(orderData: {
 
   const signature = generateSignature(params, secretKey)
 
+  console.log('[sadad] params:', params)
+  console.log('[sadad] signature:', signature)
+
   const formHtml = `
 <form action="https://sadadqa.com/webpurchase" method="post" name="gosadad" id="sadad_form">
   <input type="hidden" name="CALLBACK_URL" value="${callbackUrl}">
