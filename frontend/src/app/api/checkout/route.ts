@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { initiateSadadPayment } from '@/lib/sadad'
+import { buildSadadForm } from '@/lib/sadad'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
     const { order, subtotal } = await req.json()
     const items = order.items as Array<{ productName: string; unitPrice: number; quantity: number }>
 
-    // Save order to Supabase as pending_payment
     const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString()
     const sb = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,15 +27,15 @@ export async function POST(req: NextRequest) {
         ? items[0].productName
         : `Biteez Order (${items.length} items)`
 
-    const formHtml = await initiateSadadPayment({
+    const { formHtml } = buildSadadForm({
       orderId:        orderNumber,
       amount:         Number(subtotal).toFixed(2),
       customerEmail:  order.customer_email  ?? '',
       customerMobile: order.customer_phone  ?? '',
-      customerId:     order.customer_phone  ?? orderNumber,
       itemName,
     })
 
+    console.log('[checkout] built SADAD form for order', orderNumber)
     return NextResponse.json({ formHtml, orderNumber })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : JSON.stringify(error)

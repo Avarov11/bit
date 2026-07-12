@@ -7,7 +7,8 @@ import { AlertCircle, RotateCcw, Home } from "lucide-react";
 
 function FailContent() {
   const p = useSearchParams();
-  const order = p.get("order") ?? p.get("orderId");
+  const order  = p.get("order") ?? p.get("orderId");
+  const reason = p.get("reason");
 
   return (
     <main
@@ -26,8 +27,9 @@ function FailContent() {
           Something went wrong
         </h1>
         <p className="text-[#800020]/55 text-sm leading-relaxed mb-8">
-          Your payment could not be processed. No charge has been made.
-          Please try again or choose Cash on Pickup.
+          {reason
+            ? reason
+            : "Your payment could not be processed. No charge has been made. Please try again or choose Cash on Pickup."}
         </p>
 
         {order && (
