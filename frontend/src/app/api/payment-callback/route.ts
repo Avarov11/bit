@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
         time:  orderData?.pickup_time   ?? '',
       })
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?${qs.toString()}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?${qs.toString()}`,
+        { status: 303 }
       )
     }
 
@@ -59,12 +60,14 @@ export async function POST(req: NextRequest) {
 
     const reason = fields.RESPMSG ?? 'Payment failed'
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/fail?orderId=${orderId}&reason=${encodeURIComponent(reason)}`
+      `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/fail?orderId=${orderId}&reason=${encodeURIComponent(reason)}`,
+      { status: 303 }
     )
   } catch (err) {
     console.error('[payment-callback]', err)
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://biteezcustomer.vercel.app'}/checkout/fail`
+      `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://biteezcustomer.vercel.app'}/checkout/fail`,
+      { status: 303 }
     )
   }
 }
