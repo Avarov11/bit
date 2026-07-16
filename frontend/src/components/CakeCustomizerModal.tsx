@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Flame, Balloon, Camera, Upload, Sticker } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Flame, Balloon, Camera, Upload, Sticker, Cookie, Milk, Coffee, Leaf, Layers } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -40,14 +40,22 @@ const SHAPES = [
 ];
 
 const FLAVORS = [
-  { id: "chocolate", label: "Chocolate",       tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
-  { id: "white",     label: "White Chocolate", tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
+  {
+    id: "chocolate", tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub",
+    Icon: Cookie, iconColor: "text-white",
+    iconBg: "linear-gradient(145deg, #6B3318 0%, #2E0D05 100%)",
+  },
+  {
+    id: "white", tKey: "cust_modal_flavor_white", subKey: "cust_modal_flavor_white_sub",
+    Icon: Milk, iconColor: "text-[#7A5C38]",
+    iconBg: "linear-gradient(145deg, #FFF9EE 0%, #E8D5A8 100%)",
+  },
 ];
 
 const CHOC_FLAVORS = [
-  { id: "milk",     label: "Milk",     tKey: "cust_modal_choc_milk"     },
-  { id: "hazelnut", label: "Hazelnut", tKey: "cust_modal_choc_hazelnut" },
-  { id: "oreo",     label: "Oreo",     tKey: "cust_modal_choc_oreo"     },
+  { id: "milk",     label: "Milk",     tKey: "cust_modal_choc_milk",     Icon: Coffee, iconBg: "linear-gradient(145deg, #C49A6C, #7A4A24)" },
+  { id: "hazelnut", label: "Hazelnut", tKey: "cust_modal_choc_hazelnut", Icon: Leaf,   iconBg: "linear-gradient(145deg, #D4A853, #9A6E1A)" },
+  { id: "oreo",     label: "Oreo",     tKey: "cust_modal_choc_oreo",     Icon: Layers, iconBg: "linear-gradient(145deg, #4A3025, #0D0806)" },
 ];
 
 const COLOURS = [
@@ -543,12 +551,12 @@ export default function CakeCustomizerModal({
   };
 
   const OptionCard = ({
-    id, label, sub, selected, onClick,
-  }: { id: string; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
+    id, icon, iconStyle, label, sub, selected, onClick,
+  }: { id: string; icon: React.ReactNode; iconStyle?: React.CSSProperties; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
     <button
       key={id} onClick={onClick}
       className={cn(
-        "relative rounded-2xl bg-white text-left transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+        "relative rounded-2xl overflow-hidden bg-white text-left transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
         selected ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
       )}
     >
@@ -557,8 +565,11 @@ export default function CakeCustomizerModal({
           <Check size={11} className="text-white" strokeWidth={3} />
         </span>
       )}
-      <div className="p-4 pt-5 min-h-[64px] flex flex-col justify-center">
-        <p className="font-playfair font-bold text-[#2D000A] text-sm pr-5">{label}</p>
+      <div className="flex items-center justify-center py-7" style={iconStyle}>
+        {icon}
+      </div>
+      <div className="p-3">
+        <p className="font-playfair font-bold text-[#2D000A] text-sm">{label}</p>
         {sub && <p className="text-[#A05068] text-[11px] mt-0.5">{sub}</p>}
       </div>
     </button>
@@ -720,6 +731,8 @@ export default function CakeCustomizerModal({
             {availableFlavors.map((f) => (
               <OptionCard
                 key={f.id} id={f.id}
+                icon={<f.Icon size={40} strokeWidth={1.5} className={f.iconColor} />}
+                iconStyle={{ background: f.iconBg }}
                 label={t(f.tKey)} sub={t(f.subKey)}
                 selected={custSel.flavorType === f.id}
                 onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "", cakeColor: f.id === "chocolate" ? "brown" : "" }))}
@@ -750,7 +763,10 @@ export default function CakeCustomizerModal({
                           <Check size={10} className="text-white" strokeWidth={3} />
                         </span>
                       )}
-                      <div className="px-2.5 py-3.5 flex items-center justify-center min-h-[52px]">
+                      <div className="flex flex-col items-center gap-2 py-4 px-2">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: choc.iconBg }}>
+                          <choc.Icon size={18} strokeWidth={1.5} className="text-white" />
+                        </div>
                         <p className="font-playfair font-bold text-[#2D000A] text-xs text-center leading-tight">{t(choc.tKey)}</p>
                       </div>
                     </button>
@@ -760,10 +776,10 @@ export default function CakeCustomizerModal({
             </div>
           )}
           {isWhiteType && (() => {
-            const colGradients: Record<string, string> = {
-              white: "linear-gradient(145deg, #FFFEF9 0%, #F5ECE4 52%, #EDE0D4 100%)",
-              pink:  "linear-gradient(145deg, #FFB8CC 0%, #FF6B9D 52%, #E84C88 100%)",
-              blue:  "linear-gradient(145deg, #D6EDFA 0%, #B2C8D8 52%, #8AAFC8 100%)",
+            const colFlat: Record<string, string> = {
+              white: "linear-gradient(145deg, #FEFAF5, #E8DDD0)",
+              pink:  "linear-gradient(145deg, #FFB8CC, #E84C88)",
+              blue:  "linear-gradient(145deg, #C8DCEC, #8AAFC8)",
             };
             const colSub: Record<string, string> = {
               white: "Classic Pearl",
@@ -772,7 +788,7 @@ export default function CakeCustomizerModal({
             };
             return (
               <div>
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-5">{t("cust_modal_choose_colour")}</p>
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">{t("cust_modal_choose_colour")}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {COLOURS.map((col) => {
                     const sel = custSel.colour === col.id;
@@ -780,36 +796,23 @@ export default function CakeCustomizerModal({
                       <button
                         key={col.id}
                         onClick={() => setCustSel((p) => ({ ...p, colour: col.id, cakeColor: col.id }))}
-                        className="flex flex-col items-center gap-3 group"
+                        className={cn(
+                          "relative rounded-2xl overflow-hidden transition-all duration-200 active:scale-[0.97] shadow-warm-xs",
+                          sel ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-sm"
+                        )}
+                        style={{ background: colFlat[col.id] ?? col.hex }}
                       >
-                        <div className={cn(
-                          "relative w-[78px] h-[78px] rounded-full transition-all duration-300",
-                          sel
-                            ? "scale-110 shadow-[0_0_0_3px_#800020,0_6px_20px_rgba(128,0,32,0.22)]"
-                            : "shadow-[0_2px_10px_rgba(0,0,0,0.12)] group-hover:scale-105 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.18)]"
-                        )}>
-                          <div
-                            className="w-full h-full rounded-full overflow-hidden relative"
-                            style={{ background: colGradients[col.id] ?? col.hex }}
-                          >
-                            {/* Shimmer highlight */}
-                            <div className="absolute top-2 left-3 w-8 h-4 rounded-full bg-white/45 blur-sm pointer-events-none" />
-                            <div className="absolute top-3.5 left-4.5 w-4 h-2 rounded-full bg-white/65 blur-[1.5px] pointer-events-none" />
-                            {/* Selection check */}
-                            {sel && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-[#800020]/10 rounded-full">
-                                <div className="w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center">
-                                  <Check size={13} className="text-[#800020]" strokeWidth={3.5} />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <p className={cn("text-sm font-bold transition-colors leading-tight", sel ? "text-[#800020]" : "text-[#2D000A]/80 group-hover:text-[#800020]")}>
+                        <div className="h-16" />
+                        {sel && (
+                          <span className="absolute top-2 right-2 bg-white/90 rounded-full p-0.5 shadow-sm">
+                            <Check size={11} className="text-[#800020]" strokeWidth={3.5} />
+                          </span>
+                        )}
+                        <div className="bg-white/80 backdrop-blur-sm px-2 py-2 text-center border-t border-white/40">
+                          <p className={cn("text-xs font-bold leading-tight", sel ? "text-[#800020]" : "text-[#2D000A]")}>
                             {t(col.tKey)}
                           </p>
-                          <p className="text-[10px] text-[#A05068]/65 mt-0.5 font-medium">{colSub[col.id]}</p>
+                          <p className="text-[10px] text-[#A05068]/70 mt-0.5">{colSub[col.id]}</p>
                         </div>
                       </button>
                     );
@@ -828,11 +831,13 @@ export default function CakeCustomizerModal({
         <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_sprinkles_subtitle")}</p>
         <div className="grid grid-cols-2 gap-3">
           {([
-            { id: "yes", Icon: Sparkles, labelKey: "cust_modal_sprinkles_yes", subKey: "cust_modal_sprinkles_yes_sub" },
-            { id: "no",  Icon: X,        labelKey: "cust_modal_sprinkles_no",  subKey: "cust_modal_sprinkles_no_sub"  },
+            { id: "yes", Icon: Sparkles, bg: "linear-gradient(145deg, #FF6B9D, #C04070)", labelKey: "cust_modal_sprinkles_yes", subKey: "cust_modal_sprinkles_yes_sub" },
+            { id: "no",  Icon: X,        bg: "linear-gradient(145deg, #C8B4BC, #8A7080)", labelKey: "cust_modal_sprinkles_no",  subKey: "cust_modal_sprinkles_no_sub"  },
           ] as const).map((opt) => (
             <OptionCard
               key={opt.id} id={opt.id}
+              icon={<opt.Icon size={40} strokeWidth={1.5} className="text-white" />}
+              iconStyle={{ background: opt.bg }}
               label={t(opt.labelKey)} sub={t(opt.subKey)}
               selected={custSel.sprinkles === opt.id}
               onClick={() => setCustSel((p) => ({ ...p, sprinkles: opt.id }))}
@@ -863,7 +868,10 @@ export default function CakeCustomizerModal({
             <div className={cn("grid gap-3", cardCols)}>
               {showWrite && (
                 <OptionCard
-                  id="write" label={t("cust_modal_write")}
+                  id="write"
+                  icon={<PenLine size={40} strokeWidth={1.5} className="text-white" />}
+                  iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
+                  label={t("cust_modal_write")}
                   sub={shape === "cake" ? "Max 5 letters" : "Max 3 letters"}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
@@ -871,7 +879,10 @@ export default function CakeCustomizerModal({
               )}
               {showImage && (
                 <OptionCard
-                  id="image" label={t("cust_modal_image")}
+                  id="image"
+                  icon={<Camera size={40} strokeWidth={1.5} className="text-white" />}
+                  iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
+                  label={t("cust_modal_image")}
                   sub={t("cust_modal_image_sub")}
                   selected={custSel.topping === "image"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}

@@ -36,15 +36,17 @@ export async function POST(req: NextRequest) {
 
       const { data: orderData } = await sb
         .from('orders')
-        .select('customer_name, pickup_date, pickup_time')
+        .select('customer_name, customer_phone, delivery_address, pickup_date, pickup_time')
         .eq('order_number', orderId)
         .single()
 
       const qs = new URLSearchParams({
-        order: orderId,
-        name:  orderData?.customer_name ?? '',
-        date:  orderData?.pickup_date   ?? '',
-        time:  orderData?.pickup_time   ?? '',
+        order:   orderId,
+        name:    orderData?.customer_name    ?? '',
+        date:    orderData?.pickup_date      ?? '',
+        time:    orderData?.pickup_time      ?? '',
+        phone:   orderData?.customer_phone   ?? '',
+        address: orderData?.delivery_address ?? '',
       })
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?${qs.toString()}`,
