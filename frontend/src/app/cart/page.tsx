@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, Plus, Minus, ShoppingBag, ArrowRight, Trash2, ChevronLeft } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, ArrowRight, Trash2, ChevronLeft, Info } from "lucide-react";
 import { useCartStore, type CartItem } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -228,8 +228,9 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <div className="bg-[#F5D0D8] rounded-xl px-4 py-3 mb-5 text-xs text-[#800020] leading-relaxed">
-                🍫 &nbsp;<span data-i18n="cart_freshness_note">{t("cart_freshness_note")}</span>
+              <div className="bg-[#F5D0D8] rounded-xl px-4 py-3 mb-5 text-xs text-[#800020] leading-relaxed flex items-start gap-2">
+                <Info size={13} strokeWidth={2} className="shrink-0 mt-0.5" />
+                <span data-i18n="cart_freshness_note">{t("cart_freshness_note")}</span>
               </div>
 
               <button

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MapPin, Clock, CreditCard, Truck, Banknote } from "lucide-react";
+import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -47,10 +47,8 @@ export default function CheckoutPage() {
   const [sadadHtml, setSadadHtml] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", phone: "", email: "",
-    deliveryMethod: "pickup",
-    address: "",
-    pickupDate: "", pickupTime: "",
-    payment: "online", notes: "",
+    orderDate: "", orderTime: "",
+    notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placing, setPlacing] = useState(false);
@@ -76,6 +74,7 @@ export default function CheckoutPage() {
     d.setDate(d.getDate() + 14);
     return d.toISOString().split("T")[0];
   }, []);
+
   const paymentFailed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("payment") === "failed";
 
   const set = (key: string, value: string) => {
@@ -85,12 +84,11 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = t("checkout_error_name");
+    if (!form.name.trim())  e.name  = t("checkout_error_name");
     if (!form.phone.trim()) e.phone = t("checkout_error_phone");
     if (!form.email.trim() || !form.email.includes("@")) e.email = t("checkout_error_email");
-    if (form.deliveryMethod === "delivery" && !form.address.trim()) e.address = "Please enter your delivery address";
-    if (!form.pickupDate) e.pickupDate = t("checkout_error_pickup_date");
-    if (!form.pickupTime) e.pickupTime = t("checkout_error_pickup_time");
+    if (!form.orderDate)    e.orderDate = t("checkout_error_pickup_date");
+    if (!form.orderTime)    e.orderTime = t("checkout_error_pickup_time");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -104,15 +102,13 @@ export default function CheckoutPage() {
     const imageUrl   = items.map(i => i.customization?.imageUrl).find(Boolean) ?? null;
 
     const orderBase = {
-      customer_name:    form.name,
-      customer_phone:   form.phone,
-      customer_email:   form.email || null,
-      delivery_method:  form.deliveryMethod,
-      delivery_address: form.deliveryMethod === "delivery" ? form.address : null,
-      pickup_date:      form.pickupDate,
-      pickup_time:      form.pickupTime,
-      sticker_url:      stickerUrl,
-      image_url:        imageUrl,
+      customer_name:  form.name,
+      customer_phone: form.phone,
+      customer_email: form.email || null,
+      pickup_date:    form.orderDate,
+      pickup_time:    form.orderTime,
+      sticker_url:    stickerUrl,
+      image_url:      imageUrl,
       items: items.map((i) => ({
         productId:     i.productId,
         productName:   i.productName,
@@ -129,68 +125,50 @@ export default function CheckoutPage() {
       language:     lang,
     };
 
-    // ── Online payment via SADAD Web Checkout (SHA256 signature) ─────────
-    if (form.payment === "online") {
-      try {
-        const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
+    try {
+      const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
 
-        // Save order to Supabase as pending_payment
-        const saveRes = await fetch("/api/orders", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({
-            ...orderBase,
-            order_number:   orderNumber,
-            payment_method: "sadad_online",
-            status:         "pending_payment",
-          }),
-        });
-        if (!saveRes.ok) {
-          const { error: saveErr } = await saveRes.json().catch(() => ({ error: saveRes.statusText }));
-          throw new Error(saveErr ?? "Failed to save order");
-        }
-
-        const itemName =
-          items.length === 1
-            ? items[0].productName
-            : `Biteez Order (${items.length} items)`;
-
-        // Build the SADAD form
-        const res = await fetch("/api/checkout", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({
-            orderId:        orderNumber,
-            amount:         subtotal.toFixed(2),
-            customerEmail:  form.email,
-            customerMobile: form.phone,
-            itemName,
-          }),
-        });
-        if (!res.ok) {
-          const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(apiErr ?? "checkout failed");
-        }
-        const { formHtml } = await res.json();
-        setSadadHtml(formHtml as string);
-      } catch (err) {
-        setPlacing(false);
-        alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
+      const saveRes = await fetch("/api/orders", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          ...orderBase,
+          order_number:   orderNumber,
+          payment_method: "sadad_online",
+          status:         "pending_payment",
+        }),
+      });
+      if (!saveRes.ok) {
+        const { error: saveErr } = await saveRes.json().catch(() => ({ error: saveRes.statusText }));
+        throw new Error(saveErr ?? "Failed to save order");
       }
-      return;
-    }
 
-    // ── Cash on pickup ──────────────────────────────────────────────────────
-    const orderNumber = Math.floor(100000 + Math.random() * 900000).toString();
-    await fetch("/api/orders", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ ...orderBase, order_number: orderNumber, payment_method: "cash", status: "pending" }),
-    });
-    clearCart();
-    router.push(
-      `/checkout/success?order=${orderNumber}&date=${form.pickupDate}&time=${encodeURIComponent(form.pickupTime)}&name=${encodeURIComponent(form.name)}`
-    );
+      const itemName =
+        items.length === 1
+          ? items[0].productName
+          : `Biteez Order (${items.length} items)`;
+
+      const res = await fetch("/api/checkout", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          orderId:        orderNumber,
+          amount:         subtotal.toFixed(2),
+          customerEmail:  form.email,
+          customerMobile: form.phone,
+          itemName,
+        }),
+      });
+      if (!res.ok) {
+        const { error: apiErr } = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(apiErr ?? "checkout failed");
+      }
+      const { formHtml } = await res.json();
+      setSadadHtml(formHtml as string);
+    } catch (err) {
+      setPlacing(false);
+      alert("Payment error: " + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   if (!mounted) {
@@ -248,8 +226,9 @@ export default function CheckoutPage() {
 
       {paymentFailed && (
         <div className="max-w-6xl mx-auto px-6 md:px-12 pt-4">
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium">
-            ⚠️ Payment was not completed. Please try again or choose Cash on Pickup.
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium flex items-center gap-2">
+            <AlertTriangle size={15} strokeWidth={2} className="shrink-0" />
+            Payment was not completed. Please try again.
           </div>
         </div>
       )}
@@ -292,95 +271,26 @@ export default function CheckoutPage() {
               </Section>
 
               <Section title={t("checkout_pickup_section")}>
-                {/* Pickup / Delivery toggle */}
-                <div className="grid grid-cols-2 gap-3">
-                  {([
-                    { id: "pickup",   label: "Pickup",   Icon: MapPin },
-                    { id: "delivery", label: "Delivery", Icon: Truck  },
-                  ] as const).map(({ id, label, Icon }) => (
-                    <button
-                      key={id} type="button" onClick={() => set("deliveryMethod", id)}
-                      className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
-                        form.deliveryMethod === id
-                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
-                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                        form.deliveryMethod === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
-                      )}>
-                        <Icon size={16} />
-                      </div>
-                      <span className={cn(
-                        "text-sm font-semibold",
-                        form.deliveryMethod === id ? "text-[#800020]" : "text-[#800020]"
-                      )}>
-                        {label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Store card — pickup only */}
-                {form.deliveryMethod === "pickup" && (
-                  <div className="flex items-start gap-3 p-4 bg-[#F5D0D8] border border-[rgba(128,0,32,0.10)] rounded-xl">
-                    <MapPin size={16} className="text-[#800020] shrink-0 mt-0.5" />
-                    <div>
-                      <p data-i18n="checkout_boutique_name" className="font-semibold text-[#2D000A] text-sm">
-                        {t("checkout_boutique_name")}
-                      </p>
-                      <p data-i18n="checkout_address" className="text-[#800020] text-xs mt-0.5">
-                        {t("checkout_address")}
-                      </p>
-                      <p data-i18n="checkout_hours" className="text-[#A05068] text-xs flex items-center gap-1 mt-1">
-                        <Clock size={10} /> {t("checkout_hours")}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Address field — delivery only */}
-                {form.deliveryMethod === "delivery" && (
-                  <div>
-                    <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
-                      Delivery Address
-                    </label>
-                    <textarea
-                      value={form.address}
-                      onChange={(e) => set("address", e.target.value)}
-                      placeholder="Enter your full delivery address..."
-                      rows={3}
-                      className={cn(
-                        "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none",
-                        errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
-                      )}
-                    />
-                    {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
-                  </div>
-                )}
-
                 {/* Date */}
                 <div>
                   <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
-                    {form.deliveryMethod === "delivery" ? "Delivery Date" : t("checkout_pickup_date")}
+                    {t("checkout_pickup_date")}
                   </label>
                   <input
                     type="date" min={today} max={maxDate}
-                    value={form.pickupDate} onChange={(e) => set("pickupDate", e.target.value)}
+                    value={form.orderDate} onChange={(e) => set("orderDate", e.target.value)}
                     className={cn(
                       "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] outline-none transition-colors",
-                      errors.pickupDate ? "border-red-400" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
+                      errors.orderDate ? "border-red-400" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
                     )}
                   />
-                  {errors.pickupDate && <p className="text-red-500 text-[11px] mt-1">{errors.pickupDate}</p>}
+                  {errors.orderDate && <p className="text-red-500 text-[11px] mt-1">{errors.orderDate}</p>}
                 </div>
 
                 {/* Time slots */}
                 <div>
                   <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-2">
-                    {form.deliveryMethod === "delivery" ? "Delivery Time" : t("checkout_pickup_time")}
+                    {t("checkout_pickup_time")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {timeSlotKeys.map((slotKey) => {
@@ -389,11 +299,11 @@ export default function CheckoutPage() {
                         <button
                           key={slotKey}
                           type="button"
-                          onClick={() => set("pickupTime", slotLabel)}
+                          onClick={() => set("orderTime", slotLabel)}
                           data-i18n={slotKey}
                           className={cn(
                             "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97]",
-                            form.pickupTime === slotLabel
+                            form.orderTime === slotLabel
                               ? "border-[#800020] bg-[#800020] text-white shadow-warm-sm"
                               : "border-[rgba(128,0,32,0.10)] text-[#800020] hover:border-[#800020]/40 bg-white"
                           )}
@@ -403,37 +313,7 @@ export default function CheckoutPage() {
                       );
                     })}
                   </div>
-                  {errors.pickupTime && <p className="text-red-500 text-[11px] mt-1">{errors.pickupTime}</p>}
-                </div>
-              </Section>
-
-              <Section title={t("checkout_payment_section")}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {([
-                    { id: "online", label: "Pay Online",     sub: "Visa · Mastercard · AMEX", Icon: CreditCard },
-                    { id: "cash",   label: "Cash on Pickup", sub: "Pay when you collect",      Icon: Banknote  },
-                  ] as const).map(({ id, label, sub, Icon }) => (
-                    <button
-                      key={id} type="button" onClick={() => set("payment", id)}
-                      className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
-                        form.payment === id
-                          ? "border-[#800020] bg-[#F5D0D8] shadow-warm-xs"
-                          : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/30 bg-white"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                        form.payment === id ? "bg-[#800020] text-white" : "bg-[#F5D0D8] text-[#A05068]"
-                      )}>
-                        <Icon size={16} />
-                      </div>
-                      <div>
-                        <p className={cn("text-sm font-semibold", form.payment === id ? "text-[#800020]" : "text-[#2D000A]")}>{label}</p>
-                        <p className="text-xs text-[#A05068] mt-0.5">{sub}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {errors.orderTime && <p className="text-red-500 text-[11px] mt-1">{errors.orderTime}</p>}
                 </div>
               </Section>
 

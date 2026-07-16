@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import type { DbProduct } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
@@ -213,7 +213,7 @@ export default function MenuContent() {
               placeholder={t("menu_search_placeholder")}
               className="w-full pl-9 pr-10 py-2 bg-white/85 border border-white/50 rounded-full text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all duration-200"
             />
-            {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020] text-xs font-bold">✕</button>}
+            {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020]"><X size={13} strokeWidth={2.5} /></button>}
           </div>
           <div className="flex gap-2 pb-0.5 overflow-x-auto scrollbar-hide">
             {(["All", "Customized", ...customizedSubCats, "Accessories", "Boxes"] as FilterCat[]).map((cat) => (
@@ -261,7 +261,7 @@ export default function MenuContent() {
               placeholder="Search…"
               className="w-full pl-8 pr-7 py-2 bg-white/75 border border-white/50 rounded-full text-xs text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all"
             />
-            {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020] text-xs">✕</button>}
+            {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020]"><X size={13} strokeWidth={2.5} /></button>}
           </div>
 
           <p className="text-[9px] font-bold text-[#800020]/45 uppercase tracking-widest mb-3">Categories</p>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { MapPin, Mail, Phone, ArrowRight, ShoppingBag, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Mail, Phone, ArrowRight, ShoppingBag, Check, ChevronLeft, ChevronRight, Cake, GraduationCap, Gem, PartyPopper } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCartStore } from "@/store/cartStore";
 import type { DbProduct } from "@/lib/types";
@@ -181,10 +181,10 @@ export default function HomePage() {
       tags: null,
       stats: null,
       steps: [
-        { n: "🎂", text: t("home_slide5_step_1") },
-        { n: "🎓", text: t("home_slide5_step_2") },
-        { n: "💍", text: t("home_slide5_step_3") },
-        { n: "🎉", text: t("home_slide5_step_4") },
+        { n: <Cake size={18} strokeWidth={1.5} />,          text: t("home_slide5_step_1") },
+        { n: <GraduationCap size={18} strokeWidth={1.5} />, text: t("home_slide5_step_2") },
+        { n: <Gem size={18} strokeWidth={1.5} />,           text: t("home_slide5_step_3") },
+        { n: <PartyPopper size={18} strokeWidth={1.5} />,   text: t("home_slide5_step_4") },
       ],
       btn: t("home_slide5_btn"),
       href: "/menu?category=Gender+Reveal",
@@ -384,20 +384,19 @@ export default function HomePage() {
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-6 sm:mb-8">
                   {HERO_SLIDES[heroSlide].steps!.map((step) => (
                     <div
-                      key={step.n}
+                      key={step.text}
                       className="flex items-center gap-2.5 bg-white/6 border border-white/12 backdrop-blur-sm rounded-xl px-3 py-2.5 sm:px-4 sm:py-3"
                     >
-                      <span
-                        className={cn(
-                          "shrink-0 leading-none",
-                          /^\d/.test(step.n)
-                            ? "font-playfair font-bold text-[#FF6B9D]"
-                            : "text-xl"
-                        )}
-                        style={/^\d/.test(step.n) ? { fontSize: "clamp(1rem, 2vw, 1.25rem)" } : undefined}
-                      >
-                        {step.n}
-                      </span>
+                      {typeof step.n === "string" ? (
+                        <span
+                          className="shrink-0 font-playfair font-bold text-[#FF6B9D] leading-none"
+                          style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)" }}
+                        >
+                          {step.n}
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-[#FF6B9D] leading-none">{step.n}</span>
+                      )}
                       <span className="text-white/70 text-[11px] sm:text-xs font-semibold leading-tight">
                         {step.text}
                       </span>

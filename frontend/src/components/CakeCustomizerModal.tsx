@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Coffee, Milk, Flame, Balloon, Camera, Upload, Sticker } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -40,14 +40,14 @@ const SHAPES = [
 ];
 
 const FLAVORS = [
-  { id: "chocolate", label: "Chocolate",       emoji: "🍫", tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
-  { id: "white",     label: "White Chocolate", emoji: "🤍", tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
+  { id: "chocolate", label: "Chocolate",       Icon: Coffee, tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
+  { id: "white",     label: "White Chocolate", Icon: Milk,   tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
 ];
 
 const CHOC_FLAVORS = [
-  { id: "milk",     label: "Milk",     emoji: "🍫", tKey: "cust_modal_choc_milk"     },
-  { id: "hazelnut", label: "Hazelnut", emoji: "🌰", tKey: "cust_modal_choc_hazelnut" },
-  { id: "oreo",     label: "Oreo",     emoji: "⚫", tKey: "cust_modal_choc_oreo"     },
+  { id: "milk",     label: "Milk",     swatch: { top: "#A67C52", mid: "#7B4F2E", dark: "#4E2E15" }, tKey: "cust_modal_choc_milk"     },
+  { id: "hazelnut", label: "Hazelnut", swatch: { top: "#DDB97A", mid: "#C9A269", dark: "#9E7840" }, tKey: "cust_modal_choc_hazelnut" },
+  { id: "oreo",     label: "Oreo",     swatch: { top: "#4A3025", mid: "#2A1A12", dark: "#0D0806" }, tKey: "cust_modal_choc_oreo"     },
 ];
 
 const COLOURS = [
@@ -149,6 +149,77 @@ function SprinkleOverlay({ active }: { active: boolean }) {
   );
 }
 
+// ─── Preview image URL maps (module-level for bulk preloading) ───────────────
+
+const BASE_CAKE   = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes";
+const BASE_HEART  = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart";
+const BASE_SQUARE = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square";
+
+const CAKE_COLOR_FILES: Record<string, [string, string]> = {
+  brown: ["brown1.png", "brown2.png"],
+  beige: ["beige1.png", "beige2.png"],
+  black: ["black1.png", "black2.png"],
+  pink:  ["red1.png",   "red2.png"  ],
+  blue:  ["blue1.png",  "blue2.png" ],
+  white: ["white1.png", "white2.png"],
+};
+const HEART_COLOR_FILES: Record<string, [string, string, string]> = {
+  brown: ["1br.png",    "2br.png", "3br.png"],
+  beige: ["1be.png",    "2be.png", "3be.png"],
+  black: ["1bl.png",    "2bl.png", "3bl.png"],
+  pink:  ["1pi.png",    "2pi.png", "3pi.png"],
+  blue:  ["1%20bb.png", "2bb.png", "3bb.png"],
+  white: ["1wh.png",    "2wh.png", "3wh.png"],
+};
+const SQUARE_COLOR_FILES: Record<string, [string, string, string]> = {
+  brown: ["1br.png", "2br.png", "3br.png"],
+  beige: ["1be.png", "2be.png", "3be.png"],
+  black: ["1bl.png", "2bl.png", "3bl.png"],
+  pink:  ["1pi.png", "2pi.png", "3pi.png"],
+  blue:  ["1bb.png", "2bb.png", "3bb.png"],
+  white: ["1wh.png", "2wh.png", "3wh.png"],
+};
+
+// All 48 preview URLs — fetched once when the modal first opens so every
+// subsequent shape/colour swap hits the browser cache instantly.
+const ALL_PREVIEW_URLS: string[] = [
+  ...Object.values(CAKE_COLOR_FILES).flatMap(([s, t]) => [
+    `${BASE_CAKE}/${s}?v=2`, `${BASE_CAKE}/${t}?v=2`,
+  ]),
+  ...Object.values(HEART_COLOR_FILES).flatMap(files =>
+    files.map(f => `${BASE_HEART}/${f}?v=2`)
+  ),
+  ...Object.values(SQUARE_COLOR_FILES).flatMap(files =>
+    files.map(f => `${BASE_SQUARE}/${f}?v=2`)
+  ),
+];
+
+// ─── PreviewImg ───────────────────────────────────────────────────────────────
+// Tracks its own loaded-src so it shows a pulse skeleton while the network
+// request is in flight and fades in once the image is ready.
+
+function PreviewImg({ src, alt }: { src: string; alt: string }) {
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const isLoaded = loadedSrc === src;
+  return (
+    <div className="relative w-full h-full">
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-[#F5D0D8]/50 animate-pulse rounded-xl pointer-events-none" />
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className={cn(
+          "w-full h-full object-contain transition-opacity duration-200",
+          isLoaded ? "opacity-100" : "opacity-0"
+        )}
+        onLoad={() => setLoadedSrc(src)}
+      />
+    </div>
+  );
+}
+
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
 function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; sprinkles?: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
@@ -168,21 +239,9 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
   let views: JSX.Element[] = [];
 
   if (!shape || shape === "cake") {
-    const BASE = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes";
-    const colorToFile: Record<string, { s: string; t: string }> = {
-      brown:  { s: "brown1.png",  t: "brown2.png"  },
-      beige:  { s: "beige1.png",  t: "beige2.png"  },
-      black:  { s: "black1.png",  t: "black2.png"  },
-      pink:   { s: "red1.png",    t: "red2.png"    },
-      blue:   { s: "blue1.png",   t: "blue2.png"   },
-      white:  { s: "white1.png",  t: "white2.png"  },
-    };
-    const files = colorToFile[colorId] ?? colorToFile["brown"];
-    const sideImg = `${BASE}/${files.s}?v=2`;
-    const topImg  = `${BASE}/${files.t}?v=2`;
-    if (typeof window !== "undefined") {
-      [sideImg, topImg].forEach(src => { const i = new window.Image(); i.src = src; });
-    }
+    const [sideFile, topFile] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"];
+    const sideImg = `${BASE_CAKE}/${sideFile}?v=2`;
+    const topImg  = `${BASE_CAKE}/${topFile}?v=2`;
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -203,30 +262,16 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
     ) : null;
     views = [
       <div key="s" className="relative w-full h-full flex items-center justify-center p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={sideImg} alt="Full Cake" className="w-full h-full object-contain" />
+        <PreviewImg src={sideImg} alt="Full Cake" />
       </div>,
       <div key="t" className="relative w-full h-full flex items-center justify-center p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={topImg} alt="Full Cake top view" className="w-full h-full object-contain" />
+        <PreviewImg src={topImg} alt="Full Cake top view" />
         {photoOverlay}
       </div>,
     ];
   } else if (shape === "heart") {
-    const BASE_H = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes%20heart";
-    const heartColorToFile: Record<string, [string, string, string]> = {
-      brown: ["1br.png",    "2br.png", "3br.png"],
-      beige: ["1be.png",    "2be.png", "3be.png"],
-      black: ["1bl.png",    "2bl.png", "3bl.png"],
-      pink:  ["1pi.png",    "2pi.png", "3pi.png"],
-      blue:  ["1%20bb.png", "2bb.png", "3bb.png"],
-      white: ["1wh.png",    "2wh.png", "3wh.png"],
-    };
-    const hFiles = heartColorToFile[colorId] ?? heartColorToFile["brown"];
-    const hImgs = hFiles.map(f => `${BASE_H}/${f}?v=2`);
-    if (typeof window !== "undefined") {
-      hImgs.forEach(src => { const i = new window.Image(); i.src = src; });
-    }
+    const hFiles = HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"];
+    const hImgs = hFiles.map(f => `${BASE_HEART}/${f}?v=2`);
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -247,27 +292,13 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
     ) : null;
     views = hImgs.map((src, i) => (
       <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={`Heart brownie view ${i + 1}`} className="w-full h-full object-contain" />
+        <PreviewImg src={src} alt={`Heart brownie view ${i + 1}`} />
         {i === 1 ? photoOverlay : null}
       </div>
     ));
   } else {
-    // Square — photos from shape square bucket
-    const BASE_S = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square";
-    const squareColorToFile: Record<string, [string, string, string]> = {
-      brown: ["1br.png", "2br.png", "3br.png"],
-      beige: ["1be.png", "2be.png", "3be.png"],
-      black: ["1bl.png", "2bl.png", "3bl.png"],
-      pink:  ["1pi.png", "2pi.png", "3pi.png"],
-      blue:  ["1bb.png", "2bb.png", "3bb.png"],
-      white: ["1wh.png", "2wh.png", "3wh.png"],
-    };
-    const sFiles = squareColorToFile[colorId] ?? squareColorToFile["brown"];
-    const sImgs = sFiles.map(f => `${BASE_S}/${f}?v=2`);
-    if (typeof window !== "undefined") {
-      sImgs.forEach(src => { const i = new window.Image(); i.src = src; });
-    }
+    const sFiles = SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"];
+    const sImgs = sFiles.map(f => `${BASE_SQUARE}/${f}?v=2`);
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -288,8 +319,7 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
     ) : null;
     views = sImgs.map((src, i) => (
       <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={`Square brownie view ${i + 1}`} className="w-full h-full object-contain" />
+        <PreviewImg src={src} alt={`Square brownie view ${i + 1}`} />
         {i === 1 ? photoOverlay : null}
       </div>
     ));
@@ -421,6 +451,16 @@ export default function CakeCustomizerModal({
     }
   }
 
+  // Preload all 48 preview images as soon as the modal opens so every
+  // subsequent shape/colour swap is served instantly from the browser cache.
+  useEffect(() => {
+    if (!product) return;
+    ALL_PREVIEW_URLS.forEach(src => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, [product]);
+
   const [previewImageUrl, setPreviewImageUrl] = useState("");
   useEffect(() => {
     if (custSel.topping === "image" && custSel.imageFile) {
@@ -503,8 +543,8 @@ export default function CakeCustomizerModal({
   };
 
   const OptionCard = ({
-    id, emoji, label, sub, selected, onClick,
-  }: { id: string; emoji: string; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
+    id, icon, label, sub, selected, onClick,
+  }: { id: string; icon: React.ReactNode; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
     <button
       key={id} onClick={onClick}
       className={cn(
@@ -518,7 +558,7 @@ export default function CakeCustomizerModal({
         </span>
       )}
       <div className="bg-[#F5D0D8] flex items-center justify-center py-7">
-        <span className="text-5xl">{emoji}</span>
+        {icon}
       </div>
       <div className="p-3">
         <p className="font-playfair font-bold text-[#2D000A] text-sm">{label}</p>
@@ -550,7 +590,7 @@ export default function CakeCustomizerModal({
                 </span>
               )}
               <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
-                <span className="text-5xl">🕯️</span>
+                <Flame size={48} strokeWidth={1.5} className="text-[#800020]" />
               </div>
               <div className="p-3">
                 <p className="font-playfair font-bold text-[#2D000A] text-sm">Candles</p>
@@ -572,7 +612,7 @@ export default function CakeCustomizerModal({
                 </span>
               )}
               <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
-                <span className="text-5xl">🎈</span>
+                <Balloon size={48} strokeWidth={1.5} className="text-[#800020]" />
               </div>
               <div className="p-3">
                 <p className="font-playfair font-bold text-[#2D000A] text-sm">Balloons</p>
@@ -610,13 +650,13 @@ export default function CakeCustomizerModal({
               label={t("cust_modal_summary_topping")}
               value={
                 custSel.topping === "write"   ? `${t("cust_modal_writing")} "${custSel.toppingText || "—"}"`
-                : custSel.topping === "sticker" && custSel.stickerUrl ? `🎨 Sticker selected`
-                : custSel.topping === "image"   && custSel.imageFile   ? `📷 ${custSel.imageFile.name}`
+                : custSel.topping === "sticker" && custSel.stickerUrl ? `Sticker selected`
+                : custSel.topping === "image"   && custSel.imageFile   ? custSel.imageFile.name
                 : "—"
               }
             />
-            <SummaryRow label="Candles"  value={custSel.candles  ? `🕯️ Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
-            <SummaryRow label="Balloons" value={custSel.balloons ? `🎈 Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
+            <SummaryRow label="Candles"  value={custSel.candles  ? `Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
+            <SummaryRow label="Balloons" value={custSel.balloons ? `Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
           </div>
         </div>
       );
@@ -645,9 +685,18 @@ export default function CakeCustomizerModal({
                   </span>
                 )}
                 {shape.photo ? (
-                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] flex items-center justify-center p-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={shape.photo} alt={shape.label} className="w-full h-full object-contain" />
+                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] p-3">
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={shape.photo}
+                        alt={shape.label}
+                        fill
+                        sizes="(max-width: 768px) 33vw, 200px"
+                        className="object-contain"
+                        quality={90}
+                        priority
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
@@ -673,7 +722,9 @@ export default function CakeCustomizerModal({
           <div className={cn("grid gap-3 mb-5", availableFlavors.length === 1 ? "grid-cols-1 max-w-[50%]" : "grid-cols-2")}>
             {availableFlavors.map((f) => (
               <OptionCard
-                key={f.id} id={f.id} emoji={f.emoji} label={t(f.tKey)} sub={t(f.subKey)}
+                key={f.id} id={f.id}
+                icon={<f.Icon size={40} strokeWidth={1.5} className="text-[#800020]" />}
+                label={t(f.tKey)} sub={t(f.subKey)}
                 selected={custSel.flavorType === f.id}
                 onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "", cakeColor: f.id === "chocolate" ? "brown" : "" }))}
               />
@@ -704,7 +755,7 @@ export default function CakeCustomizerModal({
                         </span>
                       )}
                       <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
-                        <span className="text-4xl">{choc.emoji}</span>
+                        <div className="w-10 h-10 rounded-full shadow-md" style={{ background: `radial-gradient(circle at 35% 35%, ${choc.swatch.top}, ${choc.swatch.mid} 60%, ${choc.swatch.dark})` }} />
                       </div>
                       <div className="p-2.5">
                         <p className="font-playfair font-bold text-[#2D000A] text-xs">{t(choc.tKey)}</p>
@@ -783,12 +834,14 @@ export default function CakeCustomizerModal({
         <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_sprinkles_title")}</h2>
         <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_sprinkles_subtitle")}</p>
         <div className="grid grid-cols-2 gap-3">
-          {[
-            { id: "yes", labelKey: "cust_modal_sprinkles_yes", emoji: "🌈", subKey: "cust_modal_sprinkles_yes_sub" },
-            { id: "no",  labelKey: "cust_modal_sprinkles_no",  emoji: "✖️", subKey: "cust_modal_sprinkles_no_sub"  },
-          ].map((opt) => (
+          {([
+            { id: "yes", Icon: Sparkles, labelKey: "cust_modal_sprinkles_yes", subKey: "cust_modal_sprinkles_yes_sub" },
+            { id: "no",  Icon: X,        labelKey: "cust_modal_sprinkles_no",  subKey: "cust_modal_sprinkles_no_sub"  },
+          ] as const).map((opt) => (
             <OptionCard
-              key={opt.id} id={opt.id} emoji={opt.emoji} label={t(opt.labelKey)} sub={t(opt.subKey)}
+              key={opt.id} id={opt.id}
+              icon={<opt.Icon size={40} strokeWidth={1.5} className="text-[#800020]" />}
+              label={t(opt.labelKey)} sub={t(opt.subKey)}
               selected={custSel.sprinkles === opt.id}
               onClick={() => setCustSel((p) => ({ ...p, sprinkles: opt.id }))}
             />
@@ -818,7 +871,7 @@ export default function CakeCustomizerModal({
             <div className={cn("grid gap-3", cardCols)}>
               {showWrite && (
                 <OptionCard
-                  id="write" emoji="✍️" label={t("cust_modal_write")}
+                  id="write" icon={<PenLine size={40} strokeWidth={1.5} className="text-[#800020]" />} label={t("cust_modal_write")}
                   sub={shape === "cake" ? "Max 5 letters" : "Max 3 letters"}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
@@ -826,7 +879,7 @@ export default function CakeCustomizerModal({
               )}
               {showImage && (
                 <OptionCard
-                  id="image" emoji="📷" label={t("cust_modal_image")}
+                  id="image" icon={<Camera size={40} strokeWidth={1.5} className="text-[#800020]" />} label={t("cust_modal_image")}
                   sub={t("cust_modal_image_sub")}
                   selected={custSel.topping === "image"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}
@@ -870,13 +923,13 @@ export default function CakeCustomizerModal({
               >
                 {custSel.imageFile ? (
                   <div>
-                    <p className="text-3xl mb-2">📷</p>
+                    <Camera size={28} className="text-[#800020] mx-auto mb-2" strokeWidth={1.5} />
                     <p className="text-sm text-[#800020] font-semibold truncate px-6">{custSel.imageFile.name}</p>
                     <p className="text-[11px] text-[#A05068] mt-1">{t("cust_modal_tap_change")}</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-3xl mb-2">📤</p>
+                    <Upload size={28} className="text-[#800020] mx-auto mb-2" strokeWidth={1.5} />
                     <p className="text-sm font-semibold text-[#800020]">{t("cust_modal_tap_upload")}</p>
                     <p className="text-[11px] text-[#A05068] mt-1">{t("cust_modal_formats")}</p>
                   </div>
@@ -926,7 +979,7 @@ export default function CakeCustomizerModal({
                   onClick={() => setShowStickerPicker(true)}
                   className="w-full bg-white rounded-2xl p-4 shadow-warm-sm border-2 border-dashed border-[rgba(128,0,32,0.18)] hover:border-[#800020]/40 hover:bg-[#F5D0D8]/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98]"
                 >
-                  <span className="text-2xl">🎨</span>
+                  <Sticker size={22} strokeWidth={1.5} className="text-[#800020]" />
                   <span className="font-bold text-[#800020] text-sm">Select your sticker</span>
                 </button>
               )}
@@ -1067,8 +1120,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image}</span>}
-                      {custSel.candles   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} 🕯️</span>}
-                      {custSel.balloons  && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} 🎈</span>}
+                      {custSel.candles   && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} <Flame size={9} strokeWidth={2} /></span>}
+                      {custSel.balloons  && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} <Balloon size={9} strokeWidth={2} /></span>}
                     </div>
                     <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
                   </div>
@@ -1147,8 +1200,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.image}</span>}
-                      {custSel.candles   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} 🕯️</span>}
-                      {custSel.balloons  && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} 🎈</span>}
+                      {custSel.candles   && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} <Flame size={8} strokeWidth={2} /></span>}
+                      {custSel.balloons  && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} <Balloon size={8} strokeWidth={2} /></span>}
                     </div>
                   </div>
                   <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
