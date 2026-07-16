@@ -45,6 +45,7 @@ export default function CheckoutPage() {
   const [sadadHtml, setSadadHtml] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", phone: "", email: "",
+    address: "",
     orderDate: "", orderTime: "",
     notes: "",
   });
@@ -82,11 +83,12 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim())  e.name  = t("checkout_error_name");
-    if (!form.phone.trim()) e.phone = t("checkout_error_phone");
+    if (!form.name.trim())    e.name    = t("checkout_error_name");
+    if (!form.phone.trim())   e.phone   = t("checkout_error_phone");
     if (!form.email.trim() || !form.email.includes("@")) e.email = t("checkout_error_email");
-    if (!form.orderDate)    e.orderDate = t("checkout_error_pickup_date");
-    if (!form.orderTime)    e.orderTime = t("checkout_error_pickup_time");
+    if (!form.address.trim()) e.address = t("checkout_error_address");
+    if (!form.orderDate)      e.orderDate = t("checkout_error_pickup_date");
+    if (!form.orderTime)      e.orderTime = t("checkout_error_pickup_time");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -100,13 +102,15 @@ export default function CheckoutPage() {
     const imageUrl   = items.map(i => i.customization?.imageUrl).find(Boolean) ?? null;
 
     const orderBase = {
-      customer_name:  form.name,
-      customer_phone: form.phone,
-      customer_email: form.email || null,
-      pickup_date:    form.orderDate,
-      pickup_time:    form.orderTime,
-      sticker_url:    stickerUrl,
-      image_url:      imageUrl,
+      customer_name:    form.name,
+      customer_phone:   form.phone,
+      customer_email:   form.email || null,
+      delivery_method:  "delivery",
+      delivery_address: form.address,
+      pickup_date:      form.orderDate,
+      pickup_time:      form.orderTime,
+      sticker_url:     stickerUrl,
+      image_url:       imageUrl,
       items: items.map((i) => ({
         productId:     i.productId,
         productName:   i.productName,
@@ -269,6 +273,24 @@ export default function CheckoutPage() {
               </Section>
 
               <Section title={t("checkout_pickup_section")}>
+                {/* Address */}
+                <div>
+                  <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
+                    {t("checkout_address_label")}
+                  </label>
+                  <textarea
+                    value={form.address}
+                    onChange={(e) => set("address", e.target.value)}
+                    placeholder={t("checkout_address_placeholder")}
+                    rows={2}
+                    className={cn(
+                      "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none",
+                      errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
+                    )}
+                  />
+                  {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
+                </div>
+
                 {/* Date */}
                 <div>
                   <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">

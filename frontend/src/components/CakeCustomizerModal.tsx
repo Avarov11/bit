@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Coffee, Milk, Flame, Balloon, Camera, Upload, Sticker } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Flame, Balloon, Camera, Upload, Sticker } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -40,14 +40,14 @@ const SHAPES = [
 ];
 
 const FLAVORS = [
-  { id: "chocolate", label: "Chocolate",       Icon: Coffee, tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
-  { id: "white",     label: "White Chocolate", Icon: Milk,   tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
+  { id: "chocolate", label: "Chocolate",       tKey: "cust_modal_flavor_chocolate", subKey: "cust_modal_flavor_choc_sub" },
+  { id: "white",     label: "White Chocolate", tKey: "cust_modal_flavor_white",      subKey: "cust_modal_flavor_white_sub" },
 ];
 
 const CHOC_FLAVORS = [
-  { id: "milk",     label: "Milk",     swatch: { top: "#A67C52", mid: "#7B4F2E", dark: "#4E2E15" }, tKey: "cust_modal_choc_milk"     },
-  { id: "hazelnut", label: "Hazelnut", swatch: { top: "#DDB97A", mid: "#C9A269", dark: "#9E7840" }, tKey: "cust_modal_choc_hazelnut" },
-  { id: "oreo",     label: "Oreo",     swatch: { top: "#4A3025", mid: "#2A1A12", dark: "#0D0806" }, tKey: "cust_modal_choc_oreo"     },
+  { id: "milk",     label: "Milk",     tKey: "cust_modal_choc_milk"     },
+  { id: "hazelnut", label: "Hazelnut", tKey: "cust_modal_choc_hazelnut" },
+  { id: "oreo",     label: "Oreo",     tKey: "cust_modal_choc_oreo"     },
 ];
 
 const COLOURS = [
@@ -543,12 +543,12 @@ export default function CakeCustomizerModal({
   };
 
   const OptionCard = ({
-    id, icon, label, sub, selected, onClick,
-  }: { id: string; icon: React.ReactNode; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
+    id, label, sub, selected, onClick,
+  }: { id: string; label: string; sub?: string; selected: boolean; onClick: () => void }) => (
     <button
       key={id} onClick={onClick}
       className={cn(
-        "relative rounded-2xl overflow-hidden bg-white text-left transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+        "relative rounded-2xl bg-white text-left transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
         selected ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
       )}
     >
@@ -557,11 +557,8 @@ export default function CakeCustomizerModal({
           <Check size={11} className="text-white" strokeWidth={3} />
         </span>
       )}
-      <div className="bg-[#F5D0D8] flex items-center justify-center py-7">
-        {icon}
-      </div>
-      <div className="p-3">
-        <p className="font-playfair font-bold text-[#2D000A] text-sm">{label}</p>
+      <div className="p-4 pt-5 min-h-[64px] flex flex-col justify-center">
+        <p className="font-playfair font-bold text-[#2D000A] text-sm pr-5">{label}</p>
         {sub && <p className="text-[#A05068] text-[11px] mt-0.5">{sub}</p>}
       </div>
     </button>
@@ -723,7 +720,6 @@ export default function CakeCustomizerModal({
             {availableFlavors.map((f) => (
               <OptionCard
                 key={f.id} id={f.id}
-                icon={<f.Icon size={40} strokeWidth={1.5} className="text-[#800020]" />}
                 label={t(f.tKey)} sub={t(f.subKey)}
                 selected={custSel.flavorType === f.id}
                 onClick={() => setCustSel((p) => ({ ...p, flavorType: f.id, flavor: "", colour: "", cakeColor: f.id === "chocolate" ? "brown" : "" }))}
@@ -754,11 +750,8 @@ export default function CakeCustomizerModal({
                           <Check size={10} className="text-white" strokeWidth={3} />
                         </span>
                       )}
-                      <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
-                        <div className="w-10 h-10 rounded-full shadow-md" style={{ background: `radial-gradient(circle at 35% 35%, ${choc.swatch.top}, ${choc.swatch.mid} 60%, ${choc.swatch.dark})` }} />
-                      </div>
-                      <div className="p-2.5">
-                        <p className="font-playfair font-bold text-[#2D000A] text-xs">{t(choc.tKey)}</p>
+                      <div className="px-2.5 py-3.5 flex items-center justify-center min-h-[52px]">
+                        <p className="font-playfair font-bold text-[#2D000A] text-xs text-center leading-tight">{t(choc.tKey)}</p>
                       </div>
                     </button>
                   );
@@ -840,7 +833,6 @@ export default function CakeCustomizerModal({
           ] as const).map((opt) => (
             <OptionCard
               key={opt.id} id={opt.id}
-              icon={<opt.Icon size={40} strokeWidth={1.5} className="text-[#800020]" />}
               label={t(opt.labelKey)} sub={t(opt.subKey)}
               selected={custSel.sprinkles === opt.id}
               onClick={() => setCustSel((p) => ({ ...p, sprinkles: opt.id }))}
@@ -871,7 +863,7 @@ export default function CakeCustomizerModal({
             <div className={cn("grid gap-3", cardCols)}>
               {showWrite && (
                 <OptionCard
-                  id="write" icon={<PenLine size={40} strokeWidth={1.5} className="text-[#800020]" />} label={t("cust_modal_write")}
+                  id="write" label={t("cust_modal_write")}
                   sub={shape === "cake" ? "Max 5 letters" : "Max 3 letters"}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
@@ -879,7 +871,7 @@ export default function CakeCustomizerModal({
               )}
               {showImage && (
                 <OptionCard
-                  id="image" icon={<Camera size={40} strokeWidth={1.5} className="text-[#800020]" />} label={t("cust_modal_image")}
+                  id="image" label={t("cust_modal_image")}
                   sub={t("cust_modal_image_sub")}
                   selected={custSel.topping === "image"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}

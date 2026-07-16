@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Layers, ChefHat, Sparkles, CheckCircle2, Check, Coffee, Milk, Leaf, PenLine, Sticker } from "lucide-react";
+import { ChevronLeft, Layers, ChefHat, Sparkles, CheckCircle2, Check } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,10 @@ const shapes = [
 ];
 
 const chocolates = [
-  { id: "milk",     name: "Milk Chocolate", Icon: Coffee, swatch: { top: "#A67C52", mid: "#7B4F2E", dark: "#4E2E15" } },
-  { id: "hazelnut", name: "Hazelnut",        Icon: Leaf,   swatch: { top: "#DDB97A", mid: "#C9A269", dark: "#9E7840" } },
-  { id: "oreo",     name: "Oreo",            Icon: Layers, swatch: { top: "#4A3025", mid: "#2A1A12", dark: "#0D0806" } },
-  { id: "white",    name: "White Chocolate", Icon: Milk,   swatch: null },
+  { id: "milk",     name: "Milk Chocolate" },
+  { id: "hazelnut", name: "Hazelnut"        },
+  { id: "oreo",     name: "Oreo"            },
+  { id: "white",    name: "White Chocolate" },
 ];
 
 const CAKE_COLORS = [
@@ -29,9 +29,9 @@ const CAKE_COLORS = [
 ];
 
 const toppingOptions = [
-  { id: "writing",   name: "Writing",   Icon: PenLine  },
-  { id: "sticker",   name: "Sticker",   Icon: Sticker  },
-  { id: "sprinkles", name: "Sprinkles", Icon: Sparkles },
+  { id: "writing",   name: "Writing"   },
+  { id: "sticker",   name: "Sticker"   },
+  { id: "sprinkles", name: "Sprinkles" },
 ];
 
 const steps = [
@@ -424,12 +424,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
               className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-300 bg-white active:scale-[0.97]",
                 selected ? "border-[#800020] shadow-warm-md" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40 hover:shadow-warm-sm")}>
               {selected && <CheckCircle2 size={16} className="absolute top-2.5 right-2.5 text-[#800020] fill-[#F5D0D8]" />}
-              <div className="flex items-center justify-center mb-2">
-                {choc.swatch
-                  ? <div className="w-9 h-9 rounded-full shadow-md" style={{ background: `radial-gradient(circle at 35% 35%, ${choc.swatch.top}, ${choc.swatch.mid} 60%, ${choc.swatch.dark})` }} />
-                  : <choc.Icon size={32} strokeWidth={1.5} className="text-[#800020]" />}
-              </div>
-              <h3 className="font-semibold text-[#2D000A] text-sm">{choc.name}</h3>
+              <h3 className="font-playfair font-bold text-[#2D000A] text-sm pr-4">{choc.name}</h3>
             </button>
           );
         })}
@@ -472,8 +467,7 @@ export default function CustomizeContent({ product }: { product: DbProduct }) {
                 className={cn("relative rounded-2xl border-2 p-4 text-center transition-all duration-200 bg-white active:scale-[0.97]",
                   selected ? "border-[#800020] bg-[#F5D0D8] shadow-warm-sm" : "border-[rgba(128,0,32,0.10)] hover:border-[#800020]/40")}>
                 {selected && <span className="absolute top-2 right-2"><Check size={12} className="text-[#800020]" strokeWidth={3} /></span>}
-                <topping.Icon size={26} strokeWidth={1.5} className="text-[#800020] mx-auto mb-2" />
-                <p className="text-xs font-semibold text-[#2D000A]">{topping.name}</p>
+                <p className="text-xs font-semibold text-[#2D000A] pr-4">{topping.name}</p>
               </button>
             );
           })}
