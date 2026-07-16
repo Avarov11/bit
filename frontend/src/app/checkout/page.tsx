@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
@@ -40,8 +39,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { items, clearCart } = useCartStore();
+  const { items } = useCartStore();
   const { t, lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [sadadHtml, setSadadHtml] = useState<string | null>(null);
