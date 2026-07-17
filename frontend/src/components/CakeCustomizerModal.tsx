@@ -189,19 +189,19 @@ const SQUARE_COLOR_FILES: Record<string, [string, string, string]> = {
   white: ["1wh.png", "2wh.png", "3wh.png"],
 };
 
-// All 48 preview URLs — fetched once when the modal first opens so every
-// subsequent shape/colour swap hits the browser cache instantly.
-const ALL_PREVIEW_URLS: string[] = [
-  ...Object.values(CAKE_COLOR_FILES).flatMap(([s, t]) => [
-    `${BASE_CAKE}/${s}?v=2`, `${BASE_CAKE}/${t}?v=2`,
-  ]),
-  ...Object.values(HEART_COLOR_FILES).flatMap(files =>
-    files.map(f => `${BASE_HEART}/${f}?v=2`)
-  ),
-  ...Object.values(SQUARE_COLOR_FILES).flatMap(files =>
-    files.map(f => `${BASE_SQUARE}/${f}?v=2`)
-  ),
-];
+// Build default URL maps from the hardcoded filename tables (used as fallback)
+function buildDefaultMaps(): Record<string, Record<string, string[]>> {
+  const cake:   Record<string, string[]> = {};
+  const heart:  Record<string, string[]> = {};
+  const square: Record<string, string[]> = {};
+  for (const [c, [f0, f1]] of Object.entries(CAKE_COLOR_FILES))
+    cake[c] = [`${BASE_CAKE}/${f0}?v=2`, `${BASE_CAKE}/${f1}?v=2`];
+  for (const [c, files] of Object.entries(HEART_COLOR_FILES))
+    heart[c] = files.map(f => `${BASE_HEART}/${f}?v=2`);
+  for (const [c, files] of Object.entries(SQUARE_COLOR_FILES))
+    square[c] = files.map(f => `${BASE_SQUARE}/${f}?v=2`);
+  return { cake, heart, square };
+}
 
 // ─── PreviewImg ───────────────────────────────────────────────────────────────
 // Tracks its own loaded-src so it shows a pulse skeleton while the network
@@ -231,7 +231,7 @@ function PreviewImg({ src, alt }: { src: string; alt: string }) {
 
 // ─── CakePreview ─────────────────────────────────────────────────────────────
 
-function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "", imageUrl = "" }: { shape: string; colorId: string; sprinkles?: string; text?: string; stickerUrl?: string; imageUrl?: string }) {
+function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "", imageUrl = "", shapeImageMap = {} }: { shape: string; colorId: string; sprinkles?: string; text?: string; stickerUrl?: string; imageUrl?: string; shapeImageMap?: Record<string, string[]> }) {
   const [viewIdx, setViewIdx] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const prevSpr = useRef("");
@@ -248,9 +248,9 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
   let views: JSX.Element[] = [];
 
   if (!shape || shape === "cake") {
-    const [sideFile, topFile] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"];
-    const sideImg = `${BASE_CAKE}/${sideFile}?v=2`;
-    const topImg  = `${BASE_CAKE}/${topFile}?v=2`;
+    const cakeUrls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
+      (() => { const [f0,f1] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"]; return [`${BASE_CAKE}/${f0}?v=2`,`${BASE_CAKE}/${f1}?v=2`]; })();
+    const [sideImg, topImg] = cakeUrls;
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -279,8 +279,8 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       </div>,
     ];
   } else if (shape === "heart") {
-    const hFiles = HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"];
-    const hImgs = hFiles.map(f => `${BASE_HEART}/${f}?v=2`);
+    const hImgs = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
+      (HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"]).map(f => `${BASE_HEART}/${f}?v=2`);
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -306,8 +306,8 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       </div>
     ));
   } else {
-    const sFiles = SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"];
-    const sImgs = sFiles.map(f => `${BASE_SQUARE}/${f}?v=2`);
+    const sImgs = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
+      (SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"]).map(f => `${BASE_SQUARE}/${f}?v=2`);
     const photoOverlay = (text || stickerUrl || imageUrl) ? (
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
         {imageUrl && (
@@ -406,6 +406,7 @@ export default function CakeCustomizerModal({
     heart:  { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
     square: { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
   });
+  const [shapeImageMaps, setShapeImageMaps] = useState<Record<string, Record<string, string[]>>>(buildDefaultMaps);
   const [uploading,  setUploading]  = useState(false);
   const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -435,6 +436,23 @@ export default function CakeCustomizerModal({
         }
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    for (const shape of ["cake", "heart", "square"]) {
+      fetch(`/api/shape-color-images?shape=${shape}`, { cache: "no-store" })
+        .then(r => r.json())
+        .then((rows: { color: string; view_index: number; url: string }[]) => {
+          if (!Array.isArray(rows) || !rows.length) return;
+          const map: Record<string, string[]> = {};
+          for (const row of rows) {
+            if (!map[row.color]) map[row.color] = [];
+            map[row.color][row.view_index] = row.url;
+          }
+          setShapeImageMaps(prev => ({ ...prev, [shape]: map }));
+        })
+        .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
@@ -1394,7 +1412,7 @@ export default function CakeCustomizerModal({
                   <span className="text-[8px] font-bold text-[#800020]/45 uppercase tracking-[0.18em]">Preview</span>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center pb-8">
-                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
+                  <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} shapeImageMap={shapeImageMaps[custSel.shape ?? "cake"] ?? {}} />
                 </div>
                 {custSel.shape && (
                   <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)]">
