@@ -398,6 +398,7 @@ export default function CakeCustomizerModal({
     ? FLAVORS.filter(f => product.allowed_flavors.includes(f.id))
     : FLAVORS;
   const allowedToppings  = product?.allowed_toppings ?? ["write", "sticker", "image"];
+  const [shapeLimits, setShapeLimits] = useState<Record<string, number>>({ cake: 5, heart: 3, square: 3 });
   const [uploading,  setUploading]  = useState(false);
   const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -415,6 +416,19 @@ export default function CakeCustomizerModal({
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, [product]);
+
+  useEffect(() => {
+    fetch("/api/shape-configs", { cache: "no-store" })
+      .then(r => r.json())
+      .then((data: { shape: string; max_chars: number }[]) => {
+        if (Array.isArray(data)) {
+          const m: Record<string, number> = {};
+          data.forEach(c => { m[c.shape] = c.max_chars; });
+          setShapeLimits(prev => ({ ...prev, ...m }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const category = product?.category ?? "Birthday";
@@ -1106,7 +1120,7 @@ export default function CakeCustomizerModal({
       const showSticker  = allowedToppings.includes("sticker") && (shape === "square" || shape === "cake");
       const showImage    = allowedToppings.includes("image")   && shape === "cake";
       const showWrite    = allowedToppings.includes("write");
-      const charLimit = shape === "cake" ? 5 : 3;
+      const charLimit = shapeLimits[shape] ?? (shape === "cake" ? 5 : 3);
       const count = custSel.toppingText.length;
       const cardCols = showWrite && showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
@@ -1126,7 +1140,7 @@ export default function CakeCustomizerModal({
                   icon={<PenLine size={40} strokeWidth={1.5} className="text-white" />}
                   iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
                   label={t("cust_modal_write")}
-                  sub={shape === "cake" ? "Max 5 letters" : "Max 3 letters"}
+                  sub={`Max ${charLimit} letter${charLimit !== 1 ? "s" : ""}`}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "write" ? "" : "write", stickerUrl: null, imageFile: null }))}
                 />

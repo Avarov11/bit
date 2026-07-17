@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree } from "lucide-react";
+import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const nav = [
@@ -40,6 +40,12 @@ const nav = [
     label: "Categories",
     Icon:  FolderTree,
     desc:  "Manage menu categories",
+  },
+  {
+    href:  "/dashboard/settings",
+    label: "Settings",
+    Icon:  Settings,
+    desc:  "Writing limits per shape",
   },
 ];
 
