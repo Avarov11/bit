@@ -142,6 +142,31 @@ function ItemDetail({ item }: { item: OrderItem }) {
           </p>
         </div>
       )}
+      {c?.imageUrl && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-blue-100 bg-blue-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-blue-100/60">
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Customer photo — print this</span>
+            <a
+              href={c.imageUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download
+            </a>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.imageUrl}
+            alt="Customer upload"
+            className="w-full object-contain max-h-64 bg-white"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -151,20 +176,48 @@ function ItemDetail({ item }: { item: OrderItem }) {
 function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; imageUrl: string | null }) {
   if (!stickerUrl && !imageUrl) return null;
   return (
-    <div className="flex gap-3">
+    <div className="space-y-3">
+      {imageUrl && (
+        <div className="rounded-xl overflow-hidden border border-blue-100 bg-blue-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-blue-100/60">
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Customer photo — print this</span>
+            <div className="flex items-center gap-3">
+              <a
+                href={imageUrl}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
+              <a
+                href={imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-semibold text-blue-500 hover:text-blue-700 transition-colors"
+              >
+                Open full size ↗
+              </a>
+            </div>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt="Customer upload"
+            className="w-full object-contain max-h-72 bg-white"
+          />
+        </div>
+      )}
       {stickerUrl && (
-        <a href={stickerUrl} target="_blank" rel="noopener noreferrer">
+        <a href={stickerUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
           <div className="p-2 bg-white border border-gray-200 rounded-xl hover:border-brand-500 transition-colors text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={stickerUrl} alt="Sticker" className="w-14 h-14 object-contain rounded-lg" />
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide mt-1">Sticker</p>
-          </div>
-        </a>
-      )}
-      {imageUrl && (
-        <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-          <div className="p-2 bg-white border border-gray-200 rounded-xl hover:border-brand-500 transition-colors text-center">
-            <img src={imageUrl} alt="Custom image" className="w-14 h-14 object-cover rounded-lg" />
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide mt-1">Image</p>
           </div>
         </a>
       )}
