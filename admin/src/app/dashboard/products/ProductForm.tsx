@@ -5,11 +5,7 @@ import type { Product } from "@/lib/types";
 
 type FormData = Omit<Product, "id" | "created_at" | "updated_at">;
 
-const SUBCATEGORIES: Record<string, string[]> = {
-  Customized:  ["Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal"],
-  Accessories: ["Candles", "Balloons"],
-  Boxes:       [],
-};
+interface CatData { name: string; parent: string | null; filter_mode: string; }
 const TAGS = ["Bestseller", "Signature", "New", "Custom"] as const;
 
 const ALL_SHAPES = [
@@ -52,15 +48,25 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [error, setError]       = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
+  const [allCats, setAllCats] = useState<CatData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories", { cache: "no-store" })
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setCategories(data); })
+      .then((data: CatData[]) => { if (Array.isArray(data)) setAllCats(data); })
       .catch(() => {});
   }, []);
+
+  // Categories that go into products.category (all except as_subcategory children)
+  const categoryOptions = allCats
+    .filter(c => c.filter_mode !== "as_subcategory")
+    .map(c => c.name);
+
+  // Subcategories for the selected category (children stored in products.subcategory)
+  const subcategoryOptions = allCats
+    .filter(c => c.parent === form.category && c.filter_mode === "as_subcategory")
+    .map(c => c.name);
 
   function set(field: keyof FormData, value: unknown) {
     setForm(f => ({ ...f, [field]: value }));
@@ -109,7 +115,6 @@ export default function ProductForm({ product }: { product?: Product }) {
     }
   }
 
-  const subs = SUBCATEGORIES[form.category] ?? [];
   const preview = form.image_url;
 
   return (
@@ -139,15 +144,15 @@ export default function ProductForm({ product }: { product?: Product }) {
           <select value={form.category}
             onChange={e => { set("category", e.target.value); set("subcategory", null); }}
             className="input">
-            {categories.map(c => <option key={c}>{c}</option>)}
+            {categoryOptions.map(c => <option key={c}>{c}</option>)}
           </select>
         </Field>
         <Field label="Subcategory">
           <select value={form.subcategory ?? ""}
             onChange={e => set("subcategory", e.target.value || null)}
-            className="input" disabled={subs.length === 0}>
+            className="input" disabled={subcategoryOptions.length === 0}>
             <option value="">— None —</option>
-            {subs.map(s => <option key={s}>{s}</option>)}
+            {subcategoryOptions.map(s => <option key={s}>{s}</option>)}
           </select>
         </Field>
       </div>
