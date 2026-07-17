@@ -29,21 +29,27 @@ type Stats = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
-  pending:   "#F59E0B",
-  confirmed: "#3B82F6",
-  preparing: "#F97316",
-  ready:     "#10B981",
-  delivered: "#94A3B8",
-  cancelled: "#EF4444",
+  pending_payment: "#F97316",
+  paid:            "#14B8A6",
+  payment_failed:  "#F43F5E",
+  pending:         "#F59E0B",
+  confirmed:       "#3B82F6",
+  preparing:       "#8B5CF6",
+  ready:           "#10B981",
+  delivered:       "#94A3B8",
+  cancelled:       "#EF4444",
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending:   "Pending",
-  confirmed: "Confirmed",
-  preparing: "Preparing",
-  ready:     "Ready",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
+  pending_payment: "Awaiting Payment",
+  paid:            "Paid",
+  payment_failed:  "Failed",
+  pending:         "Pending",
+  confirmed:       "Confirmed",
+  preparing:       "Preparing",
+  ready:           "Ready",
+  delivered:       "Delivered",
+  cancelled:       "Cancelled",
 };
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -286,12 +292,12 @@ export default function DashboardPage() {
           bg:    "#10B9811a",
         },
         {
-          label: "Pending",
+          label: "Need Action",
           value: fmt(stats.pendingOrders),
-          sub:   "Need attention",
+          sub:   "Paid, awaiting confirmation",
           Icon:  Clock,
-          color: stats.pendingOrders > 0 ? "#F59E0B" : "#94A3B8",
-          bg:    stats.pendingOrders > 0 ? "#F59E0B1a" : "#94A3B81a",
+          color: stats.pendingOrders > 0 ? "#14B8A6" : "#94A3B8",
+          bg:    stats.pendingOrders > 0 ? "#14B8A61a" : "#94A3B81a",
         },
       ]
     : [];

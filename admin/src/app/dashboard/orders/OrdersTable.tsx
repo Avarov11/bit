@@ -7,16 +7,26 @@ import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 const STATUS_META: Record<OrderStatus, {
   label: string; color: string; bg: string; stripe: string; dot: string;
 }> = {
-  pending:   { label: "Pending",   color: "text-amber-700",   bg: "bg-amber-50",   stripe: "#F59E0B", dot: "bg-amber-400"   },
-  confirmed: { label: "Confirmed", color: "text-blue-700",    bg: "bg-blue-50",    stripe: "#3B82F6", dot: "bg-blue-500"    },
-  preparing: { label: "Preparing", color: "text-violet-700",  bg: "bg-violet-50",  stripe: "#8B5CF6", dot: "bg-violet-500"  },
-  ready:     { label: "Ready",     color: "text-emerald-700", bg: "bg-emerald-50", stripe: "#10B981", dot: "bg-emerald-500" },
-  delivered: { label: "Delivered", color: "text-gray-500",    bg: "bg-gray-100",   stripe: "#9CA3AF", dot: "bg-gray-400"    },
-  cancelled: { label: "Cancelled", color: "text-red-600",     bg: "bg-red-50",     stripe: "#EF4444", dot: "bg-red-400"     },
+  pending_payment: { label: "Awaiting Payment", color: "text-orange-700",  bg: "bg-orange-50",  stripe: "#F97316", dot: "bg-orange-400"  },
+  paid:            { label: "Paid",             color: "text-teal-700",    bg: "bg-teal-50",    stripe: "#14B8A6", dot: "bg-teal-500"    },
+  payment_failed:  { label: "Failed",           color: "text-rose-700",    bg: "bg-rose-50",    stripe: "#F43F5E", dot: "bg-rose-500"    },
+  pending:         { label: "Pending",          color: "text-amber-700",   bg: "bg-amber-50",   stripe: "#F59E0B", dot: "bg-amber-400"   },
+  confirmed:       { label: "Confirmed",        color: "text-blue-700",    bg: "bg-blue-50",    stripe: "#3B82F6", dot: "bg-blue-500"    },
+  preparing:       { label: "Preparing",        color: "text-violet-700",  bg: "bg-violet-50",  stripe: "#8B5CF6", dot: "bg-violet-500"  },
+  ready:           { label: "Ready",            color: "text-emerald-700", bg: "bg-emerald-50", stripe: "#10B981", dot: "bg-emerald-500" },
+  delivered:       { label: "Delivered",        color: "text-gray-500",    bg: "bg-gray-100",   stripe: "#9CA3AF", dot: "bg-gray-400"    },
+  cancelled:       { label: "Cancelled",        color: "text-red-600",     bg: "bg-red-50",     stripe: "#EF4444", dot: "bg-red-400"     },
 };
 
-const TIMELINE_STEPS: OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "delivered"];
-const ALL_STATUSES:   OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"];
+// Timeline reflects the SADAD payment flow: paid → confirmed → preparing → ready → delivered
+const TIMELINE_STEPS: OrderStatus[] = ["paid", "confirmed", "preparing", "ready", "delivered"];
+// All statuses shown in filter pills
+const ALL_STATUSES: OrderStatus[] = [
+  "paid", "pending_payment", "payment_failed",
+  "confirmed", "preparing", "ready", "delivered", "cancelled",
+];
+// Statuses an admin can manually set (excludes payment-system-managed states)
+const ADMIN_STATUSES: OrderStatus[] = ["paid", "confirmed", "preparing", "ready", "delivered", "cancelled"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +56,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 
 function OrderTimeline({ status }: { status: OrderStatus }) {
   const activeIdx   = TIMELINE_STEPS.indexOf(status);
-  const isCancelled = status === "cancelled";
+  const isCancelled = status === "cancelled" || status === "payment_failed";
 
   return (
     <div className="flex items-start w-full">
@@ -242,7 +252,7 @@ function OrderCard({ order, updating, onChangeStatus }: {
             onChange={e => onChangeStatus(order.id, e.target.value as OrderStatus)}
             className="text-xs font-semibold border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 bg-white text-gray-700 cursor-pointer"
           >
-            {ALL_STATUSES.map(s => (
+            {ADMIN_STATUSES.map(s => (
               <option key={s} value={s}>{STATUS_META[s].label}</option>
             ))}
           </select>
@@ -273,6 +283,9 @@ function OrderCard({ order, updating, onChangeStatus }: {
               <OrderTimeline status={order.status} />
               {order.status === "cancelled" && (
                 <p className="mt-3 text-xs text-red-500 font-medium text-center">This order was cancelled</p>
+              )}
+              {order.status === "payment_failed" && (
+                <p className="mt-3 text-xs text-rose-600 font-medium text-center">Payment failed — order not processed</p>
               )}
             </div>
 
@@ -306,9 +319,13 @@ function OrderCard({ order, updating, onChangeStatus }: {
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400 font-medium">Payment method</span>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                order.payment_method === "card" ? "bg-purple-50 text-purple-700" : "bg-green-50 text-green-700"
+                order.payment_method === "sadad_online" ? "bg-teal-50 text-teal-700"
+                : order.payment_method === "card"       ? "bg-purple-50 text-purple-700"
+                :                                         "bg-green-50 text-green-700"
               }`}>
-                {order.payment_method === "card" ? "💳 Card" : "💵 Cash"}
+                {order.payment_method === "sadad_online" ? "💳 SADAD Online"
+                : order.payment_method === "card"        ? "💳 Card"
+                :                                          "💵 Cash"}
               </span>
             </div>
           </div>

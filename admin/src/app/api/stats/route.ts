@@ -32,18 +32,24 @@ export async function GET() {
   ]);
 
   const orders = allOrders ?? [];
-  const totalOrders  = orders.length;
-  const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0);
-  const todayOrders  = orders.filter(o => o.pickup_date === today).length;
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
+
+  // Only count orders that represent real revenue (exclude payment in-flight or failed)
+  const REVENUE_STATUSES = ["paid", "confirmed", "preparing", "ready", "delivered", "pending"];
+  const realOrders = orders.filter(o => REVENUE_STATUSES.includes(o.status));
+
+  const totalOrders   = realOrders.length;
+  const totalRevenue  = realOrders.reduce((s, o) => s + Number(o.total), 0);
+  const todayOrders   = realOrders.filter(o => o.pickup_date === today).length;
+  // "Need action" = paid (awaiting confirmation) + legacy pending
+  const pendingOrders = orders.filter(o => o.status === "paid" || o.status === "pending").length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-  const monthRevenue  = orders
+  const monthRevenue  = realOrders
     .filter(o => o.created_at.slice(0, 10) >= monthStart)
     .reduce((s, o) => s + Number(o.total), 0);
 
-  // Revenue by day — last 7 days (grouped by created_at date)
+  // Revenue by day — last 7 days, real orders only
   const revMap: Record<string, number> = Object.fromEntries(days.map(d => [d, 0]));
-  orders
+  realOrders
     .filter(o => o.created_at.slice(0, 10) >= weekAgo)
     .forEach(o => {
       const d = o.created_at.slice(0, 10);
@@ -51,8 +57,9 @@ export async function GET() {
     });
   const revenueByDay = days.map(d => ({ date: d, revenue: revMap[d] }));
 
-  // Orders by status
+  // Orders by status (all orders including payment states)
   const statusCounts: Record<string, number> = {
+    pending_payment: 0, paid: 0, payment_failed: 0,
     pending: 0, confirmed: 0, preparing: 0, ready: 0, delivered: 0, cancelled: 0,
   };
   orders.forEach(o => { if (o.status in statusCounts) statusCounts[o.status]++; });

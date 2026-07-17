@@ -4,7 +4,7 @@ import type { OrderStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID: OrderStatus[] = ["pending","confirmed","preparing","ready","delivered","cancelled"];
+const VALID: OrderStatus[] = ["paid","confirmed","preparing","ready","delivered","cancelled"];
 
 export async function PATCH(req: Request) {
   const { orderId, status } = await req.json();

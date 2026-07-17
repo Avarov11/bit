@@ -1,4 +1,7 @@
 export type OrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "payment_failed"
   | "pending"
   | "confirmed"
   | "preparing"
@@ -37,7 +40,7 @@ export interface Order {
   delivery_address: string | null;
   pickup_date: string;
   pickup_time: string;
-  payment_method: "cash" | "card";
+  payment_method: "cash" | "card" | "sadad_online";
   items: OrderItem[];
   subtotal: number;
   delivery_fee: number;
