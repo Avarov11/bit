@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift } from "lucide-react";
+import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const nav = [
@@ -34,6 +34,12 @@ const nav = [
     label: "Extras",
     Icon:  Gift,
     desc:  "Candles, balloons & cards",
+  },
+  {
+    href:  "/dashboard/categories",
+    label: "Categories",
+    Icon:  FolderTree,
+    desc:  "Manage menu categories",
   },
 ];
 

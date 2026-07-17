@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
@@ -10,94 +10,102 @@ import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 import CakeCustomizerModal from "@/components/CakeCustomizerModal";
 
-// ─── Filter category type (UI only) ────────────────────────────────────────────
-type FilterCat = "All" | "Customized" | "Birthday" | "Congrats" | "Graduation" | "Get Well Soon" | "Bride to Be" | "Gender Reveal" | "Accessories" | "Boxes";
-type SubCat = "Candles" | "Balloons";
+interface Category {
+  id: string;
+  name: string;
+  parent: string | null;
+  sort_order: number;
+  badge_bg: string;
+  badge_text: string;
+  filter_mode: "direct" | "as_subcategory";
+}
 
-const accessoriesSubs: SubCat[] = ["Candles", "Balloons"];
-const customizedSubCats = ["Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal"] as const;
-
-const catKeyMap: Record<string, string> = {
-  All: "cat_all", Accessories: "cat_accessories", Candles: "cat_candles",
-  Balloons: "cat_balloons", Boxes: "cat_boxes", Customized: "cat_customized",
-  Birthday: "cat_birthday", Congrats: "cat_congrats", Graduation: "cat_graduation",
-  "Get Well Soon": "cat_get_well_soon", "Bride to Be": "cat_bride_to_be",
-  "Gender Reveal": "cat_gender_reveal",
-};
-
-const categoryBadge: Record<string, string> = {
-  Customized: "bg-gold-light text-chocolate-dark",
-  Accessories: "bg-[#E4EDF5] text-[#2D4A7A]",
-  Boxes: "bg-[#F5EDE4] text-[#7A4A2D]",
-  Birthday: "bg-chocolate-light text-chocolate-dark",
-  Congrats: "bg-[#D6F0E8] text-[#2D7A5C]",
-  Graduation: "bg-[#DAE4F5] text-[#2D4A7A]",
-  "Get Well Soon": "bg-[#D6F0EC] text-[#2D7A6A]",
-  "Bride to Be": "bg-[#F5E4F0] text-[#7A2D6A]",
-  "Gender Reveal": "bg-[#EDE4F5] text-[#6B3FA0]",
-  Candles: "bg-[#FFF3E0] text-[#7A5200]",
-  Balloons: "bg-[#FCE4EC] text-[#880E4F]",
-};
-
-// ─── Page component ────────────────────────────────────────────────────────────
+function isProductCustomizable(p: DbProduct, cats: Category[]): boolean {
+  const cat = cats.find(c => c.name === p.category);
+  if (!cat) return false;
+  return cat.name === "Customized" || cat.parent === "Customized";
+}
 
 export default function MenuContent() {
-  const { t, lang } = useLanguage();
+  const { t, lang }  = useLanguage();
   const searchParams = useSearchParams();
 
-  const [products, setProducts]                   = useState<DbProduct[]>([]);
-  const [loadingProducts, setLoadingProducts]     = useState(true);
-  const [activeCategory, setActiveCategory]       = useState<FilterCat>(() => {
-    const cat = searchParams.get("category");
-    const valid: FilterCat[] = ["Customized", "Birthday", "Congrats", "Graduation", "Get Well Soon", "Bride to Be", "Gender Reveal", "Accessories", "Boxes"];
-    if (valid.includes(cat as FilterCat)) return cat as FilterCat;
-    return "All";
-  });
-  const [activeSubCategory, setActiveSubCategory] = useState<SubCat | null>(null);
-  const [query, setQuery]                         = useState("");
-  const [custProduct, setCustProduct]             = useState<DbProduct | null>(null);
+  const [products,     setProducts]     = useState<DbProduct[]>([]);
+  const [categories,   setCategories]   = useState<Category[]>([]);
+  const [loadingProds, setLoadingProds] = useState(true);
+  const [loadingCats,  setLoadingCats]  = useState(true);
+  const [activeCat,    setActiveCat]    = useState<Category | null>(null);
+  const [activeSub,    setActiveSub]    = useState<Category | null>(null);
+  const [query,        setQuery]        = useState("");
+  const [custProduct,  setCustProduct]  = useState<DbProduct | null>(null);
+  const appliedParam = useRef(false);
 
   useEffect(() => {
     fetch("/api/products")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setProducts(data); })
-      .finally(() => setLoadingProducts(false));
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setProducts(data); })
+      .finally(() => setLoadingProds(false));
+
+    fetch("/api/categories")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setCategories(data); })
+      .finally(() => setLoadingCats(false));
   }, []);
 
-  const displayName    = (p: DbProduct) => lang === "ar" ? (p.name_ar ?? p.name) : p.name;
-  const displayCatKey  = (p: DbProduct) => p.subcategory ?? p.category;
-  const isCustomizable = (p: DbProduct) => p.category !== "Accessories" && p.category !== "Boxes";
+  // Apply ?category= search param once categories are loaded
+  useEffect(() => {
+    if (appliedParam.current || categories.length === 0) return;
+    const param = searchParams.get("category");
+    if (param) {
+      const found = categories.find(c => c.name === param);
+      if (found) setActiveCat(found);
+    }
+    appliedParam.current = true;
+  }, [categories, searchParams]);
 
-  const openCustomizer  = (product: DbProduct) => setCustProduct(product);
-  const closeCustomizer = () => setCustProduct(null);
+  const topLevel   = useMemo(() => categories.filter(c => !c.parent), [categories]);
+  const childrenOf = useMemo(() => (name: string) => categories.filter(c => c.parent === name), [categories]);
 
-  // ── Filter logic ────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    return products.filter((p) => {
-      let matchCat: boolean;
-      if (activeCategory === "All") {
-        matchCat = true;
-      } else if (activeCategory === "Customized") {
-        matchCat = p.category === "Customized" && !p.subcategory;
-      } else if ((customizedSubCats as readonly string[]).includes(activeCategory)) {
-        matchCat = p.category === activeCategory;
-      } else if (activeCategory === "Accessories") {
-        matchCat = p.category === "Accessories" &&
-          (activeSubCategory ? p.subcategory === activeSubCategory : true);
-      } else {
-        matchCat = p.category === activeCategory;
-      }
-      const matchSearch =
-        query === "" ||
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        (p.description ?? "").toLowerCase().includes(query.toLowerCase());
-      return matchCat && matchSearch;
-    });
-  }, [activeCategory, activeSubCategory, query, products]);
+    let result = products;
+    if (query) {
+      const q = query.toLowerCase();
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description ?? "").toLowerCase().includes(q)
+      );
+    }
+    if (!activeCat) return result;
 
-  // ─── Card interior ─────────────────────────────────────────────────────────
+    const children = childrenOf(activeCat.name);
+
+    return result.filter(p => {
+      if (activeSub) {
+        if (activeSub.filter_mode === "as_subcategory") {
+          return p.category === activeCat.name && p.subcategory === activeSub.name;
+        }
+        return p.category === activeSub.name;
+      }
+      if (children.length === 0) return p.category === activeCat.name;
+
+      const hasAsSub = children.some(c => c.filter_mode === "as_subcategory");
+      if (hasAsSub) return p.category === activeCat.name;
+      // Customized-style: own products + all direct-mode children
+      return (p.category === activeCat.name && !p.subcategory) ||
+             children.some(child => p.category === child.name);
+    });
+  }, [activeCat, activeSub, products, query, childrenOf]);
+
+  const loading = loadingProds || loadingCats;
+
+  function selectCat(cat: Category | null) { setActiveCat(cat); setActiveSub(null); }
+
+  const displayName = (p: DbProduct) => lang === "ar" ? (p.name_ar ?? p.name) : p.name;
+
+  // ─── Card ──────────────────────────────────────────────────────────────────
   const CardInterior = ({ product, priority = false }: { product: DbProduct; priority?: boolean }) => {
-    const badgeKey = displayCatKey(product);
+    const badgeKey = product.subcategory ?? product.category;
+    const badgeCat = categories.find(c => c.name === badgeKey);
     return (
       <>
         <div className="relative aspect-square overflow-hidden bg-[#F5D0D8]">
@@ -114,8 +122,13 @@ export default function MenuContent() {
               {product.tag}
             </span>
           )}
-          <span className={cn("absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full", categoryBadge[badgeKey] ?? "bg-[#F5D0D8] text-[#800020]")}>
-            {t(catKeyMap[badgeKey]) || badgeKey}
+          <span
+            className="absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+            style={badgeCat
+              ? { background: badgeCat.badge_bg, color: badgeCat.badge_text }
+              : { background: "#F5D0D8", color: "#800020" }}
+          >
+            {badgeKey}
           </span>
         </div>
         <div className="p-3">
@@ -123,16 +136,16 @@ export default function MenuContent() {
             {displayName(product)}
           </h3>
           <div className="w-full bg-[#FF6B9D] group-hover:bg-[#2D000A] text-white text-xs font-bold py-2.5 rounded-xl text-center tracking-wide transition-colors duration-200">
-            {isCustomizable(product) ? t("menu_customise") : t("menu_add_to_cart")}
+            {isProductCustomizable(product, categories) ? t("menu_customise") : t("menu_add_to_cart")}
           </div>
         </div>
       </>
     );
   };
 
-  // ─── Shared product grid renderer ─────────────────────────────────────────
+  // ─── Grid ──────────────────────────────────────────────────────────────────
   const renderGrid = (cols: string) => {
-    if (loadingProducts) return (
+    if (loading) return (
       <div className="text-center py-24">
         <div className="inline-block w-8 h-8 border-4 border-[#800020]/20 border-t-[#800020] rounded-full animate-spin mb-4" />
         <p className="text-[#800020]/50 text-sm font-medium">Loading menu…</p>
@@ -147,45 +160,71 @@ export default function MenuContent() {
     const cardClass = "group bg-white rounded-2xl overflow-hidden shadow-warm-sm hover:shadow-warm-lg hover:-translate-y-1 transition-all duration-300";
     return (
       <div className={cn("grid gap-3 md:gap-4", cols)}>
-        {filtered.map((product, i) => isCustomizable(product) ? (
-          <div key={product.id} className={cn(cardClass, "cursor-pointer")} onClick={() => openCustomizer(product)}>
-            <CardInterior product={product} priority={i === 0} />
-          </div>
-        ) : (
-          <Link key={product.id} href={`/product/${product.id}`} className={cardClass}>
-            <CardInterior product={product} priority={i === 0} />
-          </Link>
-        ))}
+        {filtered.map((product, i) =>
+          isProductCustomizable(product, categories) ? (
+            <div key={product.id} className={cn(cardClass, "cursor-pointer")} onClick={() => setCustProduct(product)}>
+              <CardInterior product={product} priority={i === 0} />
+            </div>
+          ) : (
+            <Link key={product.id} href={`/product/${product.id}`} className={cardClass}>
+              <CardInterior product={product} priority={i === 0} />
+            </Link>
+          )
+        )}
       </div>
     );
   };
 
-  // ─── Shared category sidebar content ───────────────────────────────────────
-  const renderSidebarCategories = () => (
+  // ─── Desktop sidebar ───────────────────────────────────────────────────────
+  const renderSidebar = () => (
     <div className="space-y-0.5">
-      {(["All", "Customized", ...customizedSubCats, "Accessories", "Boxes"] as FilterCat[]).map((cat) => {
-        const active = activeCategory === cat;
-        const isCustomizedSub = (customizedSubCats as readonly string[]).includes(cat);
+      <button
+        onClick={() => selectCat(null)}
+        className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
+          !activeCat ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10")}
+      >
+        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", !activeCat ? "bg-white" : "bg-[#800020]/35")} />
+        {t("cat_all") || "All"}
+      </button>
+
+      {topLevel.map(cat => {
+        const directKids  = childrenOf(cat.name).filter(c => c.filter_mode === "direct");
+        const subKids     = childrenOf(cat.name).filter(c => c.filter_mode === "as_subcategory");
+        const parentActive = activeCat?.name === cat.name || directKids.some(k => activeCat?.name === k.name);
+
         return (
-          <div key={cat}>
+          <div key={cat.id}>
             <button
-              onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
-              className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-left",
-                isCustomizedSub ? "pl-5 text-[13px]" : "",
-                active ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10"
-              )}
+              onClick={() => selectCat(cat)}
+              className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
+                activeCat?.name === cat.name ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10")}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 transition-colors", active ? "bg-white" : isCustomizedSub ? "bg-[#800020]/20" : "bg-[#800020]/35")} />
-              {cat}
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", activeCat?.name === cat.name ? "bg-white" : "bg-[#800020]/35")} />
+              {cat.name}
             </button>
-            {cat === "Accessories" && active && (
+
+            {/* Direct children — always visible, indented */}
+            {directKids.map(sub => (
+              <button key={sub.id} onClick={() => selectCat(sub)}
+                className={cn("w-full flex items-center gap-2.5 pl-5 pr-3 py-2 rounded-xl text-[13px] font-semibold transition-all text-left",
+                  activeCat?.name === sub.name ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10")}
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", activeCat?.name === sub.name ? "bg-white" : "bg-[#800020]/20")} />
+                {sub.name}
+              </button>
+            ))}
+
+            {/* as_subcategory children — visible only when parent is active */}
+            {subKids.length > 0 && parentActive && (
               <div className="ml-5 mt-1 space-y-0.5">
-                {accessoriesSubs.map(sub => (
-                  <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
+                {subKids.map(sub => (
+                  <button key={sub.id}
+                    onClick={() => { setActiveCat(cat); setActiveSub(activeSub?.id === sub.id ? null : sub); }}
                     className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                      activeSubCategory === sub ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8"
-                    )}>{sub}</button>
+                      activeSub?.id === sub.id ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8")}
+                  >
+                    {sub.name}
+                  </button>
                 ))}
               </div>
             )}
@@ -195,11 +234,25 @@ export default function MenuContent() {
     </div>
   );
 
+  // Mobile chips: top-level + direct children as peers
+  const mobileChips = useMemo(() => {
+    const chips: Category[] = [];
+    topLevel.forEach(cat => {
+      chips.push(cat);
+      childrenOf(cat.name).filter(c => c.filter_mode === "direct").forEach(sub => chips.push(sub));
+    });
+    return chips;
+  }, [topLevel, childrenOf]);
+
+  const activeCatSubKids = activeCat
+    ? childrenOf(activeCat.name).filter(c => c.filter_mode === "as_subcategory")
+    : [];
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen pt-16 md:pt-20" style={{ backgroundColor: "#FFFFFF" }}>
 
-      {/* ══ MOBILE layout ══════════════════════════════════════════════════════ */}
+      {/* ══ MOBILE ══════════════════════════════════════════════════════════ */}
       <div className="md:hidden">
         <section className="px-6 pt-7 pb-4">
           <h1 className="font-playfair text-3xl font-bold text-[#2D000A] leading-tight">{t("menu_heading")}</h1>
@@ -209,34 +262,43 @@ export default function MenuContent() {
         <div className="sticky top-16 z-30 bg-[#F5D0D8]/96 backdrop-blur-md border-b border-[rgba(128,0,32,0.12)] px-6 pt-3 pb-3 space-y-2.5">
           <div className="relative">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A05068]" />
-            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            <input type="text" value={query} onChange={e => setQuery(e.target.value)}
               placeholder={t("menu_search_placeholder")}
               className="w-full pl-9 pr-10 py-2 bg-white/85 border border-white/50 rounded-full text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all duration-200"
             />
             {query && <button onClick={() => setQuery("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020]"><X size={13} strokeWidth={2.5} /></button>}
           </div>
+
           <div className="flex gap-2 pb-0.5 overflow-x-auto scrollbar-hide">
-            {(["All", "Customized", ...customizedSubCats, "Accessories", "Boxes"] as FilterCat[]).map((cat) => (
-              <button key={cat} onClick={() => { setActiveCategory(cat); setActiveSubCategory(null); }}
-                className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-200 active:scale-[0.97]",
-                  activeCategory === cat ? "bg-[#800020] text-white shadow-warm-sm" : "bg-white/70 text-[#800020] hover:bg-white border border-white/40"
-                )}>{cat}</button>
+            <button onClick={() => selectCat(null)}
+              className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all active:scale-[0.97]",
+                !activeCat ? "bg-[#800020] text-white shadow-warm-sm" : "bg-white/70 text-[#800020] hover:bg-white border border-white/40")}>
+              {t("cat_all") || "All"}
+            </button>
+            {mobileChips.map(cat => (
+              <button key={cat.id} onClick={() => selectCat(cat)}
+                className={cn("shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all active:scale-[0.97]",
+                  activeCat?.name === cat.name ? "bg-[#800020] text-white shadow-warm-sm" : "bg-white/70 text-[#800020] hover:bg-white border border-white/40")}>
+                {cat.name}
+              </button>
             ))}
           </div>
-          {activeCategory === "Accessories" && (
+
+          {activeCatSubKids.length > 0 && (
             <div className="flex gap-2 pb-0.5">
-              {accessoriesSubs.map((sub) => (
-                <button key={sub} onClick={() => setActiveSubCategory(activeSubCategory === sub ? null : sub)}
+              {activeCatSubKids.map(sub => (
+                <button key={sub.id} onClick={() => setActiveSub(activeSub?.id === sub.id ? null : sub)}
                   className={cn("shrink-0 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all active:scale-[0.97]",
-                    activeSubCategory === sub ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40"
-                  )}>{sub}</button>
+                    activeSub?.id === sub.id ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40")}>
+                  {sub.name}
+                </button>
               ))}
             </div>
           )}
         </div>
 
         <section className="px-4 py-6">
-          {!loadingProducts && filtered.length > 0 && (
+          {!loading && filtered.length > 0 && (
             <p className="text-[#800020]/55 text-[11px] font-bold mb-4 uppercase tracking-widest">
               {filtered.length} {filtered.length !== 1 ? "items" : "item"}
             </p>
@@ -245,10 +307,8 @@ export default function MenuContent() {
         </section>
       </div>
 
-      {/* ══ DESKTOP layout ═════════════════════════════════════════════════════ */}
+      {/* ══ DESKTOP ════════════════════════════════════════════════════════════ */}
       <div className="hidden md:flex max-w-[1440px] mx-auto min-h-[calc(100vh-80px)]">
-
-        {/* ── Sidebar ── */}
         <aside className="w-60 lg:w-68 shrink-0 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto border-r border-[rgba(128,0,32,0.10)] flex flex-col px-6 lg:px-8 py-8">
           <h1 className="font-playfair text-3xl lg:text-4xl font-bold text-[#2D000A] leading-tight mb-1">
             {t("menu_heading")}
@@ -257,18 +317,17 @@ export default function MenuContent() {
 
           <div className="relative mb-6">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A05068]" />
-            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
+            <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search…"
               className="w-full pl-8 pr-7 py-2 bg-white/75 border border-white/50 rounded-full text-xs text-[#2D000A] placeholder:text-[#A05068] outline-none focus:bg-white focus:border-[#800020] transition-all"
             />
             {query && <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A05068] hover:text-[#800020]"><X size={13} strokeWidth={2.5} /></button>}
           </div>
 
           <p className="text-[9px] font-bold text-[#800020]/45 uppercase tracking-widest mb-3">Categories</p>
-          {renderSidebarCategories()}
+          {renderSidebar()}
 
           <div className="mt-auto pt-6 border-t border-[rgba(128,0,32,0.08)]">
-            {!loadingProducts && (
+            {!loading && (
               <p className="text-[10px] font-bold text-[#800020]/40 uppercase tracking-widest">
                 {filtered.length} {filtered.length !== 1 ? "items" : "item"}
               </p>
@@ -276,14 +335,12 @@ export default function MenuContent() {
           </div>
         </aside>
 
-        {/* ── Main grid ── */}
         <div className="flex-1 overflow-y-auto px-8 lg:px-10 py-8">
           {renderGrid("grid-cols-3 xl:grid-cols-4")}
         </div>
       </div>
 
-      <CakeCustomizerModal product={custProduct} onClose={closeCustomizer} />
-
+      <CakeCustomizerModal product={custProduct} onClose={() => setCustProduct(null)} />
     </main>
   );
 }
