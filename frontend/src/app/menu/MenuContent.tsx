@@ -202,14 +202,19 @@ export default function MenuContent() {
         const subKids     = childrenOf(cat.name).filter(c => c.filter_mode === "as_subcategory");
         const parentActive = activeCat?.name === cat.name || directKids.some(k => activeCat?.name === k.name);
 
+        const subActive = subKids.some(k => k.id === activeSub?.id) && activeCat?.name === cat.name;
+
         return (
           <div key={cat.id}>
             <button
               onClick={() => selectCat(cat)}
               className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-                activeCat?.name === cat.name ? "bg-[#800020] text-white" : "text-[#800020] hover:bg-[#800020]/10")}
+                activeCat?.name === cat.name && !subActive ? "bg-[#800020] text-white"
+                : activeCat?.name === cat.name && subActive  ? "bg-[#800020]/10 text-[#800020]"
+                : "text-[#800020] hover:bg-[#800020]/10")}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", activeCat?.name === cat.name ? "bg-white" : "bg-[#800020]/35")} />
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0",
+                activeCat?.name === cat.name && !subActive ? "bg-white" : "bg-[#800020]/35")} />
               {cat.name}
             </button>
 
@@ -230,8 +235,10 @@ export default function MenuContent() {
                 {subKids.map(sub => (
                   <button key={sub.id}
                     onClick={() => { setActiveCat(cat); setActiveSub(activeSub?.id === sub.id ? null : sub); }}
-                    className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                      activeSub?.id === sub.id ? "bg-[#800020]/12 text-[#800020] font-bold" : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/8")}
+                    className={cn("w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                      activeSub?.id === sub.id
+                        ? "bg-[#800020] text-white"
+                        : "text-[#800020]/65 hover:text-[#800020] hover:bg-[#800020]/10")}
                   >
                     {sub.name}
                   </button>
@@ -297,9 +304,12 @@ export default function MenuContent() {
           {activeCatSubKids.length > 0 && (
             <div className="flex gap-2 pb-0.5">
               {activeCatSubKids.map(sub => (
-                <button key={sub.id} onClick={() => setActiveSub(activeSub?.id === sub.id ? null : sub)}
+                <button key={sub.id}
+                  onClick={() => setActiveSub(activeSub?.id === sub.id ? null : sub)}
                   className={cn("shrink-0 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all active:scale-[0.97]",
-                    activeSub?.id === sub.id ? "bg-[#800020] text-white" : "bg-white/50 text-[#800020] hover:bg-white border border-white/40")}>
+                    activeSub?.id === sub.id
+                      ? "bg-[#800020] text-white shadow-warm-sm"
+                      : "bg-white/70 text-[#800020] hover:bg-white border border-white/40")}>
                   {sub.name}
                 </button>
               ))}
