@@ -377,7 +377,7 @@ export default function CakeCustomizerModal({
   useEffect(() => {
     fetch("/api/shape-configs", { cache: "no-store" })
       .then(r => r.json())
-      .then((data: { shape: string; max_chars: number; allowed_colors: string[] }[]) => {
+      .then((data: { shape: string; max_chars: number; view_count?: number; allowed_colors: string[] }[]) => {
         if (Array.isArray(data)) {
           const m: Record<string, ShapeCfg> = {};
           data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, view_count: c.view_count ?? (c.shape === "cake" ? 2 : 3), allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
