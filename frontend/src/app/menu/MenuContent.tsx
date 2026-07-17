@@ -41,12 +41,12 @@ export default function MenuContent() {
   const appliedParam = useRef(false);
 
   useEffect(() => {
-    fetch("/api/products")
+    fetch("/api/products", { cache: "no-store" })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setProducts(data); })
       .finally(() => setLoadingProds(false));
 
-    fetch("/api/categories")
+    fetch("/api/categories", { cache: "no-store" })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setCategories(data); })
       .finally(() => setLoadingCats(false));
@@ -88,11 +88,21 @@ export default function MenuContent() {
       }
       if (children.length === 0) return p.category === activeCat.name;
 
-      const hasAsSub = children.some(c => c.filter_mode === "as_subcategory");
-      if (hasAsSub) return p.category === activeCat.name;
-      // Customized-style: own products + all direct-mode children
-      return (p.category === activeCat.name && !p.subcategory) ||
-             children.some(child => p.category === child.name);
+      const directKids = children.filter(c => c.filter_mode === "direct");
+      const hasAsSub   = children.some(c => c.filter_mode === "as_subcategory");
+
+      if (hasAsSub && directKids.length === 0) {
+        // Pure as_subcategory parent (e.g. Accessories): show all category=parent products
+        return p.category === activeCat.name;
+      }
+      if (directKids.length > 0 && !hasAsSub) {
+        // Pure direct parent (e.g. Customized): show direct children's products
+        return (p.category === activeCat.name && !p.subcategory) ||
+               directKids.some(child => p.category === child.name);
+      }
+      // Mixed parent (e.g. Dounts): show category=parent + all direct children products
+      return p.category === activeCat.name ||
+             directKids.some(child => p.category === child.name);
     });
   }, [activeCat, activeSub, products, query, childrenOf]);
 
