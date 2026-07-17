@@ -11,15 +11,20 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const { shape, max_chars } = await req.json();
-  if (!shape || typeof max_chars !== "number" || max_chars < 1) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
+  const body = await req.json();
+  const { shape, max_chars, allowed_colors } = body;
+
+  if (!shape) return NextResponse.json({ error: "Missing shape" }, { status: 400 });
+
+  const update: Record<string, unknown> = {};
+  if (typeof max_chars === "number" && max_chars >= 1) update.max_chars = max_chars;
+  if (Array.isArray(allowed_colors)) update.allowed_colors = allowed_colors;
+
+  if (Object.keys(update).length === 0)
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+
   const sb = getAdmin();
-  const { error } = await sb
-    .from("shape_configs")
-    .update({ max_chars })
-    .eq("shape", shape);
+  const { error } = await sb.from("shape_configs").update(update).eq("shape", shape);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

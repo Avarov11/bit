@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("shape_configs")
-    .select("shape, max_chars")
+    .select("shape, max_chars, allowed_colors")
     .order("shape");
 
   if (error) console.error("[shape-configs]", error.message);

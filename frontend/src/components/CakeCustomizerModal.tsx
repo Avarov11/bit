@@ -398,7 +398,14 @@ export default function CakeCustomizerModal({
     ? FLAVORS.filter(f => product.allowed_flavors.includes(f.id))
     : FLAVORS;
   const allowedToppings  = product?.allowed_toppings ?? ["write", "sticker", "image"];
-  const [shapeLimits, setShapeLimits] = useState<Record<string, number>>({ cake: 5, heart: 3, square: 3 });
+  const ALL_SAUCE_IDS = ["brown","beige","black","white","pink","blue"];
+  interface ShapeCfg { max_chars: number; allowed_colors: string[]; }
+  const DEFAULT_CFG: ShapeCfg = { max_chars: 5, allowed_colors: ALL_SAUCE_IDS };
+  const [shapeConfigs, setShapeConfigs] = useState<Record<string, ShapeCfg>>({
+    cake:   { max_chars: 5, allowed_colors: ALL_SAUCE_IDS },
+    heart:  { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
+    square: { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
+  });
   const [uploading,  setUploading]  = useState(false);
   const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
@@ -420,11 +427,11 @@ export default function CakeCustomizerModal({
   useEffect(() => {
     fetch("/api/shape-configs", { cache: "no-store" })
       .then(r => r.json())
-      .then((data: { shape: string; max_chars: number }[]) => {
+      .then((data: { shape: string; max_chars: number; allowed_colors: string[] }[]) => {
         if (Array.isArray(data)) {
-          const m: Record<string, number> = {};
-          data.forEach(c => { m[c.shape] = c.max_chars; });
-          setShapeLimits(prev => ({ ...prev, ...m }));
+          const m: Record<string, ShapeCfg> = {};
+          data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
+          setShapeConfigs(prev => ({ ...prev, ...m }));
         }
       })
       .catch(() => {});
@@ -989,14 +996,21 @@ export default function CakeCustomizerModal({
     }
 
     if (custStep === 1) {
+      const allowedSauces  = (shapeConfigs[custSel.shape] ?? DEFAULT_CFG).allowed_colors;
+      const chocColorMap: Record<string, string> = { milk: "brown", hazelnut: "beige", oreo: "black" };
+      const visibleChocFlavors = CHOC_FLAVORS.filter(f => allowedSauces.includes(chocColorMap[f.id]));
+      const visibleColours     = COLOURS.filter(c => allowedSauces.includes(c.id));
+      const showChocType  = visibleChocFlavors.length > 0;
+      const showWhiteType = visibleColours.length > 0;
       const isChocType  = custSel.flavorType === "chocolate";
       const isWhiteType = custSel.flavorType === "white";
+      const visibleFlavors = availableFlavors.filter(f => f.id === "chocolate" ? showChocType : showWhiteType);
       return (
         <div>
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">{t("cust_modal_flavor_title")}</h2>
           <p className="text-[#A05068] text-sm mb-5">{t("cust_modal_flavor_subtitle")}</p>
-          <div className={cn("grid gap-3 mb-5", availableFlavors.length === 1 ? "grid-cols-1 max-w-[50%]" : "grid-cols-2")}>
-            {availableFlavors.map((f) => (
+          <div className={cn("grid gap-3 mb-5", visibleFlavors.length === 1 ? "grid-cols-1 max-w-[50%]" : "grid-cols-2")}>
+            {visibleFlavors.map((f) => (
               <OptionCard
                 key={f.id} id={f.id}
                 icon={<f.Icon size={40} strokeWidth={1.5} className={f.iconColor} />}
@@ -1011,7 +1025,7 @@ export default function CakeCustomizerModal({
             <div>
               <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-3">{t("cust_modal_choose_flavor")}</p>
               <div className="grid grid-cols-3 gap-3">
-                {CHOC_FLAVORS.map((choc) => {
+                {visibleChocFlavors.map((choc) => {
                   const sel = custSel.flavor === choc.id;
                   return (
                     <button
@@ -1058,7 +1072,7 @@ export default function CakeCustomizerModal({
               <div>
                 <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider mb-4">{t("cust_modal_choose_colour")}</p>
                 <div className="grid grid-cols-3 gap-3">
-                  {COLOURS.map((col) => {
+                  {visibleColours.map((col) => {
                     const sel = custSel.colour === col.id;
                     return (
                       <button
@@ -1120,7 +1134,7 @@ export default function CakeCustomizerModal({
       const showSticker  = allowedToppings.includes("sticker") && (shape === "square" || shape === "cake");
       const showImage    = allowedToppings.includes("image")   && shape === "cake";
       const showWrite    = allowedToppings.includes("write");
-      const charLimit = shapeLimits[shape] ?? (shape === "cake" ? 5 : 3);
+      const charLimit = (shapeConfigs[shape] ?? DEFAULT_CFG).max_chars;
       const count = custSel.toppingText.length;
       const cardCols = showWrite && showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
