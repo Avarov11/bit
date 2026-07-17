@@ -42,8 +42,8 @@ export default function SettingsPage() {
   const [draftChars,    setDraftChars]    = useState<Record<string, number>>({});
   const [draftColors,   setDraftColors]   = useState<Record<string, string[]>>({});
   const [toast,         setToast]         = useState<{ msg: string; ok: boolean } | null>(null);
-  const [pendingSlot,   setPendingSlot]   = useState<{ color: string; view: number } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef        = useRef<HTMLInputElement>(null);
+  const pendingSlotRef = useRef<{ color: string; view: number } | null>(null);
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -99,14 +99,15 @@ export default function SettingsPage() {
   }
 
   function triggerUpload(color: string, view: number) {
-    setPendingSlot({ color, view });
+    pendingSlotRef.current = { color, view };
     if (fileRef.current) { fileRef.current.value = ""; fileRef.current.click(); }
   }
 
   async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !pendingSlot) return;
-    const { color, view } = pendingSlot;
+    const slot = pendingSlotRef.current;
+    if (!file || !slot) return;
+    const { color, view } = slot;
     setUploadingSlot({ color, view });
 
     const fd = new FormData();
@@ -118,6 +119,7 @@ export default function SettingsPage() {
     const res  = await fetch("/api/shape-color-images", { method: "POST", body: fd });
     const data = await res.json() as { url?: string; filename?: string; error?: string };
     setUploadingSlot(null);
+    pendingSlotRef.current = null;
 
     if (data.url && data.filename) {
       setColorImages(prev => {
@@ -128,7 +130,6 @@ export default function SettingsPage() {
     } else {
       showToast(data.error ?? "Upload failed.", false);
     }
-    setPendingSlot(null);
   }
 
   async function deleteSlot(color: string, view: number) {
