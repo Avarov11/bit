@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdmin } from "@/lib/supabase-admin";
+import { getAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
