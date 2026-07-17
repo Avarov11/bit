@@ -1441,7 +1441,7 @@ export default function CakeCustomizerModal({
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden mb-5 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 bg-white/60" />
               <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
-                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} />
+                <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} shapeImageMap={shapeImageMaps[custSel.shape ?? "cake"] ?? {}} />
               </div>
               {custSel.shape && (
                 <div className="absolute bottom-0 inset-x-0 px-3 py-2 bg-white/80 backdrop-blur-sm border-t border-[rgba(128,0,32,0.06)] flex items-center justify-between gap-2">
