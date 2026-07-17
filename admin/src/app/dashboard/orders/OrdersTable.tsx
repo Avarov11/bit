@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -107,13 +107,71 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 
 // ─── Item Detail ──────────────────────────────────────────────────────────────
 
-function ItemDetail({ item }: { item: OrderItem }) {
+function ItemDetail({ item, orderId, itemIndex, onExtrasUpdated }: {
+  item: OrderItem;
+  orderId: string;
+  itemIndex: number;
+  onExtrasUpdated: (items: OrderItem[]) => void;
+}) {
   const c = item.customization;
+
+  // Extras get their own visual blocks — exclude them from the generic pills
+  const EXTRAS = new Set(["Candles", "Balloons", "Card"]);
+  const baseToppings = (c?.toppings ?? []).filter((t) => !EXTRAS.has(t));
+  const hasCandles   = c?.toppings?.includes("Candles") ?? false;
+
+  // ── Edit Extras state ──────────────────────────────────────────
+  const [editing,        setEditing]        = React.useState(false);
+  const [saving,         setSaving]         = React.useState(false);
+  const [editCandleUrl,  setEditCandleUrl]  = React.useState<string | null>(c?.candleUrl ?? null);
+  const [editBalloonUrl, setEditBalloonUrl] = React.useState<string | null>(c?.balloonUrl ?? null);
+  const [editCardUrl,    setEditCardUrl]    = React.useState<string | null>(c?.cardUrl ?? null);
+  const [candleImages,   setCandleImages]   = React.useState<{ name: string; url: string }[]>([]);
+  const [balloonImages,  setBalloonImages]  = React.useState<{ name: string; url: string }[]>([]);
+  const [cardImages,     setCardImages]     = React.useState<{ name: string; url: string }[]>([]);
+  const [imagesLoaded,   setImagesLoaded]   = React.useState(false);
+
+  const openEditor = async () => {
+    setEditCandleUrl(c?.candleUrl ?? null);
+    setEditBalloonUrl(c?.balloonUrl ?? null);
+    setEditCardUrl(c?.cardUrl ?? null);
+    setEditing(true);
+    if (!imagesLoaded) {
+      const [cn, b, ca] = await Promise.all([
+        fetch("/api/candles").then((r) => r.json()).catch(() => []),
+        fetch("/api/balloons").then((r) => r.json()).catch(() => []),
+        fetch("/api/cards").then((r) => r.json()).catch(() => []),
+      ]);
+      if (Array.isArray(cn)) setCandleImages(cn);
+      if (Array.isArray(b))  setBalloonImages(b);
+      if (Array.isArray(ca)) setCardImages(ca);
+      setImagesLoaded(true);
+    }
+  };
+
+  const saveExtras = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/orders/extras", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, itemIndex, candleUrl: editCandleUrl, balloonUrl: editBalloonUrl, cardUrl: editCardUrl }),
+      });
+      if (res.ok) {
+        const { items } = await res.json();
+        onExtrasUpdated(items);
+        setEditing(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const details = [
-    c?.shape   && c.shape,
-    c?.flavor  && c.flavor,
-    c?.color   && c.color,
-    c?.toppings?.length && c.toppings.join(", "),
+    c?.shape  && c.shape,
+    c?.flavor && c.flavor,
+    c?.color  && c.color,
+    baseToppings.length && baseToppings.join(", "),
   ].filter(Boolean) as string[];
 
   return (
@@ -142,16 +200,45 @@ function ItemDetail({ item }: { item: OrderItem }) {
           </p>
         </div>
       )}
-      {c?.imageUrl && (
-        <div className="mt-2 rounded-xl overflow-hidden border border-blue-100 bg-blue-50">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-blue-100/60">
-            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Customer photo — print this</span>
+
+      {/* ── Candles ──────────────────────────────────────────────── */}
+      {(hasCandles || c?.candleUrl) && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-amber-100 bg-amber-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-amber-100/60">
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">🕯️ Candles</span>
+            {c?.candleUrl && (
+              <a
+                href={c.candleUrl}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
+            )}
+          </div>
+          {c?.candleUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={c.candleUrl} alt="Selected candle design" className="w-full object-contain max-h-48 bg-white" />
+          )}
+        </div>
+      )}
+
+      {/* ── Balloon design ───────────────────────────────────────── */}
+      {c?.balloonUrl && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-purple-100 bg-purple-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-purple-100/60">
+            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">🎈 Balloon design</span>
             <a
-              href={c.imageUrl}
+              href={c.balloonUrl}
               download
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors"
+              className="text-[10px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -161,10 +248,166 @@ function ItemDetail({ item }: { item: OrderItem }) {
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={c.imageUrl}
-            alt="Customer upload"
-            className="w-full object-contain max-h-64 bg-white"
+            src={c.balloonUrl}
+            alt="Selected balloon design"
+            className="w-full object-contain max-h-48 bg-white"
           />
+        </div>
+      )}
+
+      {/* ── Greeting card ────────────────────────────────────────── */}
+      {c?.cardUrl && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-100/60">
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">🎴 Greeting card</span>
+            <a
+              href={c.cardUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download
+            </a>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.cardUrl}
+            alt="Selected greeting card"
+            className="w-full object-contain max-h-48 bg-white"
+          />
+        </div>
+      )}
+
+      {/* ── Edit Extras button ───────────────────────────────────── */}
+      {!editing && (
+        <button
+          onClick={openEditor}
+          className="mt-3 w-full text-[11px] font-bold text-brand-700 border border-brand-200 hover:border-brand-500 hover:bg-brand-50 rounded-lg py-1.5 transition-colors"
+        >
+          ✏️ Edit Extras (Candles / Balloons / Card)
+        </button>
+      )}
+
+      {/* ── Extras editor panel ──────────────────────────────────── */}
+      {editing && (
+        <div className="mt-3 bg-white border border-gray-200 rounded-xl p-4 space-y-4">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Edit Extras</p>
+
+          {/* Candle picker */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-gray-700">🕯️ Candle design</p>
+              {editCandleUrl && (
+                <button onClick={() => setEditCandleUrl(null)} className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition-colors">Remove</button>
+              )}
+            </div>
+            {!imagesLoaded ? (
+              <p className="text-[11px] text-gray-400">Loading…</p>
+            ) : candleImages.length === 0 ? (
+              <p className="text-[11px] text-gray-400">No candle designs in bucket</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5">
+                {candleImages.map((cn) => {
+                  const sel = editCandleUrl === cn.url;
+                  return (
+                    <button
+                      key={cn.url}
+                      onClick={() => setEditCandleUrl(sel ? null : cn.url)}
+                      className={`relative rounded-lg overflow-hidden border-2 aspect-square transition-all ${sel ? "border-amber-500 ring-1 ring-amber-300" : "border-gray-100 hover:border-amber-300"}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={cn.url} alt={cn.name} className="w-full h-full object-cover" />
+                      {sel && <span className="absolute inset-0 bg-amber-500/10" />}
+                      {sel && <span className="absolute top-0.5 right-0.5 bg-amber-600 rounded-full p-0.5"><svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Balloon picker */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-gray-700">🎈 Balloon design</p>
+              {editBalloonUrl && (
+                <button onClick={() => setEditBalloonUrl(null)} className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition-colors">Remove</button>
+              )}
+            </div>
+            {balloonImages.length === 0 ? (
+              <p className="text-[11px] text-gray-400">Loading…</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5">
+                {balloonImages.map((b) => {
+                  const sel = editBalloonUrl === b.url;
+                  return (
+                    <button
+                      key={b.url}
+                      onClick={() => setEditBalloonUrl(sel ? null : b.url)}
+                      className={`relative rounded-lg overflow-hidden border-2 aspect-square transition-all ${sel ? "border-purple-500 ring-1 ring-purple-300" : "border-gray-100 hover:border-purple-300"}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={b.url} alt={b.name} className="w-full h-full object-cover" />
+                      {sel && <span className="absolute inset-0 bg-purple-500/10" />}
+                      {sel && <span className="absolute top-0.5 right-0.5 bg-purple-600 rounded-full p-0.5"><svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Card picker */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-gray-700">🎴 Greeting card</p>
+              {editCardUrl && (
+                <button onClick={() => setEditCardUrl(null)} className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition-colors">Remove</button>
+              )}
+            </div>
+            {cardImages.length === 0 ? (
+              <p className="text-[11px] text-gray-400">Loading…</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5">
+                {cardImages.map((ca) => {
+                  const sel = editCardUrl === ca.url;
+                  return (
+                    <button
+                      key={ca.url}
+                      onClick={() => setEditCardUrl(sel ? null : ca.url)}
+                      className={`relative rounded-lg overflow-hidden border-2 aspect-[3/4] transition-all ${sel ? "border-emerald-500 ring-1 ring-emerald-300" : "border-gray-100 hover:border-emerald-300"}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={ca.url} alt={ca.name} className="w-full h-full object-cover" />
+                      {sel && <span className="absolute inset-0 bg-emerald-500/10" />}
+                      {sel && <span className="absolute top-0.5 right-0.5 bg-emerald-600 rounded-full p-0.5"><svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={saveExtras}
+              disabled={saving}
+              className="flex-1 bg-brand-700 hover:bg-brand-900 text-white text-xs font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="flex-1 border border-gray-200 hover:border-gray-400 text-gray-600 text-xs font-bold py-2 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -233,8 +476,8 @@ function OrderCard({ order, updating, onChangeStatus }: {
   onChangeStatus: (id: string, s: OrderStatus) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [items, setItems] = useState<OrderItem[]>(Array.isArray(order.items) ? order.items : []);
   const m         = STATUS_META[order.status];
-  const items     = Array.isArray(order.items) ? order.items : [];
   const itemCount = items.length;
   const preview   = itemCount > 0
     ? `${items[0].productName}${itemCount > 1 ? ` +${itemCount - 1} more` : ""}`
@@ -347,7 +590,15 @@ function OrderCard({ order, updating, onChangeStatus }: {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Items Ordered</p>
                 <div className="space-y-2">
-                  {items.map((item, i) => <ItemDetail key={i} item={item} />)}
+                  {items.map((item, i) => (
+                    <ItemDetail
+                      key={i}
+                      item={item}
+                      orderId={order.id}
+                      itemIndex={i}
+                      onExtrasUpdated={setItems}
+                    />
+                  ))}
                 </div>
               </div>
             )}

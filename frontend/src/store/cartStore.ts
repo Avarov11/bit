@@ -16,6 +16,9 @@ export interface CartItem {
     message?: string;
     stickerUrl?: string;
     imageUrl?: string;
+    candleUrl?: string;
+    balloonUrl?: string;
+    cardUrl?: string;
   };
 }
 

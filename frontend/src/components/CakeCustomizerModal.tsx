@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Flame, Balloon, Camera, Upload, Sticker, Cookie, Milk, Coffee, Leaf, Layers } from "lucide-react";
+import { Check, ChefHat, Sparkles, PenLine, Box, ChevronRight, X, Loader2, Gift, Flame, Balloon, Camera, Upload, Sticker, Cookie, Milk, Coffee, Leaf, Layers, Mail } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -82,7 +82,7 @@ const STEPS = [
 ];
 
 const DEFAULT_BASE_PRICES: Record<string, number> = { cake: 160, heart: 85, square: 85 };
-const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25 };
+const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25, card: 25 };
 
 interface CustSel {
   shape: string;
@@ -95,14 +95,15 @@ interface CustSel {
   toppingText: string;
   stickerUrl: string | null;
   imageFile: File | null;
-  candles: boolean;
-  balloons: boolean;
+  candleUrl: string | null;
+  balloonUrl: string | null;
+  cardUrl: string | null;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
   sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
-  candles: false, balloons: false,
+  candleUrl: null, balloonUrl: null, cardUrl: null,
 };
 
 // ─── Sprinkle overlay ────────────────────────────────────────────────────────
@@ -164,12 +165,12 @@ const BASE_HEART  = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/
 const BASE_SQUARE = "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shape%20square";
 
 const CAKE_COLOR_FILES: Record<string, [string, string]> = {
-  brown: ["brown1.png", "brown2.png"],
-  beige: ["beige1.png", "beige2.png"],
-  black: ["black1.png", "black2.png"],
-  pink:  ["red1.png",   "red2.png"  ],
-  blue:  ["blue1.png",  "blue2.png" ],
-  white: ["white1.png", "white2.png"],
+  brown: ["brown1.png", "brown%202.png"],
+  beige: ["beige1.png", "beige%202.png"],
+  black: ["black1.png", "black%202.png"],
+  pink:  ["red1.png",   "red%202.png"  ],
+  blue:  ["blue1.png",  "blue%202.png" ],
+  white: ["white1.png", "white%202.png"],
 };
 const HEART_COLOR_FILES: Record<string, [string, string, string]> = {
   brown: ["1br.png",    "2br.png", "3br.png"],
@@ -400,6 +401,12 @@ export default function CakeCustomizerModal({
   const [uploading,  setUploading]  = useState(false);
   const [stickers,          setStickers]          = useState<{ name: string; url: string }[]>([]);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [candleImages,       setCandleImages]       = useState<{ name: string; url: string }[]>([]);
+  const [showCandlePicker,   setShowCandlePicker]   = useState(false);
+  const [balloonImages,      setBalloonImages]      = useState<{ name: string; url: string }[]>([]);
+  const [showBalloonPicker,  setShowBalloonPicker]  = useState(false);
+  const [cards,              setCards]              = useState<{ name: string; url: string }[]>([]);
+  const [showCardPicker,     setShowCardPicker]     = useState(false);
   const [rawPricing,        setRawPricing]        = useState<Record<string, number>>({});
   const imageInputRef                             = useRef<HTMLInputElement>(null);
 
@@ -416,6 +423,27 @@ export default function CakeCustomizerModal({
       .then((data) => { if (Array.isArray(data)) setStickers(data); })
       .catch(() => {});
   }, [product?.category]);
+
+  useEffect(() => {
+    fetch("/api/candles")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setCandleImages(data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/balloons")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setBalloonImages(data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/cards")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setCards(data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/customizer-pricing")
@@ -436,6 +464,7 @@ export default function CakeCustomizerModal({
     image:     rawPricing["addon_image"]     ?? DEFAULT_ADDON_PRICES.image,
     candles:   rawPricing["addon_candles"]   ?? DEFAULT_ADDON_PRICES.candles,
     balloons:  rawPricing["addon_balloons"]  ?? DEFAULT_ADDON_PRICES.balloons,
+    card:      rawPricing["addon_card"]      ?? DEFAULT_ADDON_PRICES.card,
   };
   const calcPrice = (): number => {
     const base    = BASE_PRICES[custSel.shape as keyof typeof BASE_PRICES] ?? 0;
@@ -443,8 +472,9 @@ export default function CakeCustomizerModal({
     const topping = custSel.topping === "write"   ? ADDON_PRICES.writing
                   : custSel.topping === "sticker" ? ADDON_PRICES.sticker
                   : custSel.topping === "image"   ? ADDON_PRICES.image : 0;
-    const extras  = (custSel.candles ? ADDON_PRICES.candles : 0)
-                  + (custSel.balloons ? ADDON_PRICES.balloons : 0);
+    const extras  = (custSel.candleUrl  ? ADDON_PRICES.candles  : 0)
+                  + (custSel.balloonUrl ? ADDON_PRICES.balloons : 0)
+                  + (custSel.cardUrl    ? ADDON_PRICES.card     : 0);
     return base + spr + topping + extras;
   };
 
@@ -456,6 +486,9 @@ export default function CakeCustomizerModal({
       setCustStep(0);
       setCustSel(EMPTY_SEL);
       setShowStickerPicker(false);
+      setShowCandlePicker(false);
+      setShowBalloonPicker(false);
+      setShowCardPicker(false);
     }
   }
 
@@ -513,8 +546,9 @@ export default function CakeCustomizerModal({
     const cakeColorLabel = CAKE_COLORS.find((c) => c.id === custSel.cakeColor)?.label;
     const toppingsList: string[] = [];
     if (custSel.sprinkles === "yes") toppingsList.push("Sprinkles");
-    if (custSel.candles)  toppingsList.push("Candles");
-    if (custSel.balloons) toppingsList.push("Balloons");
+    if (custSel.candleUrl)   toppingsList.push("Candles");
+    if (custSel.balloonUrl)  toppingsList.push("Balloons");
+    if (custSel.cardUrl)     toppingsList.push("Card");
 
     const stickerUrl = custSel.topping === "sticker" ? custSel.stickerUrl ?? undefined : undefined;
     let imageUrl:   string | undefined;
@@ -536,6 +570,9 @@ export default function CakeCustomizerModal({
         message:  custSel.topping === "write" ? custSel.toppingText.trim() || undefined : undefined,
         stickerUrl,
         imageUrl,
+        candleUrl:  custSel.candleUrl  ?? undefined,
+        balloonUrl: custSel.balloonUrl ?? undefined,
+        cardUrl:    custSel.cardUrl    ?? undefined,
       },
     });
   };
@@ -578,59 +615,274 @@ export default function CakeCustomizerModal({
 
   const renderStep = () => {
     if (custStep === 4) {
-      const toggle = (key: "candles" | "balloons") =>
-        setCustSel((p) => ({ ...p, [key]: !p[key] }));
       return (
         <div>
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Extras</h2>
           <p className="text-[#A05068] text-sm mb-6">Add a little something extra — totally optional 🎉</p>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Candles */}
+          <div className="grid grid-cols-3 gap-3">
+            {/* Candles — image picker */}
             <button
-              onClick={() => toggle("candles")}
+              onClick={() => { setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                custSel.candles ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                (custSel.candleUrl || showCandlePicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
               )}
             >
-              {custSel.candles && (
+              {custSel.candleUrl && (
                 <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
                   <Check size={10} className="text-white" strokeWidth={3} />
                 </span>
               )}
-              <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
-                <Flame size={48} strokeWidth={1.5} className="text-[#800020]" />
-              </div>
-              <div className="p-3">
-                <p className="font-playfair font-bold text-[#2D000A] text-sm">Candles</p>
-                <p className="text-[#A05068] text-[11px] mt-0.5">Add birthday candles</p>
+              {custSel.candleUrl ? (
+                <div className="w-full h-[72px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={custSel.candleUrl} alt="Selected candle" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                  <Flame size={36} strokeWidth={1.5} className="text-[#800020]" />
+                </div>
+              )}
+              <div className="p-2.5">
+                <p className="font-playfair font-bold text-[#2D000A] text-xs">Candles</p>
+                <p className="text-[#A05068] text-[10px] mt-0.5">
+                  {custSel.candleUrl ? "Change design" : "Choose design"}
+                </p>
               </div>
             </button>
 
-            {/* Balloons */}
+            {/* Balloons — image picker */}
             <button
-              onClick={() => toggle("balloons")}
+              onClick={() => { setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                custSel.balloons ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                (custSel.balloonUrl || showBalloonPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
               )}
             >
-              {custSel.balloons && (
+              {custSel.balloonUrl && (
                 <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
                   <Check size={10} className="text-white" strokeWidth={3} />
                 </span>
               )}
-              <div className="bg-[#F5D0D8] flex items-center justify-center py-8">
-                <Balloon size={48} strokeWidth={1.5} className="text-[#800020]" />
+              {custSel.balloonUrl ? (
+                <div className="w-full h-[72px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={custSel.balloonUrl} alt="Selected balloon" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                  <Balloon size={36} strokeWidth={1.5} className="text-[#800020]" />
+                </div>
+              )}
+              <div className="p-2.5">
+                <p className="font-playfair font-bold text-[#2D000A] text-xs">Balloons</p>
+                <p className="text-[#A05068] text-[10px] mt-0.5">
+                  {custSel.balloonUrl ? "Change design" : "Choose design"}
+                </p>
               </div>
-              <div className="p-3">
-                <p className="font-playfair font-bold text-[#2D000A] text-sm">Balloons</p>
-                <p className="text-[#A05068] text-[11px] mt-0.5">Add decorative balloons</p>
+            </button>
+
+            {/* Cards — image picker */}
+            <button
+              onClick={() => { setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); }}
+              className={cn(
+                "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+                (custSel.cardUrl || showCardPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+              )}
+            >
+              {custSel.cardUrl && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
+                  <Check size={10} className="text-white" strokeWidth={3} />
+                </span>
+              )}
+              {custSel.cardUrl ? (
+                <div className="w-full h-[72px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={custSel.cardUrl} alt="Selected card" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                  <Mail size={36} strokeWidth={1.5} className="text-[#800020]" />
+                </div>
+              )}
+              <div className="p-2.5">
+                <p className="font-playfair font-bold text-[#2D000A] text-xs">Cards</p>
+                <p className="text-[#A05068] text-[10px] mt-0.5">
+                  {custSel.cardUrl ? "Change design" : "Choose design"}
+                </p>
               </div>
             </button>
           </div>
 
-          {!custSel.candles && !custSel.balloons && (
+          {/* Candle picker panel */}
+          {showCandlePicker && (
+            <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
+                  {candleImages.length} Designs
+                </p>
+                <button
+                  onClick={() => setShowCandlePicker(false)}
+                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {candleImages.map((c) => {
+                  const sel = custSel.candleUrl === c.url;
+                  return (
+                    <button
+                      key={c.url}
+                      onClick={() => {
+                        setCustSel((p) => ({ ...p, candleUrl: c.url }));
+                        setShowCandlePicker(false);
+                      }}
+                      className={cn(
+                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                        sel
+                          ? "border-[#800020] ring-2 ring-[#800020]/20"
+                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                      )}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.url} alt={c.name} className="w-full aspect-square object-cover" />
+                      {sel && (
+                        <>
+                          <span className="absolute inset-0 bg-[#800020]/10" />
+                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
+                            <Check size={10} className="text-white" strokeWidth={3} />
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {custSel.candleUrl && (
+                <button
+                  onClick={() => { setCustSel((p) => ({ ...p, candleUrl: null })); setShowCandlePicker(false); }}
+                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
+                >
+                  Remove candles
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Balloon picker panel */}
+          {showBalloonPicker && (
+            <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
+                  {balloonImages.length} Designs
+                </p>
+                <button
+                  onClick={() => setShowBalloonPicker(false)}
+                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {balloonImages.map((b) => {
+                  const sel = custSel.balloonUrl === b.url;
+                  return (
+                    <button
+                      key={b.url}
+                      onClick={() => {
+                        setCustSel((p) => ({ ...p, balloonUrl: b.url }));
+                        setShowBalloonPicker(false);
+                      }}
+                      className={cn(
+                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                        sel
+                          ? "border-[#800020] ring-2 ring-[#800020]/20"
+                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                      )}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={b.url} alt={b.name} className="w-full aspect-square object-cover" />
+                      {sel && (
+                        <>
+                          <span className="absolute inset-0 bg-[#800020]/10" />
+                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
+                            <Check size={10} className="text-white" strokeWidth={3} />
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {custSel.balloonUrl && (
+                <button
+                  onClick={() => { setCustSel((p) => ({ ...p, balloonUrl: null })); setShowBalloonPicker(false); }}
+                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
+                >
+                  Remove balloons
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Card picker panel */}
+          {showCardPicker && (
+            <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
+                  {cards.length} Designs
+                </p>
+                <button
+                  onClick={() => setShowCardPicker(false)}
+                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {cards.map((c) => {
+                  const sel = custSel.cardUrl === c.url;
+                  return (
+                    <button
+                      key={c.url}
+                      onClick={() => {
+                        setCustSel((p) => ({ ...p, cardUrl: c.url }));
+                        setShowCardPicker(false);
+                      }}
+                      className={cn(
+                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                        sel
+                          ? "border-[#800020] ring-2 ring-[#800020]/20"
+                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                      )}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.url} alt={c.name} className="w-full aspect-[3/4] object-cover" />
+                      {sel && (
+                        <>
+                          <span className="absolute inset-0 bg-[#800020]/10" />
+                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
+                            <Check size={10} className="text-white" strokeWidth={3} />
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {custSel.cardUrl && (
+                <button
+                  onClick={() => { setCustSel((p) => ({ ...p, cardUrl: null })); setShowCardPicker(false); }}
+                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
+                >
+                  Remove card
+                </button>
+              )}
+            </div>
+          )}
+
+          {!custSel.candleUrl && !custSel.balloonUrl && !custSel.cardUrl && (
             <p className="text-center text-[#A05068]/60 text-xs mt-5">Tap to select, or skip to continue</p>
           )}
         </div>
@@ -664,8 +916,9 @@ export default function CakeCustomizerModal({
                 : "—"
               }
             />
-            <SummaryRow label="Candles"  value={custSel.candles  ? `Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
-            <SummaryRow label="Balloons" value={custSel.balloons ? `Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
+            <SummaryRow label="Candles"  value={custSel.candleUrl ? `Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
+            <SummaryRow label="Balloons" value={custSel.balloonUrl ? `Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
+            <SummaryRow label="Card"     value={custSel.cardUrl  ? `Yes (+QAR ${ADDON_PRICES.card})`     : "None"} />
           </div>
         </div>
       );
@@ -1124,8 +1377,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image}</span>}
-                      {custSel.candles   && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} <Flame size={9} strokeWidth={2} /></span>}
-                      {custSel.balloons  && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} <Balloon size={9} strokeWidth={2} /></span>}
+                      {custSel.candleUrl   && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} <Flame size={9} strokeWidth={2} /></span>}
+                      {custSel.balloonUrl && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} <Balloon size={9} strokeWidth={2} /></span>}
                     </div>
                     <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
                   </div>
@@ -1204,8 +1457,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.image}</span>}
-                      {custSel.candles   && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} <Flame size={8} strokeWidth={2} /></span>}
-                      {custSel.balloons  && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} <Balloon size={8} strokeWidth={2} /></span>}
+                      {custSel.candleUrl   && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} <Flame size={8} strokeWidth={2} /></span>}
+                      {custSel.balloonUrl && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} <Balloon size={8} strokeWidth={2} /></span>}
                     </div>
                   </div>
                   <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
