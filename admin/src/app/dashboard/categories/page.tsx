@@ -225,7 +225,7 @@ export default function CategoriesPage() {
                 {subs.map((sub, idx) => (
                   <div key={sub.id} className="flex items-center gap-3 px-5 py-3 pl-10"
                     style={{ borderBottom: idx < subs.length - 1 ? "1px solid #FDF0F3" : "none", background: "#FDFAFA" }}>
-                    <ChevronRight size={12} style={{ color: "#ccc", shrink: 0 }} />
+                    <ChevronRight size={12} className="shrink-0" style={{ color: "#ccc" }} />
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0"
                       style={{ background: sub.badge_bg, color: sub.badge_text }}>
                       {sub.name}
