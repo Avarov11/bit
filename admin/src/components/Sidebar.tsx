@@ -45,7 +45,7 @@ const nav = [
     href:  "/dashboard/settings",
     label: "Settings",
     Icon:  Settings,
-    desc:  "Writing limits per shape",
+    desc:  "Shape images & writing limits",
   },
 ];
 
