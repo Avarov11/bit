@@ -34,6 +34,16 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    // TXN_PENDING: bank is still processing — leave order in pending_payment,
+    // don't redirect to fail. SADAD will send a follow-up TXN_SUCCESS or
+    // TXN_FAILURE callback when the bank responds.
+    if (status === 'TXN_PENDING') {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/fail?orderId=${orderId}&reason=${encodeURIComponent('Your payment is being processed by the bank. You will receive a confirmation shortly.')}`,
+        { status: 303 }
+      )
+    }
+
     if (status === 'TXN_SUCCESS' && sigValid) {
       await sb
         .from('orders')
