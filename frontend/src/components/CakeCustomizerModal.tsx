@@ -531,15 +531,15 @@ export default function CakeCustomizerModal({
     }
   }
 
-  // Preload all 48 preview images as soon as the modal opens so every
-  // subsequent shape/colour swap is served instantly from the browser cache.
+  // Preload preview images for the current shape maps once they're fetched.
   useEffect(() => {
     if (!product) return;
-    ALL_PREVIEW_URLS.forEach(src => {
+    const allUrls = Object.values(shapeImageMaps).flatMap(m => Object.values(m).flat());
+    allUrls.forEach(src => {
       const img = new window.Image();
       img.src = src;
     });
-  }, [product]);
+  }, [product, shapeImageMaps]);
 
   const [previewImageUrl, setPreviewImageUrl] = useState("");
   useEffect(() => {
