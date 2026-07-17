@@ -39,15 +39,15 @@ export default function CategoriesPage() {
     setTimeout(() => setToast(null), 3500);
   }
 
-  async function load() {
-    setLoading(true);
-    const res  = await fetch("/api/categories");
+  async function load(showSpinner = false) {
+    if (showSpinner) setLoading(true);
+    const res  = await fetch("/api/categories", { cache: "no-store" });
     const data = await res.json() as Category[];
     setCategories(Array.isArray(data) ? data : []);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(true); }, []);
 
   function openAdd(parentName?: string) {
     setForm({ ...EMPTY_FORM, parent: parentName ?? "" });
@@ -85,7 +85,7 @@ export default function CategoriesPage() {
       });
       const data = await res.json() as { error?: string };
       if (data.error) showToast(data.error, false);
-      else { showToast("Category added.", true); setModal(null); load(); }
+      else { showToast("Category added.", true); setModal(null); await load(); }
     } else if (modal === "edit" && editTarget) {
       const res  = await fetch("/api/categories", {
         method:  "PATCH",
@@ -101,7 +101,7 @@ export default function CategoriesPage() {
       });
       const data = await res.json() as { error?: string };
       if (data.error) showToast(data.error, false);
-      else { showToast("Category updated.", true); setModal(null); load(); }
+      else { showToast("Category updated.", true); setModal(null); await load(); }
     }
     setSaving(false);
   }
