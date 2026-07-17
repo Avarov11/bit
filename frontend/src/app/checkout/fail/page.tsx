@@ -29,7 +29,7 @@ function FailContent() {
         <p className="text-[#800020]/55 text-sm leading-relaxed mb-8">
           {reason
             ? reason
-            : "Your payment could not be processed. No charge has been made. Please try again or choose Cash on Pickup."}
+            : "Your payment could not be processed. No charge has been made. Please try again or contact us on WhatsApp for help."}
         </p>
 
         {order && (

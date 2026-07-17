@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,5 +21,7 @@ export async function GET() {
     pricing[row.key] = Number(row.price);
   }
 
-  return NextResponse.json(pricing);
+  return NextResponse.json(pricing, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }

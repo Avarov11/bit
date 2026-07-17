@@ -490,7 +490,8 @@ export default function CakeCustomizerModal({
     }
     if (custStep === 2) return !!custSel.sprinkles;
     if (custStep === 3) {
-      if (custSel.topping === "write")   return true;
+      if (!custSel.topping)              return true; // "Plain / No Topping" — nothing selected is valid
+      if (custSel.topping === "write")   return custSel.toppingText.trim().length > 0;
       if (custSel.topping === "sticker") return custSel.stickerUrl !== null;
       if (custSel.topping === "image")   return custSel.imageFile !== null;
       return false;
@@ -532,7 +533,7 @@ export default function CakeCustomizerModal({
         flavor:   flavorLabel,
         color:    cakeColorLabel || undefined,
         toppings: toppingsList.length ? toppingsList : undefined,
-        message:  custSel.topping === "write" ? custSel.toppingText || undefined : undefined,
+        message:  custSel.topping === "write" ? custSel.toppingText.trim() || undefined : undefined,
         stickerUrl,
         imageUrl,
       },
@@ -874,7 +875,7 @@ export default function CakeCustomizerModal({
                   label={t("cust_modal_write")}
                   sub={shape === "cake" ? "Max 5 letters" : "Max 3 letters"}
                   selected={custSel.topping === "write"}
-                  onClick={() => setCustSel((p) => ({ ...p, topping: "write", stickerUrl: null, imageFile: null }))}
+                  onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "write" ? "" : "write", stickerUrl: null, imageFile: null }))}
                 />
               )}
               {showImage && (
@@ -885,7 +886,7 @@ export default function CakeCustomizerModal({
                   label={t("cust_modal_image")}
                   sub={t("cust_modal_image_sub")}
                   selected={custSel.topping === "image"}
-                  onClick={() => setCustSel((p) => ({ ...p, topping: "image", toppingText: "", stickerUrl: null }))}
+                  onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "image" ? "" : "image", toppingText: "", stickerUrl: null }))}
                 />
               )}
             </div>

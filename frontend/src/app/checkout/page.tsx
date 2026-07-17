@@ -128,7 +128,7 @@ export default function CheckoutPage() {
     };
 
     try {
-      const orderNumber = Math.floor(100_000 + Math.random() * 900_000).toString();
+      const orderNumber = Date.now().toString();
 
       const saveRes = await fetch("/api/orders", {
         method:  "POST",

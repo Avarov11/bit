@@ -35,7 +35,7 @@ function buildWhatsAppMessage(order: OrderSummary): string {
     `Order #: ${order.order_number}`,
     `Name: ${order.customer_name}`,
     `Phone: ${order.customer_phone}`,
-    order.delivery_address ? `Address: ${order.delivery_address}` : "",
+    ...(order.delivery_address ? [`Address: ${order.delivery_address}`] : []),
     "",
     "🛒 Items:",
   ];
@@ -65,18 +65,19 @@ function SuccessContent() {
   const time    = p.get("time")    ?? "";
   const phone   = p.get("phone")   ?? "";
   const address = p.get("address") ?? "";
+  const token   = p.get("token")   ?? "";
 
   const [summary, setSummary] = useState<OrderSummary | null>(null);
 
   useEffect(() => { clearCart(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!order || order === "—") return;
-    fetch(`/api/order-summary?n=${encodeURIComponent(order)}`)
+    if (!order || order === "—" || !token) return;
+    fetch(`/api/order-summary?n=${encodeURIComponent(order)}&token=${encodeURIComponent(token)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => { if (data) setSummary(data); })
       .catch(() => {});
-  }, [order]);
+  }, [order, token]);
 
   const formattedDate = date
     ? new Date(date + "T12:00:00").toLocaleDateString("en-GB", {

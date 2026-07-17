@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateSignature } from '@/lib/sadad'
+import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,13 @@ export async function POST(req: NextRequest) {
     const { checksumhash, ...sigParams } = fields
     const computedSig = generateSignature(sigParams, process.env.SADAD_SECRET_KEY!)
     const sigValid    = computedSig === checksumhash
-    console.log('[callback] signature valid:', sigValid, 'computed:', computedSig)
+    // If sigValid is false, compare these two values in Vercel function logs.
+    // A mismatch almost always means SADAD_SECRET_KEY in Vercel env vars differs
+    // from the key shown in the SADAD merchant sandbox console for merchant 4228868.
+    // Verify and update the env var before going live.
+    console.log('[callback] signature check — valid:', sigValid)
+    console.log('[callback]   computed :', computedSig)
+    console.log('[callback]   received :', checksumhash)
 
     const orderId = fields.ORDERID ?? fields.ORDER_ID ?? ''
     const status  = fields.STATUS  ?? ''
@@ -40,6 +47,12 @@ export async function POST(req: NextRequest) {
         .eq('order_number', orderId)
         .single()
 
+      const token = crypto
+        .createHmac('sha256', process.env.SADAD_SECRET_KEY!)
+        .update(orderId)
+        .digest('hex')
+        .slice(0, 16)
+
       const qs = new URLSearchParams({
         order:   orderId,
         name:    orderData?.customer_name    ?? '',
@@ -47,6 +60,7 @@ export async function POST(req: NextRequest) {
         time:    orderData?.pickup_time      ?? '',
         phone:   orderData?.customer_phone   ?? '',
         address: orderData?.delivery_address ?? '',
+        token,
       })
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?${qs.toString()}`,
