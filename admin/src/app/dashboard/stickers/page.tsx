@@ -40,11 +40,14 @@ export default function StickersPage() {
 
   // Load categories
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories", { cache: "no-store" })
       .then(r => r.json())
-      .then((data: string[]) => {
-        // Only sticker-relevant categories (not Accessories/Boxes/Customized)
-        const relevant = data.filter(c => !["Accessories", "Boxes", "Customized"].includes(c));
+      .then((data: { name: string; parent: string | null; filter_mode: string }[]) => {
+        // Sticker buckets exist for leaf categories that use the "direct" filter mode
+        // (i.e. Birthday, Congrats, etc.) — not top-level containers or as_subcategory items
+        const relevant = data
+          .filter(c => c.parent !== null && c.filter_mode !== "as_subcategory")
+          .map(c => c.name);
         setCategories(relevant);
         if (relevant.length) setSelected(relevant[0]);
       });
@@ -244,7 +247,7 @@ export default function StickersPage() {
                 {stickers.map(sticker => (
                   <div key={sticker.name} className="group relative aspect-square">
                     <div
-                      className="w-full h-full rounded-xl overflow-hidden"
+                      className="relative w-full h-full rounded-xl overflow-hidden"
                       style={{ border: "1px solid #F5D0D8", background: "#FDF0F3" }}
                     >
                       <Image
