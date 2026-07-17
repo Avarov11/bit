@@ -245,94 +245,43 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
     prevSpr.current = sprinkles;
   }, [sprinkles]);
 
-  let views: JSX.Element[] = [];
+  const photoOverlay = (text || stickerUrl || imageUrl) ? (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+      {imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
+      )}
+      {stickerUrl && !imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
+      )}
+      {text && (
+        <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
+          style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
+          {text}
+        </p>
+      )}
+    </div>
+  ) : null;
 
-  if (!shape || shape === "cake") {
-    const cakeUrls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
-      (() => { const [f0,f1] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"]; return [`${BASE_CAKE}/${f0}?v=2`,`${BASE_CAKE}/${f1}?v=2`]; })();
-    const [sideImg, topImg] = cakeUrls;
-    const photoOverlay = (text || stickerUrl || imageUrl) ? (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-        {imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
-        )}
-        {stickerUrl && !imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
-        )}
-        {text && (
-          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
-            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
-            {text}
-          </p>
-        )}
-      </div>
-    ) : null;
-    views = [
-      <div key="s" className="relative w-full h-full flex items-center justify-center p-6">
-        <PreviewImg src={sideImg} alt="Full Cake" />
-      </div>,
-      <div key="t" className="relative w-full h-full flex items-center justify-center p-6">
-        <PreviewImg src={topImg} alt="Full Cake top view" />
-        {photoOverlay}
-      </div>,
-    ];
-  } else if (shape === "heart") {
-    const hImgs = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
-      (HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"]).map(f => `${BASE_HEART}/${f}?v=2`);
-    const photoOverlay = (text || stickerUrl || imageUrl) ? (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-        {imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
-        )}
-        {stickerUrl && !imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
-        )}
-        {text && (
-          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
-            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
-            {text}
-          </p>
-        )}
-      </div>
-    ) : null;
-    views = hImgs.map((src, i) => (
-      <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
-        <PreviewImg src={src} alt={`Heart brownie view ${i + 1}`} />
-        {i === 1 ? photoOverlay : null}
-      </div>
-    ));
-  } else {
-    const sImgs = shapeImageMap[colorId] ?? shapeImageMap["brown"] ??
-      (SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"]).map(f => `${BASE_SQUARE}/${f}?v=2`);
-    const photoOverlay = (text || stickerUrl || imageUrl) ? (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-        {imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="max-w-[38%] max-h-[30%] object-contain drop-shadow-lg rounded-md" />
-        )}
-        {stickerUrl && !imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
-        )}
-        {text && (
-          <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
-            style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
-            {text}
-          </p>
-        )}
-      </div>
-    ) : null;
-    views = sImgs.map((src, i) => (
-      <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
-        <PreviewImg src={src} alt={`Square brownie view ${i + 1}`} />
-        {i === 1 ? photoOverlay : null}
-      </div>
-    ));
-  }
+  const getFallbackUrls = () => {
+    if (!shape || shape === "cake") {
+      const [f0,f1] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"];
+      return [`${BASE_CAKE}/${f0}?v=2`, `${BASE_CAKE}/${f1}?v=2`];
+    } else if (shape === "heart") {
+      return (HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"]).map(f => `${BASE_HEART}/${f}?v=2`);
+    } else {
+      return (SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"]).map(f => `${BASE_SQUARE}/${f}?v=2`);
+    }
+  };
+
+  const urls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ?? getFallbackUrls();
+  const views: JSX.Element[] = urls.map((src, i) => (
+    <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
+      <PreviewImg src={src} alt={`View ${i + 1}`} />
+      {i === 1 ? photoOverlay : null}
+    </div>
+  ));
 
   const viewCount = views.length;
   const idx = Math.min(viewIdx, viewCount - 1);
@@ -399,12 +348,12 @@ export default function CakeCustomizerModal({
     : FLAVORS;
   const allowedToppings  = product?.allowed_toppings ?? ["write", "sticker", "image"];
   const ALL_SAUCE_IDS = ["brown","beige","black","white","pink","blue"];
-  interface ShapeCfg { max_chars: number; allowed_colors: string[]; }
-  const DEFAULT_CFG: ShapeCfg = { max_chars: 5, allowed_colors: ALL_SAUCE_IDS };
+  interface ShapeCfg { max_chars: number; view_count: number; allowed_colors: string[]; }
+  const DEFAULT_CFG: ShapeCfg = { max_chars: 5, view_count: 2, allowed_colors: ALL_SAUCE_IDS };
   const [shapeConfigs, setShapeConfigs] = useState<Record<string, ShapeCfg>>({
-    cake:   { max_chars: 5, allowed_colors: ALL_SAUCE_IDS },
-    heart:  { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
-    square: { max_chars: 3, allowed_colors: ALL_SAUCE_IDS },
+    cake:   { max_chars: 5, view_count: 2, allowed_colors: ALL_SAUCE_IDS },
+    heart:  { max_chars: 3, view_count: 3, allowed_colors: ALL_SAUCE_IDS },
+    square: { max_chars: 3, view_count: 3, allowed_colors: ALL_SAUCE_IDS },
   });
   const [shapeImageMaps, setShapeImageMaps] = useState<Record<string, Record<string, string[]>>>(buildDefaultMaps);
   const [uploading,  setUploading]  = useState(false);
@@ -431,7 +380,7 @@ export default function CakeCustomizerModal({
       .then((data: { shape: string; max_chars: number; allowed_colors: string[] }[]) => {
         if (Array.isArray(data)) {
           const m: Record<string, ShapeCfg> = {};
-          data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
+          data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, view_count: c.view_count ?? (c.shape === "cake" ? 2 : 3), allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
           setShapeConfigs(prev => ({ ...prev, ...m }));
         }
       })

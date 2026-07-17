@@ -12,12 +12,13 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   const body = await req.json();
-  const { shape, max_chars, allowed_colors } = body;
+  const { shape, max_chars, allowed_colors, view_count } = body;
 
   if (!shape) return NextResponse.json({ error: "Missing shape" }, { status: 400 });
 
   const update: Record<string, unknown> = {};
-  if (typeof max_chars === "number" && max_chars >= 1) update.max_chars = max_chars;
+  if (typeof max_chars    === "number" && max_chars    >= 1) update.max_chars    = max_chars;
+  if (typeof view_count   === "number" && view_count   >= 1) update.view_count   = view_count;
   if (Array.isArray(allowed_colors)) update.allowed_colors = allowed_colors;
 
   if (Object.keys(update).length === 0)

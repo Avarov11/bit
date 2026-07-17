@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Upload, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 
-interface ShapeConfig { shape: string; label: string; max_chars: number; allowed_colors: string[]; }
+interface ShapeConfig { shape: string; label: string; max_chars: number; view_count: number; allowed_colors: string[]; }
 interface ColorImageRow { color: string; view_index: number; filename: string | null; url: string | null; }
 
 const ALL_COLORS = [
@@ -17,17 +17,13 @@ const ALL_COLORS = [
 ];
 
 const DEFAULT_SHAPES: ShapeConfig[] = [
-  { shape: "cake",   label: "Full Cake", max_chars: 5, allowed_colors: ALL_COLORS.map(c => c.id) },
-  { shape: "heart",  label: "Heart",     max_chars: 3, allowed_colors: ALL_COLORS.map(c => c.id) },
-  { shape: "square", label: "Square",    max_chars: 3, allowed_colors: ALL_COLORS.map(c => c.id) },
+  { shape: "cake",   label: "Full Cake", max_chars: 5, view_count: 2, allowed_colors: ALL_COLORS.map(c => c.id) },
+  { shape: "heart",  label: "Heart",     max_chars: 3, view_count: 3, allowed_colors: ALL_COLORS.map(c => c.id) },
+  { shape: "square", label: "Square",    max_chars: 3, view_count: 3, allowed_colors: ALL_COLORS.map(c => c.id) },
 ];
 
 const SHAPE_ICONS: Record<string, string> = { cake: "🎂", heart: "❤️", square: "🟫" };
-const VIEW_LABELS: Record<string, string[]> = {
-  cake:   ["Side View", "Top View"],
-  heart:  ["View 1", "View 2", "View 3"],
-  square: ["View 1", "View 2", "View 3"],
-};
+const MAX_VIEWS = 5;
 const ACCENT = "#800020";
 
 export default function SettingsPage() {
@@ -37,10 +33,12 @@ export default function SettingsPage() {
   const [loadingImgs,   setLoadingImgs]   = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<{ color: string; view: number } | null>(null);
   const [deletingSlot,  setDeletingSlot]  = useState<{ color: string; view: number } | null>(null);
-  const [savingLimit,   setSavingLimit]   = useState(false);
-  const [savingColors,  setSavingColors]  = useState(false);
-  const [draftChars,    setDraftChars]    = useState<Record<string, number>>({});
-  const [draftColors,   setDraftColors]   = useState<Record<string, string[]>>({});
+  const [savingLimit,     setSavingLimit]     = useState(false);
+  const [savingColors,    setSavingColors]    = useState(false);
+  const [savingViewCount, setSavingViewCount] = useState(false);
+  const [draftChars,      setDraftChars]      = useState<Record<string, number>>({});
+  const [draftColors,     setDraftColors]     = useState<Record<string, string[]>>({});
+  const [draftViewCount,  setDraftViewCount]  = useState<Record<string, number>>({});
   const [toast,         setToast]         = useState<{ msg: string; ok: boolean } | null>(null);
   const fileRef        = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef<{ color: string; view: number } | null>(null);
@@ -61,24 +59,34 @@ export default function SettingsPage() {
             return db ? { ...def, ...db } : def;
           });
           setConfigs(merged);
-          const dc: Record<string, number>    = {};
+          const dc: Record<string, number>     = {};
+          const dvc: Record<string, number>    = {};
           const dcolor: Record<string, string[]> = {};
-          merged.forEach(c => { dc[c.shape] = c.max_chars; dcolor[c.shape] = c.allowed_colors ?? ALL_COLORS.map(x => x.id); });
+          merged.forEach(c => {
+            dc[c.shape]    = c.max_chars;
+            dvc[c.shape]   = c.view_count ?? (c.shape === "cake" ? 2 : 3);
+            dcolor[c.shape] = c.allowed_colors ?? ALL_COLORS.map(x => x.id);
+          });
           setDraftChars(dc);
+          setDraftViewCount(dvc);
           setDraftColors(dcolor);
         } else {
-          const dc: Record<string, number>    = {};
+          const dc: Record<string, number>     = {};
+          const dvc: Record<string, number>    = {};
           const dcolor: Record<string, string[]> = {};
-          DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dcolor[s.shape] = s.allowed_colors; });
+          DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dvc[s.shape] = s.view_count; dcolor[s.shape] = s.allowed_colors; });
           setDraftChars(dc);
+          setDraftViewCount(dvc);
           setDraftColors(dcolor);
         }
       })
       .catch(() => {
-        const dc: Record<string, number>    = {};
+        const dc: Record<string, number>     = {};
+        const dvc: Record<string, number>    = {};
         const dcolor: Record<string, string[]> = {};
-        DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dcolor[s.shape] = s.allowed_colors; });
+        DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dvc[s.shape] = s.view_count; dcolor[s.shape] = s.allowed_colors; });
         setDraftChars(dc);
+        setDraftViewCount(dvc);
         setDraftColors(dcolor);
       });
   }, []);
@@ -148,6 +156,20 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveViewCount() {
+    const view_count = draftViewCount[activeShape];
+    if (!view_count || view_count < 1) return;
+    setSavingViewCount(true);
+    const res  = await fetch("/api/shape-configs", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body:   JSON.stringify({ shape: activeShape, view_count }),
+    });
+    const data = await res.json();
+    setSavingViewCount(false);
+    if (res.ok) { setConfigs(prev => prev.map(c => c.shape === activeShape ? { ...c, view_count } : c)); showToast("View count saved.", true); }
+    else showToast(data.error ?? "Save failed.", false);
+  }
+
   async function saveLimit() {
     const max_chars = draftChars[activeShape];
     if (!max_chars || max_chars < 1) return;
@@ -183,13 +205,15 @@ export default function SettingsPage() {
     });
   }
 
-  const cfg          = configs.find(c => c.shape === activeShape) ?? DEFAULT_SHAPES.find(s => s.shape === activeShape)!;
-  const charChanged  = draftChars[activeShape] !== undefined && draftChars[activeShape] !== cfg.max_chars;
-  const curColors    = draftColors[activeShape] ?? ALL_COLORS.map(c => c.id);
-  const savedColors  = cfg.allowed_colors ?? ALL_COLORS.map(c => c.id);
-  const colorChanged = JSON.stringify([...curColors].sort()) !== JSON.stringify([...savedColors].sort());
-  const viewLabels   = VIEW_LABELS[activeShape];
-  const viewCount    = viewLabels.length;
+  const cfg            = configs.find(c => c.shape === activeShape) ?? DEFAULT_SHAPES.find(s => s.shape === activeShape)!;
+  const charChanged    = draftChars[activeShape] !== undefined && draftChars[activeShape] !== cfg.max_chars;
+  const curColors      = draftColors[activeShape] ?? ALL_COLORS.map(c => c.id);
+  const savedColors    = cfg.allowed_colors ?? ALL_COLORS.map(c => c.id);
+  const colorChanged   = JSON.stringify([...curColors].sort()) !== JSON.stringify([...savedColors].sort());
+  const viewCount      = draftViewCount[activeShape] ?? cfg.view_count ?? (activeShape === "cake" ? 2 : 3);
+  const savedViewCount = cfg.view_count ?? (activeShape === "cake" ? 2 : 3);
+  const viewChanged    = viewCount !== savedViewCount;
+  const viewLabels     = Array.from({ length: viewCount }, (_, i) => `View ${i + 1}`);
   const chocColors   = ALL_COLORS.filter(c => c.group === "Chocolate");
   const whiteColors  = ALL_COLORS.filter(c => c.group === "White Choc");
 
@@ -377,6 +401,35 @@ export default function SettingsPage() {
                 className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
                 style={{ background: colorChanged && !savingColors ? ACCENT : "#F5D0D8", color: colorChanged && !savingColors ? "white" : "#A05068", cursor: colorChanged && !savingColors ? "pointer" : "not-allowed" }}>
                 {savingColors ? "Saving…" : "Save Sauces"}
+              </button>
+            </div>
+          </div>
+
+          {/* Number of views */}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "white", border: "1px solid #F5D0D8", boxShadow: "0 2px 20px rgba(45,0,10,0.06)" }}>
+            <div className="px-5 py-4" style={{ borderBottom: "1px solid #F5D0D8", background: "#FDF8F9" }}>
+              <p className="font-bold text-base" style={{ color: "#2D000A" }}>Number of Views</p>
+              <p className="text-xs mt-0.5" style={{ color: ACCENT }}>How many image slots per color for {cfg.label}</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <button onClick={() => setDraftViewCount(d => ({ ...d, [activeShape]: Math.max(1, (d[activeShape] ?? savedViewCount) - 1) }))}
+                  className="w-10 h-10 rounded-xl text-xl font-bold flex items-center justify-center transition-all"
+                  style={{ background: "#FDF0F3", color: ACCENT, border: `1.5px solid #F5D0D8` }}>−</button>
+                <div className="flex-1 text-center">
+                  <span className="text-4xl font-bold" style={{ color: "#2D000A" }}>{viewCount}</span>
+                  <p className="text-xs mt-0.5" style={{ color: ACCENT }}>view{viewCount !== 1 ? "s" : ""} per color</p>
+                </div>
+                <button onClick={() => setDraftViewCount(d => ({ ...d, [activeShape]: Math.min(MAX_VIEWS, (d[activeShape] ?? savedViewCount) + 1) }))}
+                  className="w-10 h-10 rounded-xl text-xl font-bold flex items-center justify-center transition-all"
+                  style={{ background: "#FDF0F3", color: ACCENT, border: `1.5px solid #F5D0D8` }}>+</button>
+              </div>
+              <p className="text-[10px] text-center" style={{ color: "#C0A0A8" }}>Max {MAX_VIEWS} views · Currently saved: {savedViewCount}</p>
+              <button onClick={saveViewCount} disabled={!viewChanged || savingViewCount}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: viewChanged && !savingViewCount ? ACCENT : "#F5D0D8", color: viewChanged && !savingViewCount ? "white" : "#A05068", cursor: viewChanged && !savingViewCount ? "pointer" : "not-allowed" }}>
+                {savingViewCount ? "Saving…" : "Save Views"}
               </button>
             </div>
           </div>
