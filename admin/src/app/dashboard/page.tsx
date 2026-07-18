@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { TrendingUp, ShoppingBag, Calendar, Clock, BarChart2, PieChart, RefreshCw, ArrowRight } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { TrendingUp, ShoppingBag, Calendar, Clock, BarChart2, PieChart, RefreshCw, ArrowRight, Users, Search } from "lucide-react";
 import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -12,6 +12,13 @@ type RecentOrder = {
   total: number;
   status: string;
   created_at: string;
+};
+
+type Customer = {
+  name: string;
+  phone: string;
+  orders: number;
+  total: number;
 };
 
 type Stats = {
@@ -247,16 +254,22 @@ function Skeleton({ className }: { className?: string }) {
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [stats,   setStats]   = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updated, setUpdated] = useState<Date>(new Date());
+  const [stats,       setStats]       = useState<Stats | null>(null);
+  const [customers,   setCustomers]   = useState<Customer[]>([]);
+  const [phoneSearch, setPhoneSearch] = useState("");
+  const [loading,     setLoading]     = useState(true);
+  const [updated,     setUpdated]     = useState<Date>(new Date());
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch("/api/stats")
-      .then(r => r.json())
-      .then(data => { setStats(data); setUpdated(new Date()); })
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/stats").then(r => r.json()),
+      fetch("/api/customers").then(r => r.json()),
+    ]).then(([statsData, custData]) => {
+      setStats(statsData);
+      if (Array.isArray(custData)) setCustomers(custData);
+      setUpdated(new Date());
+    }).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -301,6 +314,14 @@ export default function DashboardPage() {
         },
       ]
     : [];
+
+  const filteredCustomers = useMemo(() => {
+    const q = phoneSearch.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter(c =>
+      c.phone.includes(q) || c.name.toLowerCase().includes(q)
+    );
+  }, [customers, phoneSearch]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -417,6 +438,79 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Top Customers ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-violet-50">
+              <Users size={15} className="text-violet-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Top Customers</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Ranked by total spend</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+            <input
+              type="text"
+              value={phoneSearch}
+              onChange={e => setPhoneSearch(e.target.value)}
+              placeholder="Search by phone or name…"
+              className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-200 w-52 bg-gray-50"
+            />
+          </div>
+        </div>
+
+        {loading && customers.length === 0 ? (
+          <div className="p-5 space-y-3">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12" />)}
+          </div>
+        ) : filteredCustomers.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-10">
+            {phoneSearch ? "No customers match that search." : "No customer data yet."}
+          </p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            <div className="grid grid-cols-[32px_1fr_auto_auto] gap-4 px-5 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              <span>#</span>
+              <span>Customer</span>
+              <span className="text-center w-16">Orders</span>
+              <span className="text-right w-24">Total Paid</span>
+            </div>
+            {filteredCustomers.slice(0, 20).map((c, idx) => {
+              const rank = phoneSearch ? customers.indexOf(c) + 1 : idx + 1;
+              const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null;
+              return (
+                <div key={c.phone}
+                  className="grid grid-cols-[32px_1fr_auto_auto] gap-4 items-center px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                  <span className="text-sm font-bold text-center">
+                    {medal ?? <span className="text-xs text-gray-300">#{rank}</span>}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{c.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 tabular-nums">{c.phone}</p>
+                  </div>
+                  <div className="text-center w-16">
+                    <span className="inline-flex items-center justify-center bg-violet-50 text-violet-700 text-xs font-bold rounded-full px-2.5 py-0.5 tabular-nums">
+                      {c.orders}
+                    </span>
+                  </div>
+                  <div className="text-right w-24">
+                    <p className="text-sm font-bold text-gray-900 tabular-nums">{fmt(c.total)} QAR</p>
+                  </div>
+                </div>
+              );
+            })}
+            {filteredCustomers.length > 20 && !phoneSearch && (
+              <p className="text-center text-xs text-gray-400 py-3">
+                Showing top 20 · search by phone to find more
+              </p>
+            )}
           </div>
         )}
       </div>
