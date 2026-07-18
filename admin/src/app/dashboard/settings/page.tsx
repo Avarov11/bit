@@ -434,36 +434,37 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Writing limit */}
+          {/* Word limit */}
           <div className="rounded-2xl overflow-hidden"
             style={{ background: "white", border: "1px solid #F5D0D8", boxShadow: "0 2px 20px rgba(45,0,10,0.06)" }}>
             <div className="px-5 py-4" style={{ borderBottom: "1px solid #F5D0D8", background: "#FDF8F9" }}>
-              <p className="font-bold text-base" style={{ color: "#2D000A" }}>Letters Limit</p>
-              <p className="text-xs mt-0.5" style={{ color: ACCENT }}>Max letters for {cfg.label}</p>
+              <p className="font-bold text-base" style={{ color: "#2D000A" }}>Words Limit</p>
+              <p className="text-xs mt-0.5" style={{ color: ACCENT }}>Max words customer can write for {cfg.label}</p>
             </div>
             <div className="p-5 space-y-4">
-              {/* Letter tiles */}
+              {/* Word tiles preview */}
               {(() => {
-                const limit   = draftChars[activeShape] ?? cfg.max_chars;
-                const visible = Math.max(limit + 2, 6);
+                const limit = draftChars[activeShape] ?? cfg.max_chars;
+                const SAMPLE = ["Happy","Birthday","Dear","My","Love","Sweet","Wishes","Always","Best","You"];
+                const visible = Math.max(limit + 2, 4);
                 return (
-                  <div className="flex flex-wrap gap-1.5 justify-center">
-                    {Array.from({ length: visible }).map((_, i) => {
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {SAMPLE.slice(0, visible).map((word, i) => {
                       const active = i < limit;
                       return (
                         <button
                           key={i}
                           onClick={() => setDraftChars(d => ({ ...d, [activeShape]: i + 1 }))}
-                          title={`Set limit to ${i + 1}`}
-                          className="w-9 h-11 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-150 hover:scale-105"
+                          title={`Set limit to ${i + 1} word${i + 1 !== 1 ? "s" : ""}`}
+                          className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-150 hover:scale-105"
                           style={{
-                            background:   active ? "#2D000A" : "#F5E8EC",
-                            color:        active ? "#FF6B9D" : "#C0A0A8",
-                            border:       `1.5px solid ${active ? ACCENT : "#E8C4CC"}`,
-                            boxShadow:    active ? "0 2px 6px rgba(45,0,10,0.25)" : "none",
+                            background: active ? "#2D000A" : "#F5E8EC",
+                            color:      active ? "#FF6B9D" : "#C0A0A8",
+                            border:     `1.5px solid ${active ? ACCENT : "#E8C4CC"}`,
+                            boxShadow:  active ? "0 2px 6px rgba(45,0,10,0.20)" : "none",
                           }}
                         >
-                          {String.fromCharCode(65 + i)}
+                          {word}
                         </button>
                       );
                     })}
@@ -483,17 +484,17 @@ export default function SettingsPage() {
                     {draftChars[activeShape] ?? cfg.max_chars}
                   </span>
                   <p className="text-xs mt-0.5" style={{ color: ACCENT }}>
-                    letter{(draftChars[activeShape] ?? cfg.max_chars) !== 1 ? "s" : ""}
+                    word{(draftChars[activeShape] ?? cfg.max_chars) !== 1 ? "s" : ""}
                   </p>
                 </div>
                 <button
-                  onClick={() => setDraftChars(d => ({ ...d, [activeShape]: Math.min(26, (d[activeShape] ?? cfg.max_chars) + 1) }))}
+                  onClick={() => setDraftChars(d => ({ ...d, [activeShape]: Math.min(10, (d[activeShape] ?? cfg.max_chars) + 1) }))}
                   className="w-10 h-10 rounded-xl text-xl font-bold flex items-center justify-center transition-all"
                   style={{ background: "#FDF0F3", color: ACCENT, border: `1.5px solid #F5D0D8` }}
                 >+</button>
               </div>
               <p className="text-[10px] text-center" style={{ color: "#C0A0A8" }}>
-                Max 26 · Currently saved: {cfg.max_chars}
+                Max 10 words · Currently saved: {cfg.max_chars}
               </p>
               <button onClick={saveLimit} disabled={!charChanged || savingLimit}
                 className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"

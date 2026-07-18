@@ -1073,8 +1073,9 @@ export default function CakeCustomizerModal({
       const showSticker  = allowedToppings.includes("sticker") && (shape === "square" || shape === "cake");
       const showImage    = allowedToppings.includes("image")   && shape === "cake";
       const showWrite    = allowedToppings.includes("write");
-      const charLimit = (shapeConfigs[shape] ?? DEFAULT_CFG).max_chars;
-      const count = custSel.toppingText.length;
+      const wordLimit = (shapeConfigs[shape] ?? DEFAULT_CFG).max_chars;
+      const countWords = (t: string) => t.trim() === "" ? 0 : t.trim().split(/\s+/).length;
+      const count = countWords(custSel.toppingText);
       const cardCols = showWrite && showImage ? "grid-cols-2" : "grid-cols-1 max-w-[50%]";
 
       return (
@@ -1093,7 +1094,7 @@ export default function CakeCustomizerModal({
                   icon={<PenLine size={40} strokeWidth={1.5} className="text-white" />}
                   iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
                   label={t("cust_modal_write")}
-                  sub={`Max ${charLimit} letter${charLimit !== 1 ? "s" : ""}`}
+                  sub={`Max ${wordLimit} word${wordLimit !== 1 ? "s" : ""}`}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "write" ? "" : "write", stickerUrl: null, imageFile: null }))}
                 />
@@ -1117,15 +1118,16 @@ export default function CakeCustomizerModal({
             <div className="bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{t("cust_modal_your_message")}</label>
-                <span className={cn("text-xs font-bold tabular-nums", count >= charLimit ? "text-[#800020]" : "text-[#A05068]")}>
-                  {count} / {charLimit} letters
+                <span className={cn("text-xs font-bold tabular-nums", count >= wordLimit ? "text-[#800020]" : "text-[#A05068]")}>
+                  {count} / {wordLimit} word{wordLimit !== 1 ? "s" : ""}
                 </span>
               </div>
               <textarea
                 value={custSel.toppingText}
                 onChange={(e) => {
                   const val = e.target.value;
-                  if (val.length <= charLimit) setCustSel((p) => ({ ...p, toppingText: val }));
+                  const words = val.trim() === "" ? 0 : val.trim().split(/\s+/).length;
+                  if (words <= wordLimit) setCustSel((p) => ({ ...p, toppingText: val }));
                 }}
                 placeholder={t("cust_modal_msg_placeholder")}
                 rows={2}
