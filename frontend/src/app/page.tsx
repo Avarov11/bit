@@ -190,7 +190,17 @@ export default function HomePage() {
       href: "/menu?category=Gender+Reveal",
     },
   ];
-  const [slides, setSlides] = useState<{ id: string; desktop_url: string | null; mobile_url: string | null }[]>([]);
+  const [slides, setSlides] = useState<{
+    id: string;
+    desktop_url: string | null;
+    mobile_url:  string | null;
+    label:       string | null;
+    headline_1:  string | null;
+    headline_2:  string | null;
+    subtitle:    string | null;
+    btn_text:    string | null;
+    btn_href:    string | null;
+  }[]>([]);
 
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
@@ -242,13 +252,21 @@ export default function HomePage() {
     }, 1500);
   };
 
-  // Merge DB images into HERO_SLIDES; if no DB slides yet, fall back to static files
+  // Merge DB data into HERO_SLIDES; DB text fields override hardcoded ones when set
   const activeSlides = slides.length > 0
-    ? slides.map((s, i) => ({
-        ...(HERO_SLIDES[i] ?? { label: `Slide ${i + 1}`, headline: ["", ""], sub: "", tags: null, stats: null, steps: null, btn: "Order Now", href: "/menu" }),
-        image:       s.desktop_url ?? HERO_SLIDES[i]?.image  ?? "/slide1.jpeg",
-        mobileImage: s.mobile_url  ?? HERO_SLIDES[i]?.mobileImage,
-      }))
+    ? slides.map((s, i) => {
+        const base = HERO_SLIDES[i] ?? { label: `Slide ${i + 1}`, headline: ["", ""], sub: "", tags: null, stats: null, steps: null, btn: "Order Now", href: "/menu" };
+        return {
+          ...base,
+          image:       s.desktop_url ?? base.image ?? "/slide1.jpeg",
+          mobileImage: s.mobile_url  ?? base.mobileImage,
+          label:       s.label       ?? base.label,
+          headline:    [s.headline_1 ?? base.headline[0], s.headline_2 ?? base.headline[1]],
+          sub:         s.subtitle    ?? base.sub,
+          btn:         s.btn_text    ?? base.btn,
+          href:        s.btn_href    ?? base.href,
+        };
+      })
     : HERO_SLIDES;
 
   return (

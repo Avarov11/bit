@@ -13,6 +13,12 @@ interface Slide {
   mobile_url:  string | null;
   hidden:      boolean;
   sort_order:  number;
+  label:       string | null;
+  headline_1:  string | null;
+  headline_2:  string | null;
+  subtitle:    string | null;
+  btn_text:    string | null;
+  btn_href:    string | null;
 }
 
 interface HeroImage {
@@ -177,6 +183,17 @@ export default function SlideshowPage() {
     const column = type === "desktop" ? "desktop_url" : "mobile_url";
     const res = await fetch("/api/slideshow", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: slideId, [column]: null }) });
     if (res.ok) { setSlides(prev => prev.map(s => s.id === slideId ? { ...s, [column]: null } : s)); showToast("Removed.", true); }
+  }
+
+  // Debounced text field save
+  const textTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  function handleTextField(slideId: string, field: string, value: string) {
+    setSlides(prev => prev.map(s => s.id === slideId ? { ...s, [field]: value || null } : s));
+    const key = `${slideId}-${field}`;
+    clearTimeout(textTimers.current[key]);
+    textTimers.current[key] = setTimeout(async () => {
+      await fetch("/api/slideshow", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: slideId, [field]: value || null }) });
+    }, 600);
   }
 
   const sorted = [...slides].sort((a, b) => a.sort_order - b.sort_order);
@@ -361,6 +378,70 @@ export default function SlideshowPage() {
                   <button onClick={() => deleteSlide(slide.id)} disabled={deleting === slide.id} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors">
                     {deleting === slide.id ? <span className="text-[9px] text-red-400">…</span> : <Trash2 size={13} className="text-red-400" />}
                   </button>
+                </div>
+              </div>
+
+              {/* Text fields */}
+              <div className="px-5 py-4 border-b border-gray-50 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Label (small tag)</label>
+                  <input
+                    type="text"
+                    placeholder={SLIDE_HINTS[idx] ?? "e.g. Qatar's Premier Brownie Brand"}
+                    value={slide.label ?? ""}
+                    onChange={e => handleTextField(slide.id, "label", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Button text</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Order Now"
+                    value={slide.btn_text ?? ""}
+                    onChange={e => handleTextField(slide.id, "btn_text", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Headline line 1</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Artisan"
+                    value={slide.headline_1 ?? ""}
+                    onChange={e => handleTextField(slide.id, "headline_1", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Headline line 2</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Brownies"
+                    value={slide.headline_2 ?? ""}
+                    onChange={e => handleTextField(slide.id, "headline_2", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Subtitle</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Handcrafted with the finest Belgian chocolate..."
+                    value={slide.subtitle ?? ""}
+                    onChange={e => handleTextField(slide.id, "subtitle", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Button link (URL)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. /menu or /menu?category=Customized"
+                    value={slide.btn_href ?? ""}
+                    onChange={e => handleTextField(slide.id, "btn_href", e.target.value)}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
+                  />
                 </div>
               </div>
 
