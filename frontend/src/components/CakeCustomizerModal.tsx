@@ -266,24 +266,31 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
     </div>
   ) : null;
 
-  const getFallbackUrls = () => {
+  const getFallbackUrls = (): string[] => {
     if (!shape || shape === "cake") {
       const [f0,f1] = CAKE_COLOR_FILES[colorId] ?? CAKE_COLOR_FILES["brown"];
       return [`${BASE_CAKE}/${f0}?v=2`, `${BASE_CAKE}/${f1}?v=2`];
     } else if (shape === "heart") {
       return (HEART_COLOR_FILES[colorId] ?? HEART_COLOR_FILES["brown"]).map(f => `${BASE_HEART}/${f}?v=2`);
-    } else {
+    } else if (shape === "square") {
       return (SQUARE_COLOR_FILES[colorId] ?? SQUARE_COLOR_FILES["brown"]).map(f => `${BASE_SQUARE}/${f}?v=2`);
     }
+    // Custom shape — no hardcoded fallback, use any available color from the map
+    return Object.values(shapeImageMap).find(arr => arr?.length) ?? [];
   };
 
-  const urls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ?? getFallbackUrls();
-  const views: JSX.Element[] = urls.map((src, i) => (
+  const rawUrls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ?? getFallbackUrls();
+  const urls = rawUrls.length > 0 ? rawUrls : getFallbackUrls();
+  const views: JSX.Element[] = urls.length > 0 ? urls.map((src, i) => (
     <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
       <PreviewImg src={src} alt={`View ${i + 1}`} />
       {i === 1 ? photoOverlay : null}
     </div>
-  ));
+  )) : [
+    <div key="empty" className="relative w-full h-full flex items-center justify-center">
+      <span className="text-4xl opacity-30">✦</span>
+    </div>
+  ];
 
   const viewCount = views.length;
   const idx = Math.min(viewIdx, viewCount - 1);
