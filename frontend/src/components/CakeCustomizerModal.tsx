@@ -853,7 +853,8 @@ export default function CakeCustomizerModal({
     }
 
     if (custStep === 5) {
-      const shapeName  = t("cust_modal_shape_" + custSel.shape) || "—";
+      const _shapeKey  = "cust_modal_shape_" + custSel.shape;
+      const shapeName  = t(_shapeKey) !== _shapeKey ? t(_shapeKey) : (dbShapes.find(s => s.id === custSel.shape)?.label ?? "—");
       const flavorName = custSel.flavorType === "chocolate"
         ? t("cust_modal_choc_" + custSel.flavor) || "—"
         : t("cust_modal_flavor_white");
@@ -910,14 +911,14 @@ export default function CakeCustomizerModal({
                   </span>
                 )}
                 {shape.photo ? (
-                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] p-3">
+                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] overflow-hidden">
                     <div className="relative w-full h-full">
                       <Image
                         src={shape.photo}
                         alt={shape.label}
                         fill
                         sizes="(max-width: 768px) 33vw, 200px"
-                        className="object-contain"
+                        className="object-cover"
                         quality={90}
                         priority
                       />
@@ -927,7 +928,9 @@ export default function CakeCustomizerModal({
                   <div className="bg-[#F5D0D8] flex items-center justify-center py-7 md:py-9">{shape.svg}</div>
                 )}
                 <div className="p-3 md:p-4">
-                  <p className="font-playfair font-bold text-[#2D000A] text-sm md:text-base">{t("cust_modal_shape_" + shape.id)}</p>
+                  <p className="font-playfair font-bold text-[#2D000A] text-sm md:text-base">
+                    {(() => { const k = "cust_modal_shape_" + shape.id; const v = t(k); return v === k ? shape.label : v; })()}
+                  </p>
                 </div>
               </button>
             );
