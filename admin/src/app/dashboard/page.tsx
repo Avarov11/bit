@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { TrendingUp, ShoppingBag, Calendar, Clock, BarChart2, PieChart, RefreshCw, ArrowRight, Users, Search } from "lucide-react";
+import { TrendingUp, ShoppingBag, Calendar, Clock, BarChart2, PieChart, RefreshCw, ArrowRight, Users, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -251,6 +251,216 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-100 rounded-xl ${className ?? ""}`} />;
 }
 
+// ─── Month Calendar ───────────────────────────────────────────────────────────
+
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WEEK_DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+interface MonthData {
+  days:      Record<string, { total: number; slots: Record<string, number> }>;
+  maxPerDay: number;
+  slots:     { label: string; max_orders: number }[];
+}
+
+function MonthCalendar() {
+  const now = new Date();
+  const [year,    setYear]    = useState(now.getFullYear());
+  const [month,   setMonth]   = useState(now.getMonth() + 1);
+  const [data,    setData]    = useState<MonthData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const todayStr = now.toISOString().split("T")[0];
+
+  const loadMonth = useCallback(async (y: number, m: number) => {
+    setLoading(true);
+    const res = await fetch(`/api/delivery/month?year=${y}&month=${m}`);
+    const d   = await res.json();
+    setData(d);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadMonth(year, month); }, [year, month, loadMonth]);
+
+  function prev() {
+    if (month === 1) { setYear(y => y - 1); setMonth(12); }
+    else setMonth(m => m - 1);
+    setSelected(null);
+  }
+  function next() {
+    if (month === 12) { setYear(y => y + 1); setMonth(1); }
+    else setMonth(m => m + 1);
+    setSelected(null);
+  }
+
+  // Build calendar grid
+  const firstDay  = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  // Pad to complete last row
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  function dateStr(day: number) {
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  function dotColor(total: number, max: number) {
+    if (total === 0) return null;
+    const pct = total / max;
+    if (pct >= 1)    return "#ef4444";
+    if (pct >= 0.75) return "#f59e0b";
+    return "#800020";
+  }
+
+  const selectedInfo = selected && data?.days[selected];
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#800020]/10">
+            <Calendar size={15} style={{ color: "#800020" }} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Delivery Calendar</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Orders per day · click a day to see time slots</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={prev} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <ChevronLeft size={14} className="text-gray-500" />
+          </button>
+          <span className="text-sm font-bold text-gray-800 w-32 text-center">
+            {MONTH_NAMES[month - 1]} {year}
+          </span>
+          <button onClick={next} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <ChevronRight size={14} className="text-gray-500" />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-4">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {WEEK_DAYS.map(d => (
+            <div key={d} className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider py-1">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        {loading ? (
+          <div className="h-48 flex items-center justify-center text-sm text-gray-400">Loading…</div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, idx) => {
+              if (!day) return <div key={`empty-${idx}`} />;
+              const ds      = dateStr(day);
+              const info    = data?.days[ds];
+              const total   = info?.total ?? 0;
+              const max     = data?.maxPerDay ?? 50;
+              const color   = dotColor(total, max);
+              const isToday = ds === todayStr;
+              const isSel   = ds === selected;
+
+              return (
+                <button
+                  key={ds}
+                  onClick={() => setSelected(isSel ? null : ds)}
+                  className={`relative flex flex-col items-center justify-start pt-1.5 pb-2 rounded-xl transition-all text-center min-h-[52px] border ${
+                    isSel
+                      ? "border-[#800020] bg-[#800020]/5"
+                      : isToday
+                        ? "border-[#FF6B9D]/40 bg-[#FF6B9D]/5"
+                        : "border-transparent hover:bg-gray-50"
+                  }`}
+                >
+                  <span className={`text-xs font-bold leading-none ${isToday ? "text-[#800020]" : "text-gray-700"}`}>
+                    {day}
+                  </span>
+                  {total > 0 && (
+                    <span
+                      className="mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white leading-none"
+                      style={{ background: color ?? "#800020" }}
+                    >
+                      {total}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+          {[
+            { color: "#800020", label: "Orders booked" },
+            { color: "#f59e0b", label: "75%+ full" },
+            { color: "#ef4444", label: "Full" },
+          ].map(({ color, label }) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+              <span className="text-[10px] text-gray-400">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected day panel */}
+      {selected && (
+        <div className="border-t border-gray-100 px-5 py-4 bg-gray-50/60">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold text-gray-800">
+              {new Date(selected + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+            <span className="text-xs font-semibold text-gray-500">
+              {selectedInfo?.total ?? 0} / {data?.maxPerDay ?? 50} orders
+            </span>
+          </div>
+
+          {!selectedInfo || selectedInfo.total === 0 ? (
+            <p className="text-xs text-gray-400">No orders on this day.</p>
+          ) : (
+            <div className="space-y-2">
+              {(data?.slots ?? []).map(slot => {
+                const booked = selectedInfo?.slots?.[slot.label] ?? 0;
+                const pct    = Math.min(100, (booked / slot.max_orders) * 100);
+                const full   = booked >= slot.max_orders;
+                return (
+                  <div key={slot.label}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-medium text-gray-700">{slot.label}</span>
+                      <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                        {booked} / {slot.max_orders}
+                        {full && <span className="ml-1.5 text-[9px] font-bold text-red-500 uppercase">Full</span>}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pct}%`,
+                          background: full ? "#ef4444" : pct > 75 ? "#f59e0b" : "#800020",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -396,6 +606,9 @@ export default function DashboardPage() {
             : <Skeleton className="h-36" />}
         </div>
       </div>
+
+      {/* ── Delivery Calendar ── */}
+      <MonthCalendar />
 
       {/* ── Recent Orders ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
