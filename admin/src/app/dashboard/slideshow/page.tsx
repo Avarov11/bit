@@ -141,6 +141,17 @@ export default function SlideshowPage() {
     }).sort((a, b) => a.sort_order - b.sort_order));
   }
 
+  async function deleteBucketImage(name: string) {
+    if (!confirm(`Delete "${name}" from the hero bucket?`)) return;
+    const res = await fetch("/api/hero-images", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (res.ok) {
+      setHeroImages(prev => prev.filter(img => img.name !== name));
+      showToast("Image deleted from bucket.", true);
+    } else {
+      showToast("Failed to delete image.", false);
+    }
+  }
+
   // Pick an existing hero image and assign it to a slide slot
   async function pickImage(url: string) {
     if (!picker) return;
@@ -249,11 +260,11 @@ export default function SlideshowPage() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {heroImages.map(img => (
-                    <button
+                    <div
                       key={img.name}
-                      onClick={() => pickImage(img.url)}
-                      className="group relative aspect-video rounded-xl overflow-hidden border-2 border-gray-100 hover:border-[#800020] transition-all"
+                      className="group relative aspect-video rounded-xl overflow-hidden border-2 border-gray-100 hover:border-[#800020] transition-all cursor-pointer"
                       title={img.name}
+                      onClick={() => pickImage(img.url)}
                     >
                       <img src={img.url} alt={img.name} className="absolute inset-0 w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-end p-1.5">
@@ -261,7 +272,14 @@ export default function SlideshowPage() {
                           {img.name}
                         </span>
                       </div>
-                    </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteBucketImage(img.name); }}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                        title="Delete from bucket"
+                      >
+                        <X size={10} className="text-white" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -336,6 +354,13 @@ export default function SlideshowPage() {
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1 pt-4">
                   <p className="text-[8px] text-white/80 truncate font-medium">{img.name}</p>
                 </div>
+                <button
+                  onClick={() => deleteBucketImage(img.name)}
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                  title="Remove from bucket"
+                >
+                  <X size={10} className="text-white" />
+                </button>
               </div>
             ))}
           </div>
