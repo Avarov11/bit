@@ -82,7 +82,7 @@ const STEPS = [
 ];
 
 const DEFAULT_BASE_PRICES: Record<string, number> = { cake: 160, heart: 85, square: 85 };
-const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25, card: 25 };
+const DEFAULT_ADDON_PRICES = { sprinkles: 15, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25, card: 25 };
 
 interface ExtraItem { url: string; qty: number; }
 
