@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Eye, EyeOff, X, Check, AlertCircle, CheckCircle2, FolderTree, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, X, Check, AlertCircle, CheckCircle2, FolderTree, ChevronRight, ImageIcon, Upload } from "lucide-react";
 
 interface Category {
   id: string;
@@ -12,6 +12,7 @@ interface Category {
   badge_bg: string;
   badge_text: string;
   filter_mode: "direct" | "as_subcategory";
+  image_url: string | null;
 }
 
 type Toast = { msg: string; ok: boolean } | null;
@@ -25,14 +26,17 @@ const EMPTY_FORM = {
 };
 
 export default function CategoriesPage() {
-  const [categories, setCategories]   = useState<Category[]>([]);
-  const [loading,    setLoading]      = useState(true);
-  const [toast,      setToast]        = useState<Toast>(null);
-  const [modal,      setModal]        = useState<"add" | "edit" | null>(null);
-  const [editTarget, setEditTarget]   = useState<Category | null>(null);
-  const [form,       setForm]         = useState(EMPTY_FORM);
-  const [saving,     setSaving]       = useState(false);
-  const [deleting,   setDeleting]     = useState<string | null>(null);
+  const [categories,   setCategories]   = useState<Category[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [toast,        setToast]        = useState<Toast>(null);
+  const [modal,        setModal]        = useState<"add" | "edit" | null>(null);
+  const [editTarget,   setEditTarget]   = useState<Category | null>(null);
+  const [form,         setForm]         = useState(EMPTY_FORM);
+  const [saving,       setSaving]       = useState(false);
+  const [deleting,     setDeleting]     = useState<string | null>(null);
+  const [uploadingImg, setUploadingImg] = useState<string | null>(null);
+  const imgInputRef                     = useRef<HTMLInputElement>(null);
+  const uploadTargetId                  = useRef<string | null>(null);
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -130,11 +134,56 @@ export default function CategoriesPage() {
     setDeleting(null);
   }
 
+  function triggerImageUpload(categoryId: string) {
+    uploadTargetId.current = categoryId;
+    imgInputRef.current?.click();
+  }
+
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file       = e.target.files?.[0];
+    const categoryId = uploadTargetId.current;
+    if (!file || !categoryId) return;
+    e.target.value = "";
+
+    setUploadingImg(categoryId);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("categoryId", categoryId);
+    const res  = await fetch("/api/category-image", { method: "POST", body: fd });
+    const data = await res.json() as { url?: string; error?: string };
+    if (data.url) {
+      setCategories(prev => prev.map(c => c.id === categoryId ? { ...c, image_url: data.url! } : c));
+      showToast("Image uploaded.", true);
+    } else {
+      showToast(data.error ?? "Upload failed.", false);
+    }
+    setUploadingImg(null);
+  }
+
+  async function removeImage(cat: Category) {
+    await fetch("/api/category-image", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryId: cat.id }),
+    });
+    setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, image_url: null } : c));
+    showToast("Image removed.", true);
+  }
+
   const topLevel  = categories.filter(c => !c.parent);
   const childrenOf = (name: string) => categories.filter(c => c.parent === name);
 
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: "#FDF0F3" }}>
+
+      {/* Hidden image input */}
+      <input
+        ref={imgInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageFile}
+      />
 
       {/* Toast */}
       {toast && (
@@ -186,6 +235,39 @@ export default function CategoriesPage() {
 
                 {/* Parent row */}
                 <div className="flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-4" style={{ borderBottom: subs.length > 0 ? "1px solid #F5D0D8" : "none" }}>
+                  {/* Image thumbnail */}
+                  <div className="relative shrink-0 group/img">
+                    {cat.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={cat.image_url}
+                        alt={cat.name}
+                        className="w-10 h-10 rounded-lg object-cover border cursor-pointer"
+                        style={{ border: "1px solid #F5D0D8" }}
+                        onClick={() => triggerImageUpload(cat.id)}
+                        title="Click to change image"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => triggerImageUpload(cat.id)}
+                        title="Upload image"
+                        className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors hover:bg-[#F5D0D8]"
+                        style={{ background: "#FDF0F3", border: "1px dashed #F5D0D8" }}
+                      >
+                        {uploadingImg === cat.id
+                          ? <span className="w-4 h-4 border-2 border-[#800020]/30 border-t-[#800020] rounded-full animate-spin" />
+                          : <ImageIcon size={14} style={{ color: "#800020", opacity: 0.4 }} />
+                        }
+                      </button>
+                    )}
+                    {/* Uploading overlay on existing image */}
+                    {cat.image_url && uploadingImg === cat.id && (
+                      <div className="absolute inset-0 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.7)" }}>
+                        <span className="w-4 h-4 border-2 border-[#800020]/30 border-t-[#800020] rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0"
                       style={{ background: cat.badge_bg, color: cat.badge_text }}>
@@ -200,6 +282,11 @@ export default function CategoriesPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => triggerImageUpload(cat.id)} title="Upload / change image"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#FDF0F3]"
+                      style={{ color: "#800020" }}>
+                      <Upload size={13} />
+                    </button>
                     <button onClick={() => openAdd(cat.name)} title="Add subcategory"
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#FDF0F3]"
                       style={{ color: "#800020" }}>

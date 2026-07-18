@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdmin } from "@/lib/admin";
 
+function bucketName(categoryId: string) {
+  return `cat-${categoryId.replace(/-/g, "").slice(0, 20)}`;
+}
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -61,7 +65,21 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
-  const { error } = await getAdmin().from("categories").delete().eq("id", id);
+  const supabase = getAdmin();
+  const bucket   = bucketName(id);
+
+  // Empty and delete the category's storage bucket (if it exists)
+  try {
+    const { data: files } = await supabase.storage.from(bucket).list("", { limit: 1000 });
+    if (files && files.length > 0) {
+      await supabase.storage.from(bucket).remove(files.map(f => f.name));
+    }
+    await supabase.storage.deleteBucket(bucket);
+  } catch {
+    // Bucket may not exist — that's fine
+  }
+
+  const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
