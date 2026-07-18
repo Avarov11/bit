@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings, CircleDollarSign, Images, Truck } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const nav = [
   {
@@ -77,8 +76,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router   = useRouter();
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+    router.refresh();
   }
 
   return (

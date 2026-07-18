@@ -1,66 +1,100 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail]       = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    setLoading(false);
+    if (res.ok) {
       router.push("/dashboard");
+      router.refresh();
+    } else {
+      const data = await res.json();
+      setError(data.error ?? "Login failed");
     }
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-brand-700 mb-1">Biteez Admin</h1>
-        <p className="text-sm text-gray-500 mb-6">Sign in to manage orders and products.</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FDF0F3" }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+            style={{ background: "#800020" }}>
+            <span className="text-2xl">🍫</span>
+          </div>
+          <h1 className="text-2xl font-bold" style={{ color: "#2D000A" }}>Biteez Admin</h1>
+          <p className="text-sm mt-1" style={{ color: "#800020" }}>Sign in to continue</p>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit}
+          className="rounded-2xl p-8 space-y-5"
+          style={{ background: "white", boxShadow: "0 4px 32px rgba(45,0,10,0.10)", border: "1px solid #F5D0D8" }}>
+
+          {error && (
+            <div className="px-4 py-3 rounded-xl text-sm font-medium"
+              style={{ background: "#fee2e2", color: "#991b1b", border: "1px solid #fca5a5" }}>
+              {error}
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "#800020" }}>
+              Username
+            </label>
             <input
-              type="email"
+              autoFocus
               required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+              style={{ border: "1.5px solid #F5D0D8", color: "#2D000A", background: "#FDF8F9" }}
+              onFocus={e => (e.target.style.borderColor = "#800020")}
+              onBlur={e  => (e.target.style.borderColor = "#F5D0D8")}
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "#800020" }}>
+              Password
+            </label>
             <input
-              type="password"
               required
+              type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="Password"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+              style={{ border: "1.5px solid #F5D0D8", color: "#2D000A", background: "#FDF8F9" }}
+              onFocus={e => (e.target.style.borderColor = "#800020")}
+              onBlur={e  => (e.target.style.borderColor = "#F5D0D8")}
             />
           </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-700 text-white rounded-lg py-2 text-sm font-medium hover:bg-brand-900 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Signing in…" : "Sign in"}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all"
+            style={{
+              background: loading ? "#F5D0D8" : "#800020",
+              color:      loading ? "#A05068" : "white",
+              cursor:     loading ? "not-allowed" : "pointer",
+            }}>
+            {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
       </div>
