@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Upload, X, Monitor, Smartphone, CheckCircle2, AlertCircle, Images,
 } from "lucide-react";
-import Image from "next/image";
+// Using plain <img> to avoid next/image remote-pattern restrictions in admin
 
 interface Slide {
   id:          string;
@@ -238,7 +238,7 @@ export default function SlideshowPage() {
                       className="group relative aspect-video rounded-xl overflow-hidden border-2 border-gray-100 hover:border-[#800020] transition-all"
                       title={img.name}
                     >
-                      <Image src={img.url} alt={img.name} fill className="object-cover" sizes="160px" />
+                      <img src={img.url} alt={img.name} className="absolute inset-0 w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-end p-1.5">
                         <span className="text-[9px] text-white/0 group-hover:text-white/90 font-medium truncate w-full transition-all">
                           {img.name}
@@ -292,7 +292,7 @@ export default function SlideshowPage() {
           {/* Preview */}
           <div className="w-40 h-16 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
             {logoUrl ? (
-              <Image src={logoUrl} alt="Logo" width={140} height={56} className="object-contain max-h-14 w-auto" />
+              <img src={logoUrl} alt="Logo" className="object-contain max-h-14 w-auto" />
             ) : (
               <span className="text-xs text-gray-400">No logo</span>
             )}
@@ -315,7 +315,7 @@ export default function SlideshowPage() {
           <div className="flex gap-3 p-4 overflow-x-auto">
             {heroImages.map(img => (
               <div key={img.name} className="relative shrink-0 w-28 aspect-video rounded-xl overflow-hidden border border-gray-100 group">
-                <Image src={img.url} alt={img.name} fill className="object-cover" sizes="112px" />
+                <img src={img.url} alt={img.name} className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1 pt-4">
                   <p className="text-[8px] text-white/80 truncate font-medium">{img.name}</p>
                 </div>
@@ -382,7 +382,7 @@ export default function SlideshowPage() {
                       <div className={`relative ${aspect} rounded-xl overflow-hidden border-2 ${url ? "border-gray-200" : "border-dashed border-gray-200"} bg-gray-50`}>
                         {url ? (
                           <>
-                            <Image src={url} alt={type} fill className="object-cover" sizes="400px" />
+                            <img src={url} alt={type} className="absolute inset-0 w-full h-full object-cover" />
                             {/* Hover overlay */}
                             <div className="absolute inset-0 bg-black/0 hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 hover:opacity-100">
                               <button onClick={() => setPicker({ slideId: slide.id, type })}
