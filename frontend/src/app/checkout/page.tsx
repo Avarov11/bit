@@ -7,7 +7,14 @@ import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
-const timeSlotKeys = ["timeslot_0", "timeslot_1", "timeslot_2", "timeslot_3"];
+interface SlotInfo {
+  id:       string;
+  label:    string;
+  label_ar: string | null;
+  booked?:  number;
+  max_orders: number;
+  full?:    boolean;
+}
 
 function Field({
   label, error, ...props
@@ -49,11 +56,41 @@ export default function CheckoutPage() {
     orderDate: "", orderTime: "",
     notes: "",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [placing, setPlacing] = useState(false);
+  const [errors,      setErrors]      = useState<Record<string, string>>({});
+  const [placing,     setPlacing]     = useState(false);
+  const [slots,       setSlots]       = useState<SlotInfo[]>([]);
+  const [dayFull,     setDayFull]     = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const sadadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Load slots (no availability) on mount
+  useEffect(() => {
+    fetch("/api/time-slots")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.slots)) setSlots(data.slots); })
+      .catch(() => {});
+  }, []);
+
+  // Re-fetch with availability when date changes
+  useEffect(() => {
+    if (!form.orderDate) return;
+    setSlotsLoading(true);
+    fetch(`/api/time-slots?date=${form.orderDate}`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data.slots)) setSlots(data.slots);
+        setDayFull(!!data.dayFull);
+        // Clear selected slot if it's now full
+        if (form.orderTime) {
+          const chosen = data.slots.find((s: SlotInfo) => s.label === form.orderTime);
+          if (chosen?.full) setForm(f => ({ ...f, orderTime: "" }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setSlotsLoading(false));
+  }, [form.orderDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (sadadHtml && sadadRef.current) {
@@ -141,8 +178,13 @@ export default function CheckoutPage() {
         }),
       });
       if (!saveRes.ok) {
-        const { error: saveErr } = await saveRes.json().catch(() => ({ error: saveRes.statusText }));
-        throw new Error(saveErr ?? "Failed to save order");
+        const body = await saveRes.json().catch(() => ({ error: saveRes.statusText }));
+        if (saveRes.status === 409) {
+          setPlacing(false);
+          setErrors(prev => ({ ...prev, orderTime: body.error ?? "Slot unavailable" }));
+          return;
+        }
+        throw new Error(body.error ?? "Failed to save order");
       }
 
       const itemName =
@@ -312,26 +354,51 @@ export default function CheckoutPage() {
                   <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-2">
                     {t("checkout_pickup_time")}
                   </label>
+                  {dayFull && (
+                    <p className="text-xs text-red-500 font-semibold mb-2">
+                      This day is fully booked. Please choose another date.
+                    </p>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
-                    {timeSlotKeys.map((slotKey) => {
-                      const slotLabel = t(slotKey);
-                      return (
-                        <button
-                          key={slotKey}
-                          type="button"
-                          onClick={() => set("orderTime", slotLabel)}
-                          data-i18n={slotKey}
-                          className={cn(
-                            "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97]",
-                            form.orderTime === slotLabel
-                              ? "border-[#800020] bg-[#800020] text-white shadow-warm-sm"
-                              : "border-[rgba(128,0,32,0.10)] text-[#800020] hover:border-[#800020]/40 bg-white"
-                          )}
-                        >
-                          {slotLabel}
-                        </button>
-                      );
-                    })}
+                    {slotsLoading ? (
+                      <div className="col-span-2 flex items-center justify-center py-6">
+                        <span className="w-5 h-5 border-2 border-[#800020]/30 border-t-[#800020] rounded-full animate-spin" />
+                      </div>
+                    ) : slots.length === 0 ? (
+                      <p className="col-span-2 text-xs text-[#A05068]">Select a date to see available slots.</p>
+                    ) : (
+                      slots.map(slot => {
+                        const label    = lang === "ar" && slot.label_ar ? slot.label_ar : slot.label;
+                        const selected = form.orderTime === slot.label;
+                        const full     = !!slot.full;
+                        const pct      = slot.booked !== undefined ? Math.round((slot.booked / slot.max_orders) * 100) : null;
+                        return (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            disabled={full}
+                            onClick={() => !full && set("orderTime", slot.label)}
+                            className={cn(
+                              "py-3 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all duration-200 active:scale-[0.97] flex flex-col items-center gap-0.5",
+                              full
+                                ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                : selected
+                                  ? "border-[#800020] bg-[#800020] text-white shadow-warm-sm"
+                                  : "border-[rgba(128,0,32,0.10)] text-[#800020] hover:border-[#800020]/40 bg-white"
+                            )}
+                          >
+                            <span>{label}</span>
+                            {full ? (
+                              <span className="text-[9px] font-bold text-red-400">Fully booked</span>
+                            ) : pct !== null && pct >= 70 ? (
+                              <span className={cn("text-[9px] font-semibold", selected ? "text-white/70" : "text-amber-500")}>
+                                Almost full
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                   {errors.orderTime && <p className="text-red-500 text-[11px] mt-1">{errors.orderTime}</p>}
                 </div>

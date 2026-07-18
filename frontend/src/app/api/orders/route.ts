@@ -33,6 +33,37 @@ export async function POST(req: Request) {
     order_number,
   } = body;
 
+  // ── Capacity enforcement ──────────────────────────────────────────────────
+  if (pickup_date && pickup_time) {
+    const sb = getAdmin();
+
+    const [slotRes, settingRes, dayCountRes] = await Promise.all([
+      sb.from("time_slots").select("max_orders").eq("label", pickup_time).eq("active", true).single(),
+      sb.from("site_settings").select("value").eq("key", "max_orders_per_day").single(),
+      sb.from("orders").select("id", { count: "exact", head: true }).eq("pickup_date", pickup_date).neq("status", "cancelled"),
+    ]);
+
+    const maxPerDay   = parseInt(settingRes.data?.value ?? "50");
+    const dayCount    = dayCountRes.count ?? 0;
+    if (dayCount >= maxPerDay) {
+      return NextResponse.json({ error: "This day is fully booked. Please choose another date." }, { status: 409 });
+    }
+
+    if (slotRes.data) {
+      const slotMax     = slotRes.data.max_orders;
+      const { count: slotCount } = await sb
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("pickup_date", pickup_date)
+        .eq("pickup_time", pickup_time)
+        .neq("status", "cancelled");
+      if ((slotCount ?? 0) >= slotMax) {
+        return NextResponse.json({ error: "This time slot is fully booked. Please choose another slot." }, { status: 409 });
+      }
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const { data, error } = await getAdmin()
     .from("orders")
     .insert({

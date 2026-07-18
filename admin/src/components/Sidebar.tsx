@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings, CircleDollarSign, Images } from "lucide-react";
+import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings, CircleDollarSign, Images, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const nav = [
@@ -46,6 +46,12 @@ const nav = [
     label: "Slideshow",
     Icon:  Images,
     desc:  "Home page banner images",
+  },
+  {
+    href:  "/dashboard/delivery",
+    label: "Delivery",
+    Icon:  Truck,
+    desc:  "Time slots & order limits",
   },
   {
     href:  "/dashboard/pricing",
