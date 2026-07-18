@@ -59,7 +59,26 @@ export async function DELETE(req: NextRequest) {
   if (["cake", "heart", "square"].includes(shape))
     return NextResponse.json({ error: "Cannot delete built-in shapes" }, { status: 400 });
 
-  const { error } = await getAdmin().from("shape_configs").delete().eq("shape", shape);
+  const sb = getAdmin();
+
+  // Get bucket name before deleting config
+  const { data: cfg } = await sb.from("shape_configs").select("bucket_name").eq("shape", shape).single();
+  const bucketName = cfg?.bucket_name;
+
+  // Delete all image files from bucket then the bucket itself
+  if (bucketName) {
+    const { data: files } = await sb.storage.from(bucketName).list();
+    if (files?.length) {
+      await sb.storage.from(bucketName).remove(files.map(f => f.name));
+    }
+    await sb.storage.deleteBucket(bucketName);
+  }
+
+  // Delete shape_color_images rows, pricing row, and shape config
+  await sb.from("shape_color_images").delete().eq("shape", shape);
+  await sb.from("customizer_pricing").delete().eq("key", `shape_${shape}`);
+  const { error } = await sb.from("shape_configs").delete().eq("shape", shape);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
   return NextResponse.json({ success: true });
 }
