@@ -482,27 +482,36 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Label + arrows */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden md:block text-white/35 text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
-              {activeSlides[heroSlide].label}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => goToSlide(s => (s - 1 + activeSlides.length) % activeSlides.length)}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
-                aria-label="Previous"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={() => goToSlide(s => (s + 1) % activeSlides.length)}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
-                aria-label="Next"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+          {/* Slide dropdown + arrows */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => goToSlide(s => (s - 1 + activeSlides.length) % activeSlides.length)}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={15} />
+            </button>
+
+            <select
+              value={heroSlide}
+              onChange={e => goToSlide(parseInt(e.target.value))}
+              className="text-[10px] sm:text-xs font-bold tracking-wide uppercase bg-white/10 border border-white/20 hover:border-white/40 text-white/70 hover:text-white rounded-full px-3 py-1.5 outline-none cursor-pointer transition-all duration-200 backdrop-blur-sm appearance-none"
+              style={{ paddingRight: "1.5rem", background: "rgba(255,255,255,0.08)" }}
+            >
+              {activeSlides.map((slide, i) => (
+                <option key={i} value={i} style={{ background: "#1a000a", color: "#fff" }}>
+                  {i + 1} — {slide.label || `Slide ${i + 1}`}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => goToSlide(s => (s + 1) % activeSlides.length)}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
+              aria-label="Next"
+            >
+              <ChevronRight size={15} />
+            </button>
           </div>
         </div>
       </section>

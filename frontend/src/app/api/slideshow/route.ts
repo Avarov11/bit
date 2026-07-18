@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("slideshow")
-    .select("id, desktop_url, mobile_url")
+    .select("id, desktop_url, mobile_url, label, headline_1, headline_2, subtitle, btn_text, btn_href")
     .eq("hidden", false)
     .order("sort_order", { ascending: true });
 
