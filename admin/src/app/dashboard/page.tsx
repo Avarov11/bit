@@ -315,7 +315,7 @@ function MonthCalendar() {
     return "#800020";
   }
 
-  const selectedInfo = selected && data?.days[selected];
+  const selectedInfo = selected ? data?.days[selected] : undefined;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
