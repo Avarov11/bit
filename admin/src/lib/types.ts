@@ -74,6 +74,7 @@ export interface Product {
   allowed_shapes: string[];
   allowed_flavors: string[];
   allowed_toppings: string[];
+  allowed_sauces: string[];
   created_at: string;
   updated_at: string;
 }

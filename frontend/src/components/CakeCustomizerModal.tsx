@@ -933,7 +933,9 @@ export default function CakeCustomizerModal({
     }
 
     if (custStep === 1) {
-      const allowedSauces  = (shapeConfigs[custSel.shape] ?? DEFAULT_CFG).allowed_colors;
+      const shapeAllowed   = (shapeConfigs[custSel.shape] ?? DEFAULT_CFG).allowed_colors;
+      const productAllowed = product?.allowed_sauces ?? ALL_SAUCE_IDS;
+      const allowedSauces  = shapeAllowed.filter(s => productAllowed.includes(s));
       const chocColorMap: Record<string, string> = { milk: "brown", hazelnut: "beige", oreo: "black" };
       const visibleChocFlavors = CHOC_FLAVORS.filter(f => allowedSauces.includes(chocColorMap[f.id]));
       const visibleColours     = COLOURS.filter(c => allowedSauces.includes(c.id));

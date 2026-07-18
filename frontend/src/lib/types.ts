@@ -15,4 +15,5 @@ export interface DbProduct {
   allowed_shapes: string[];
   allowed_flavors: string[];
   allowed_toppings: string[];
+  allowed_sauces: string[];
 }

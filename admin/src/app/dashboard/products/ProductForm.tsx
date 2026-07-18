@@ -25,6 +25,15 @@ const ALL_TOPPINGS = [
   { id: "image",   label: "Image Upload", icon: "📷" },
 ];
 
+const ALL_SAUCES = [
+  { id: "brown", label: "Milk",     hex: "#8B5E3C" },
+  { id: "beige", label: "Hazelnut", hex: "#C9A96E" },
+  { id: "black", label: "Oreo",     hex: "#2D2020" },
+  { id: "white", label: "White",    hex: "#F5F0EA", border: "#D0C8C0" },
+  { id: "pink",  label: "Pink",     hex: "#FF6B9D" },
+  { id: "blue",  label: "Blue",     hex: "#B2C8D8" },
+];
+
 const EMPTY: FormData = {
   name: "", name_ar: "", description: "", description_ar: "",
   category: "Customized", subcategory: null,
@@ -33,6 +42,7 @@ const EMPTY: FormData = {
   allowed_shapes:   ["cake", "heart", "square"],
   allowed_flavors:  ["chocolate", "white"],
   allowed_toppings: ["write", "sticker", "image"],
+  allowed_sauces:   ["brown", "beige", "black", "white", "pink", "blue"],
 };
 
 export default function ProductForm({ product }: { product?: Product }) {
@@ -43,6 +53,7 @@ export default function ProductForm({ product }: { product?: Product }) {
     allowed_shapes:   product.allowed_shapes   ?? ["cake", "heart", "square"],
     allowed_flavors:  product.allowed_flavors  ?? ["chocolate", "white"],
     allowed_toppings: product.allowed_toppings ?? ["write", "sticker", "image"],
+    allowed_sauces:   product.allowed_sauces   ?? ["brown", "beige", "black", "white", "pink", "blue"],
   } : EMPTY);
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState("");
@@ -381,6 +392,47 @@ export default function ProductForm({ product }: { product?: Product }) {
             );
           })}
         </div>
+      </Field>
+
+      {/* Sauce / color selection */}
+      <Field label="Available Sauces">
+        <p className="text-xs text-gray-400 mb-3">Uncheck any sauce that is out of stock for this product.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {ALL_SAUCES.map(({ id, label, hex, border }) => {
+            const checked = (form.allowed_sauces ?? []).includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? (form.allowed_sauces ?? []).filter(s => s !== id)
+                    : [...(form.allowed_sauces ?? []), id];
+                  set("allowed_sauces", next);
+                }}
+                className={`relative flex flex-col items-center gap-2.5 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
+                  checked ? "border-[#800020] bg-[#800020]/5" : "border-gray-200 bg-gray-50 opacity-40"
+                }`}
+              >
+                {checked && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                <span
+                  className="w-9 h-9 rounded-full shadow-sm"
+                  style={{ background: hex, border: `2px solid ${border ?? hex}` }}
+                />
+                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {(form.allowed_sauces ?? []).length === 0 && (
+          <p className="text-xs text-red-500 mt-2">Select at least one sauce.</p>
+        )}
       </Field>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
