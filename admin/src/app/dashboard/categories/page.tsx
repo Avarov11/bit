@@ -146,20 +146,21 @@ export default function CategoriesPage() {
       )}
 
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold" style={{ color: "#2D000A" }}>Categories</h1>
-          <p className="text-sm mt-1" style={{ color: "#800020" }}>
+          <p className="text-sm mt-1 hidden sm:block" style={{ color: "#800020" }}>
             Manage menu categories and subcategories — active ones appear on the customer site immediately
           </p>
         </div>
         <button
           onClick={() => openAdd()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shrink-0"
           style={{ background: "#800020" }}
         >
           <Plus size={15} />
-          Add Category
+          <span className="hidden sm:inline">Add Category</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
 
@@ -184,20 +185,21 @@ export default function CategoriesPage() {
                 style={{ background: "white", border: "1px solid #F5D0D8", boxShadow: "0 2px 12px rgba(45,0,10,0.05)" }}>
 
                 {/* Parent row */}
-                <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: subs.length > 0 ? "1px solid #F5D0D8" : "none" }}>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0"
-                    style={{ background: cat.badge_bg, color: cat.badge_text }}>
-                    {cat.name}
-                  </span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ background: cat.is_active ? "#dcfce7" : "#fee2e2", color: cat.is_active ? "#166534" : "#991b1b" }}>
-                    {cat.is_active ? "Published" : "Hidden"}
-                  </span>
-                  <span className="text-xs" style={{ color: "#800020", opacity: 0.5 }}>
-                    {subs.length} sub{subs.length !== 1 ? "s" : ""}
-                  </span>
-
-                  <div className="ml-auto flex items-center gap-1.5">
+                <div className="flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-4" style={{ borderBottom: subs.length > 0 ? "1px solid #F5D0D8" : "none" }}>
+                  <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0"
+                      style={{ background: cat.badge_bg, color: cat.badge_text }}>
+                      {cat.name}
+                    </span>
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0"
+                      style={{ background: cat.is_active ? "#dcfce7" : "#fee2e2", color: cat.is_active ? "#166534" : "#991b1b" }}>
+                      {cat.is_active ? "Published" : "Hidden"}
+                    </span>
+                    <span className="text-xs shrink-0" style={{ color: "#800020", opacity: 0.5 }}>
+                      {subs.length} sub{subs.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => openAdd(cat.name)} title="Add subcategory"
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#FDF0F3]"
                       style={{ color: "#800020" }}>
@@ -223,22 +225,23 @@ export default function CategoriesPage() {
 
                 {/* Subcategory rows */}
                 {subs.map((sub, idx) => (
-                  <div key={sub.id} className="flex items-center gap-3 px-5 py-3 pl-10"
+                  <div key={sub.id} className="flex items-center gap-2 px-4 py-2.5 pl-7 sm:pl-10"
                     style={{ borderBottom: idx < subs.length - 1 ? "1px solid #FDF0F3" : "none", background: "#FDFAFA" }}>
                     <ChevronRight size={12} className="shrink-0" style={{ color: "#ccc" }} />
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0"
-                      style={{ background: sub.badge_bg, color: sub.badge_text }}>
-                      {sub.name}
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                      style={{ background: sub.is_active ? "#dcfce7" : "#fee2e2", color: sub.is_active ? "#166534" : "#991b1b" }}>
-                      {sub.is_active ? "Published" : "Hidden"}
-                    </span>
-                    <span className="text-[10px]" style={{ color: "#800020", opacity: 0.45 }}>
-                      {sub.filter_mode === "as_subcategory" ? "subcategory field" : "category field"}
-                    </span>
-
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0"
+                        style={{ background: sub.badge_bg, color: sub.badge_text }}>
+                        {sub.name}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: sub.is_active ? "#dcfce7" : "#fee2e2", color: sub.is_active ? "#166534" : "#991b1b" }}>
+                        {sub.is_active ? "Published" : "Hidden"}
+                      </span>
+                      <span className="text-[10px] hidden sm:inline shrink-0" style={{ color: "#800020", opacity: 0.45 }}>
+                        {sub.filter_mode === "as_subcategory" ? "subcategory field" : "category field"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
                       <button onClick={() => openEdit(sub)} title="Edit"
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-[#FDF0F3]"
                         style={{ color: "#800020" }}>
