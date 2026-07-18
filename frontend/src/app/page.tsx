@@ -190,6 +190,10 @@ export default function HomePage() {
       href: "/menu?category=Gender+Reveal",
     },
   ];
+  const [slides,      setSlides]      = useState<{ id: string; desktop_url: string | null; mobile_url: string | null }[]>([]);
+  const [bannerIdx,   setBannerIdx]   = useState(0);
+  const bannerTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
   const [heroSlide, setHeroSlide]     = useState(0);
@@ -206,6 +210,21 @@ export default function HomePage() {
     });
   };
   const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
+
+  useEffect(() => {
+    fetch("/api/slideshow")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length) setSlides(data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    bannerTimer.current = setInterval(() => {
+      setBannerIdx(i => (i + 1) % slides.length);
+    }, 5000);
+    return () => { if (bannerTimer.current) clearInterval(bannerTimer.current); };
+  }, [slides.length]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -487,6 +506,80 @@ export default function HomePage() {
           animation: hero-text-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
       `}</style>
+
+      {/* ═══════════════════════════════════════════════════════════
+          BANNER SLIDESHOW (DB-managed)
+      ═══════════════════════════════════════════════════════════ */}
+      {slides.length > 0 && (
+        <section
+          className="relative w-full overflow-hidden bg-[#0a0005]"
+          style={{ height: "clamp(180px, 35vw, 520px)" }}
+          onTouchStart={e => { touchStartX.current = e.changedTouches[0].clientX; }}
+          onTouchEnd={e => {
+            const diff = touchStartX.current - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+              if (bannerTimer.current) clearInterval(bannerTimer.current);
+              if (diff > 0) setBannerIdx(i => (i + 1) % slides.length);
+              else          setBannerIdx(i => (i - 1 + slides.length) % slides.length);
+            }
+          }}
+        >
+          {slides.map((slide, i) => (
+            <div
+              key={slide.id}
+              className={cn(
+                "absolute inset-0 transition-opacity duration-[1000ms]",
+                i === bannerIdx ? "opacity-100 z-10" : "opacity-0 z-0"
+              )}
+            >
+              {/* Mobile image */}
+              {slide.mobile_url && (
+                <Image
+                  src={slide.mobile_url}
+                  alt={`Slide ${i + 1} mobile`}
+                  fill
+                  sizes="(max-width: 767px) 100vw, 0px"
+                  className="object-cover md:hidden"
+                  priority={i === 0}
+                />
+              )}
+              {/* Desktop image */}
+              {slide.desktop_url && (
+                <Image
+                  src={slide.desktop_url}
+                  alt={`Slide ${i + 1}`}
+                  fill
+                  sizes={slide.mobile_url ? "(min-width: 768px) 100vw, 0px" : "100vw"}
+                  className={cn("object-cover", slide.mobile_url && "hidden md:block")}
+                  priority={i === 0}
+                />
+              )}
+            </div>
+          ))}
+
+          {/* Dot navigation */}
+          {slides.length > 1 && (
+            <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (bannerTimer.current) clearInterval(bannerTimer.current);
+                    setBannerIdx(i);
+                  }}
+                  aria-label={`Banner slide ${i + 1}`}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    height: 3,
+                    width: i === bannerIdx ? 32 : 12,
+                    background: i === bannerIdx ? "#FF6B9D" : "rgba(255,255,255,0.45)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           BESTSELLERS
