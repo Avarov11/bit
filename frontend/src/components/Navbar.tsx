@@ -20,6 +20,7 @@ export default function Navbar() {
   const [scrolled,    setScrolled]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
   const [mounted,     setMounted]     = useState(false);
+  const [logoUrl,     setLogoUrl]     = useState("/logo.png");
   const { lang, toggle, t } = useLanguage();
 
   const count = useCartStore((s) =>
@@ -27,6 +28,13 @@ export default function Navbar() {
   );
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    fetch("/api/site-settings", { cache: "no-store" })
+      .then(r => r.json())
+      .then(data => { if (data?.logo_url) setLogoUrl(data.logo_url); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -75,7 +83,7 @@ export default function Navbar() {
             className="absolute left-1/2 -translate-x-1/2 flex items-center focus:outline-none"
           >
             <Image
-              src="/logo.png"
+              src={logoUrl}
               alt="Biteez"
               width={120}
               height={48}
