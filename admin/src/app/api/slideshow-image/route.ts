@@ -3,14 +3,7 @@ import { getAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-const BUCKET = "slideshow";
-
-async function ensureBucket(supabase: ReturnType<typeof getAdmin>) {
-  const { error } = await supabase.storage.createBucket(BUCKET, { public: true });
-  if (error && !error.message.includes("already exists") && !error.message.includes("23505")) {
-    throw error;
-  }
-}
+const BUCKET = "hero"; // use the hero bucket for all slide images
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -23,10 +16,9 @@ export async function POST(req: Request) {
   }
 
   const supabase = getAdmin();
-  await ensureBucket(supabase);
 
   const ext    = file.name.split(".").pop() ?? "jpg";
-  const prefix = slideId.replace(/-/g, "");
+  const prefix = slideId.replace(/-/g, "").slice(0, 16);
   const suffix = type === "desktop" ? "d" : "m";
 
   // Remove any existing file for this slide+type
