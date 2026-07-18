@@ -459,14 +459,23 @@ export default function SlideshowPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Button link (URL)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. /menu or /menu?category=Customized"
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Button link</label>
+                  <select
                     value={slide.btn_href ?? ""}
                     onChange={e => handleTextField(slide.id, "btn_href", e.target.value)}
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] placeholder:text-gray-300"
-                  />
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020] bg-white text-gray-700"
+                  >
+                    <option value="">— Select a page —</option>
+                    <option value="/">Home</option>
+                    <option value="/menu">Menu (All)</option>
+                    <option value="/menu?category=Customized">Menu — Customized Brownies</option>
+                    <option value="/menu?category=Accessories">Menu — Accessories</option>
+                    <option value="/menu?category=Bride+to+Be">Menu — Bride to Be</option>
+                    <option value="/menu?category=Gender+Reveal">Menu — Gender Reveal</option>
+                    <option value="/menu?category=Boxes">Menu — Boxes</option>
+                    <option value="/about">About</option>
+                    <option value="/contact">Contact</option>
+                  </select>
                 </div>
               </div>
 
