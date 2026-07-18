@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export interface ExtraItem { url: string; qty: number; }
+
 export interface CartItem {
   cartId: string;
   productId: string;
@@ -19,6 +21,9 @@ export interface CartItem {
     candleUrl?: string;
     balloonUrl?: string;
     cardUrl?: string;
+    candles?:  ExtraItem[];
+    balloons?: ExtraItem[];
+    cards?:    ExtraItem[];
   };
 }
 

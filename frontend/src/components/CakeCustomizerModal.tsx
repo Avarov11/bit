@@ -387,7 +387,7 @@ export default function CakeCustomizerModal({
         }
       })
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     for (const shape of ["cake", "heart", "square"]) {
