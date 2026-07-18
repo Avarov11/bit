@@ -8,10 +8,10 @@ type FormData = Omit<Product, "id" | "created_at" | "updated_at">;
 interface CatData { name: string; parent: string | null; filter_mode: string; }
 const TAGS = ["Bestseller", "Signature", "New", "Custom"] as const;
 
-const ALL_SHAPES = [
-  { id: "cake",   label: "Full Cake",       icon: "🎂" },
-  { id: "heart",  label: "Heart",           icon: "❤️" },
-  { id: "square", label: "Square",          icon: "🟫" },
+const BUILTIN_SHAPES = [
+  { id: "cake",   label: "Full Cake", icon: "🎂" },
+  { id: "heart",  label: "Heart",     icon: "❤️" },
+  { id: "square", label: "Square",    icon: "🟫" },
 ];
 
 const ALL_FLAVORS = [
@@ -59,13 +59,26 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [error, setError]       = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [allCats, setAllCats] = useState<CatData[]>([]);
+  const [allCats, setAllCats]     = useState<CatData[]>([]);
+  const [allShapes, setAllShapes] = useState<{ id: string; label: string; icon: string }[]>(BUILTIN_SHAPES);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/categories", { cache: "no-store" })
       .then(r => r.json())
       .then((data: CatData[]) => { if (Array.isArray(data)) setAllCats(data); })
+      .catch(() => {});
+    fetch("/api/shape-configs", { cache: "no-store" })
+      .then(r => r.json())
+      .then((data: { shape: string; label: string }[]) => {
+        if (Array.isArray(data) && data.length) {
+          setAllShapes(data.map(s => ({
+            id:   s.shape,
+            label: s.label,
+            icon:  s.shape === "cake" ? "🎂" : s.shape === "heart" ? "❤️" : s.shape === "square" ? "🟫" : "✦",
+          })));
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -284,7 +297,7 @@ export default function ProductForm({ product }: { product?: Product }) {
       <Field label="Available Shapes">
         <p className="text-xs text-gray-400 mb-3">Choose which shapes customers can pick for this product.</p>
         <div className="grid grid-cols-3 gap-3">
-          {ALL_SHAPES.map(({ id, label, icon }) => {
+          {allShapes.map(({ id, label, icon }) => {
             const checked = (form.allowed_shapes ?? []).includes(id);
             return (
               <button

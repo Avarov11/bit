@@ -39,6 +39,17 @@ export async function POST(req: NextRequest) {
   }).select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-insert a pricing row so the frontend can look it up as shape_{id}
+  const { data: maxRow } = await sb.from("customizer_pricing").select("sort").order("sort", { ascending: false }).limit(1).single();
+  await sb.from("customizer_pricing").insert({
+    key:     `shape_${shape}`,
+    label:   label.trim(),
+    price:   85,
+    sort:    (maxRow?.sort ?? 0) + 1,
+    section: "shapes",
+  });
+
   return NextResponse.json(data, { status: 201 });
 }
 
