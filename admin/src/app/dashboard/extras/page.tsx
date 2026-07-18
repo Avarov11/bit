@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Trash2, ImageIcon, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, Trash2, ImageIcon, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 interface MediaItem {
@@ -18,13 +18,15 @@ const TABS = [
 type TabKey = typeof TABS[number]["key"];
 
 export default function ExtrasPage() {
-  const [activeTab, setActiveTab]   = useState<TabKey>("candles");
-  const [items,     setItems]       = useState<MediaItem[]>([]);
-  const [loading,   setLoading]     = useState(false);
-  const [uploading, setUploading]   = useState(false);
-  const [deleting,  setDeleting]    = useState<string | null>(null);
-  const [dragging,  setDragging]    = useState(false);
-  const [toast,     setToast]       = useState<{ msg: string; ok: boolean } | null>(null);
+  const [activeTab,  setActiveTab]  = useState<TabKey>("candles");
+  const [items,      setItems]      = useState<MediaItem[]>([]);
+  const [hidden,     setHidden]     = useState<Set<string>>(new Set());
+  const [loading,    setLoading]    = useState(false);
+  const [uploading,  setUploading]  = useState(false);
+  const [deleting,   setDeleting]   = useState<string | null>(null);
+  const [toggling,   setToggling]   = useState<string | null>(null);
+  const [dragging,   setDragging]   = useState(false);
+  const [toast,      setToast]      = useState<{ msg: string; ok: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const tab = TABS.find((t) => t.key === activeTab)!;
@@ -36,11 +38,16 @@ export default function ExtrasPage() {
 
   const loadItems = useCallback(() => {
     setLoading(true);
-    fetch(tab.api)
-      .then((r) => r.json())
-      .then((data: MediaItem[]) => setItems(Array.isArray(data) ? data : []))
+    Promise.all([
+      fetch(tab.api).then((r) => r.json()),
+      fetch(`/api/extras-visibility?type=${activeTab}`).then((r) => r.json()),
+    ])
+      .then(([data, vis]: [MediaItem[], { hidden: string[] }]) => {
+        setItems(Array.isArray(data) ? data : []);
+        setHidden(new Set(vis.hidden ?? []));
+      })
       .finally(() => setLoading(false));
-  }, [tab.api]);
+  }, [tab.api, activeTab]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -72,6 +79,7 @@ export default function ExtrasPage() {
     const data = await res.json() as { success?: boolean; error?: string };
     if (data.success) {
       setItems((prev) => prev.filter((s) => s.name !== name));
+      setHidden((prev) => { const n = new Set(prev); n.delete(name); return n; });
       showToast("Deleted.", true);
     } else {
       showToast(data.error ?? "Delete failed.", false);
@@ -79,11 +87,35 @@ export default function ExtrasPage() {
     setDeleting(null);
   }
 
+  async function toggleVisibility(name: string) {
+    setToggling(name);
+    const res  = await fetch("/api/extras-visibility", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ type: activeTab, name }),
+    });
+    const data = await res.json() as { hidden?: boolean; error?: string };
+    if (typeof data.hidden === "boolean") {
+      setHidden((prev) => {
+        const n = new Set(prev);
+        data.hidden ? n.add(name) : n.delete(name);
+        return n;
+      });
+      showToast(data.hidden ? "Hidden from customers." : "Now visible to customers.", true);
+    } else {
+      showToast(data.error ?? "Failed.", false);
+    }
+    setToggling(null);
+  }
+
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragging(false);
     if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
   }
+
+  const visibleCount = items.filter((i) => !hidden.has(i.name)).length;
+  const hiddenCount  = items.filter((i) =>  hidden.has(i.name)).length;
 
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: "#FDF0F3" }}>
@@ -134,7 +166,7 @@ export default function ExtrasPage() {
       >
         {/* Panel header */}
         <div
-          className="px-6 py-4 flex items-center justify-between"
+          className="px-6 py-4 flex items-center justify-between flex-wrap gap-3"
           style={{ borderBottom: "1px solid #F5D0D8", background: `${tab.color}08` }}
         >
           <div className="flex items-center gap-3">
@@ -147,7 +179,8 @@ export default function ExtrasPage() {
             <div>
               <p className="font-bold text-base" style={{ color: "#2D000A" }}>{tab.label}</p>
               <p className="text-xs" style={{ color: "#800020" }}>
-                {items.length} design{items.length !== 1 ? "s" : ""} in bucket
+                {visibleCount} active
+                {hiddenCount > 0 && <span className="ml-1 opacity-60">· {hiddenCount} hidden</span>}
               </p>
             </div>
           </div>
@@ -206,45 +239,84 @@ export default function ExtrasPage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-              {items.map((item) => (
-                <div key={item.name} className="group relative">
-                  <div
-                    className="relative w-full rounded-xl overflow-hidden aspect-square"
-                    style={{ border: "1px solid #F5D0D8", background: "#FDF0F3" }}
-                  >
-                    <Image
-                      src={item.url}
-                      alt={item.name}
-                      fill
-                      className="object-contain p-1"
-                      sizes="120px"
-                      unoptimized
-                    />
+              {items.map((item) => {
+                const isHidden  = hidden.has(item.name);
+                const isToggling = toggling === item.name;
+                return (
+                  <div key={item.name} className="group relative">
+                    <div
+                      className="relative w-full rounded-xl overflow-hidden aspect-square transition-opacity"
+                      style={{
+                        border:   "1px solid #F5D0D8",
+                        background: "#FDF0F3",
+                        opacity:  isHidden ? 0.45 : 1,
+                      }}
+                    >
+                      <Image
+                        src={item.url}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-1"
+                        sizes="120px"
+                        unoptimized
+                      />
+
+                      {/* Hidden badge */}
+                      {isHidden && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[9px] font-bold bg-gray-800 text-white px-1.5 py-0.5 rounded-full">
+                            HIDDEN
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Action buttons — visible on hover */}
+                      <div className="absolute inset-0 flex items-end justify-between p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Toggle visibility */}
+                        <button
+                          onClick={() => toggleVisibility(item.name)}
+                          disabled={isToggling}
+                          title={isHidden ? "Show to customers" : "Hide from customers"}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
+                          style={{
+                            background: isHidden ? "#3B82F6" : "#6B7280",
+                            color: "white",
+                          }}
+                        >
+                          {isToggling
+                            ? <span className="text-[9px] font-bold">…</span>
+                            : isHidden
+                              ? <Eye size={11} />
+                              : <EyeOff size={11} />
+                          }
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => deleteItem(item.name)}
+                          disabled={deleting === item.name}
+                          title="Delete"
+                          className="w-6 h-6 rounded-lg flex items-center justify-center"
+                          style={{ background: "#ef4444", color: "white" }}
+                        >
+                          {deleting === item.name
+                            ? <span className="text-[9px] font-bold">…</span>
+                            : <Trash2 size={11} />
+                          }
+                        </button>
+                      </div>
+                    </div>
+
+                    <p
+                      className="text-[9px] truncate mt-1 text-center"
+                      style={{ color: isHidden ? "#aaa" : "#800020" }}
+                      title={item.name}
+                    >
+                      {item.name.replace(/^\d+-/, "")}
+                    </p>
                   </div>
-
-                  {/* Delete on hover */}
-                  <button
-                    onClick={() => deleteItem(item.name)}
-                    disabled={deleting === item.name}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "#ef4444", color: "white" }}
-                    title="Delete"
-                  >
-                    {deleting === item.name
-                      ? <span className="text-[9px] font-bold">…</span>
-                      : <Trash2 size={11} />
-                    }
-                  </button>
-
-                  <p
-                    className="text-[9px] truncate mt-1 text-center"
-                    style={{ color: "#800020" }}
-                    title={item.name}
-                  >
-                    {item.name.replace(/^\d+-/, "")}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
