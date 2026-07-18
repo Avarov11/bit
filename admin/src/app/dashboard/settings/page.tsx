@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { Upload, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Trash2, CheckCircle2, AlertCircle, Plus, X } from "lucide-react";
 
-interface ShapeConfig { shape: string; label: string; max_chars: number; view_count: number; allowed_colors: string[]; }
+interface ShapeConfig { shape: string; label: string; max_chars: number; view_count: number; allowed_colors: string[]; bucket_name?: string; active?: boolean; }
 interface ColorImageRow { color: string; view_index: number; filename: string | null; url: string | null; }
 
 const ALL_COLORS = [
@@ -15,6 +15,8 @@ const ALL_COLORS = [
   { id: "pink",  label: "Rose",       hex: "#FF6B9D", group: "White Choc" },
   { id: "blue",  label: "Sky",        hex: "#B2C8D8", group: "White Choc" },
 ];
+
+const BUILTIN_SHAPES = ["cake", "heart", "square"];
 
 const DEFAULT_SHAPES: ShapeConfig[] = [
   { shape: "cake",   label: "Full Cake", max_chars: 5, view_count: 2, allowed_colors: ALL_COLORS.map(c => c.id) },
@@ -29,6 +31,7 @@ const ACCENT = "#800020";
 export default function SettingsPage() {
   const [activeShape,   setActiveShape]   = useState("cake");
   const [configs,       setConfigs]       = useState<ShapeConfig[]>(DEFAULT_SHAPES);
+  const [configsLoaded, setConfigsLoaded] = useState(false);
   const [colorImages,   setColorImages]   = useState<ColorImageRow[]>([]);
   const [loadingImgs,   setLoadingImgs]   = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<{ color: string; view: number } | null>(null);
@@ -43,53 +46,64 @@ export default function SettingsPage() {
   const fileRef        = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef<{ color: string; view: number } | null>(null);
 
+  // Add shape modal state
+  const [showAddModal,  setShowAddModal]  = useState(false);
+  const [newShapeLabel, setNewShapeLabel] = useState("");
+  const [addingShape,   setAddingShape]   = useState(false);
+  const [deletingShape, setDeletingShape] = useState<string | null>(null);
+
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 3200);
   }
 
-  // Load configs
-  useEffect(() => {
+  function initDrafts(shapes: ShapeConfig[]) {
+    const dc: Record<string, number>     = {};
+    const dvc: Record<string, number>    = {};
+    const dcolor: Record<string, string[]> = {};
+    shapes.forEach(c => {
+      dc[c.shape]     = c.max_chars;
+      dvc[c.shape]    = c.view_count ?? (c.shape === "cake" ? 2 : 3);
+      dcolor[c.shape] = c.allowed_colors ?? ALL_COLORS.map(x => x.id);
+    });
+    setDraftChars(dc);
+    setDraftViewCount(dvc);
+    setDraftColors(dcolor);
+  }
+
+  // Load configs from DB
+  const loadConfigs = useCallback(() => {
     fetch("/api/shape-configs", { cache: "no-store" })
       .then(r => r.json())
       .then((data: ShapeConfig[]) => {
         if (Array.isArray(data) && data.length) {
-          const merged = DEFAULT_SHAPES.map(def => {
-            const db = data.find(d => d.shape === def.shape);
-            return db ? { ...def, ...db } : def;
-          });
+          // Merge DB data with defaults for built-ins, keep custom shapes as-is
+          const merged: ShapeConfig[] = [];
+          for (const dbShape of data) {
+            const def = DEFAULT_SHAPES.find(d => d.shape === dbShape.shape);
+            merged.push(def ? { ...def, ...dbShape } : {
+              ...dbShape,
+              max_chars:      dbShape.max_chars     ?? 3,
+              view_count:     dbShape.view_count     ?? 2,
+              allowed_colors: dbShape.allowed_colors ?? ALL_COLORS.map(c => c.id),
+            });
+          }
           setConfigs(merged);
-          const dc: Record<string, number>     = {};
-          const dvc: Record<string, number>    = {};
-          const dcolor: Record<string, string[]> = {};
-          merged.forEach(c => {
-            dc[c.shape]    = c.max_chars;
-            dvc[c.shape]   = c.view_count ?? (c.shape === "cake" ? 2 : 3);
-            dcolor[c.shape] = c.allowed_colors ?? ALL_COLORS.map(x => x.id);
-          });
-          setDraftChars(dc);
-          setDraftViewCount(dvc);
-          setDraftColors(dcolor);
+          initDrafts(merged);
         } else {
-          const dc: Record<string, number>     = {};
-          const dvc: Record<string, number>    = {};
-          const dcolor: Record<string, string[]> = {};
-          DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dvc[s.shape] = s.view_count; dcolor[s.shape] = s.allowed_colors; });
-          setDraftChars(dc);
-          setDraftViewCount(dvc);
-          setDraftColors(dcolor);
+          setConfigs(DEFAULT_SHAPES);
+          initDrafts(DEFAULT_SHAPES);
         }
+        setConfigsLoaded(true);
       })
       .catch(() => {
-        const dc: Record<string, number>     = {};
-        const dvc: Record<string, number>    = {};
-        const dcolor: Record<string, string[]> = {};
-        DEFAULT_SHAPES.forEach(s => { dc[s.shape] = s.max_chars; dvc[s.shape] = s.view_count; dcolor[s.shape] = s.allowed_colors; });
-        setDraftChars(dc);
-        setDraftViewCount(dvc);
-        setDraftColors(dcolor);
+        setConfigs(DEFAULT_SHAPES);
+        initDrafts(DEFAULT_SHAPES);
+        setConfigsLoaded(true);
       });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { loadConfigs(); }, [loadConfigs]);
 
   // Load color images for active shape
   const loadColorImages = useCallback(() => {
@@ -205,17 +219,57 @@ export default function SettingsPage() {
     });
   }
 
+  async function addShape() {
+    if (!newShapeLabel.trim()) return;
+    setAddingShape(true);
+    const res  = await fetch("/api/shapes", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body:   JSON.stringify({ label: newShapeLabel.trim() }),
+    });
+    const data = await res.json();
+    setAddingShape(false);
+    if (res.ok) {
+      setShowAddModal(false);
+      setNewShapeLabel("");
+      loadConfigs();
+      setActiveShape(data.shape);
+      showToast(`Shape "${data.label}" added!`, true);
+    } else {
+      showToast(data.error ?? "Failed to add shape.", false);
+    }
+  }
+
+  async function deleteShape(shape: string) {
+    if (!confirm(`Delete shape "${shape}"? This cannot be undone.`)) return;
+    setDeletingShape(shape);
+    const res  = await fetch("/api/shapes", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body:   JSON.stringify({ shape }),
+    });
+    const data = await res.json();
+    setDeletingShape(null);
+    if (res.ok) {
+      setConfigs(prev => prev.filter(c => c.shape !== shape));
+      if (activeShape === shape) setActiveShape("cake");
+      showToast("Shape deleted.", true);
+    } else {
+      showToast(data.error ?? "Delete failed.", false);
+    }
+  }
+
   const cfg            = configs.find(c => c.shape === activeShape) ?? DEFAULT_SHAPES.find(s => s.shape === activeShape)!;
-  const charChanged    = draftChars[activeShape] !== undefined && draftChars[activeShape] !== cfg.max_chars;
+  const charChanged    = cfg && draftChars[activeShape] !== undefined && draftChars[activeShape] !== cfg.max_chars;
   const curColors      = draftColors[activeShape] ?? ALL_COLORS.map(c => c.id);
-  const savedColors    = cfg.allowed_colors ?? ALL_COLORS.map(c => c.id);
+  const savedColors    = cfg?.allowed_colors ?? ALL_COLORS.map(c => c.id);
   const colorChanged   = JSON.stringify([...curColors].sort()) !== JSON.stringify([...savedColors].sort());
-  const viewCount      = draftViewCount[activeShape] ?? cfg.view_count ?? (activeShape === "cake" ? 2 : 3);
-  const savedViewCount = cfg.view_count ?? (activeShape === "cake" ? 2 : 3);
+  const viewCount      = draftViewCount[activeShape] ?? cfg?.view_count ?? (activeShape === "cake" ? 2 : 3);
+  const savedViewCount = cfg?.view_count ?? (activeShape === "cake" ? 2 : 3);
   const viewChanged    = viewCount !== savedViewCount;
   const viewLabels     = Array.from({ length: viewCount }, (_, i) => `View ${i + 1}`);
   const chocColors   = ALL_COLORS.filter(c => c.group === "Chocolate");
   const whiteColors  = ALL_COLORS.filter(c => c.group === "White Choc");
+  const isBuiltin    = BUILTIN_SHAPES.includes(activeShape);
+  const shapeIcon    = SHAPE_ICONS[activeShape] ?? "✦";
 
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: "#FDF0F3" }}>
@@ -227,37 +281,120 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Add Shape Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(45,0,10,0.5)" }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "white" }}>
+            <div className="px-6 py-4 flex items-center justify-between"
+              style={{ borderBottom: "1px solid #F5D0D8", background: "#FDF8F9" }}>
+              <p className="font-bold text-base" style={{ color: "#2D000A" }}>Add New Shape</p>
+              <button onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: "#F5D0D8", color: ACCENT }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: ACCENT }}>
+                  Shape Name
+                </label>
+                <input
+                  autoFocus
+                  value={newShapeLabel}
+                  onChange={e => setNewShapeLabel(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") addShape(); }}
+                  placeholder="e.g. Star, Circle, Butterfly…"
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ border: `1.5px solid #F5D0D8`, color: "#2D000A", background: "#FDF8F9" }}
+                />
+                <p className="text-[10px] mt-1.5" style={{ color: "#C0A0A8" }}>
+                  A storage bucket will be created automatically.
+                </p>
+              </div>
+              <button onClick={addShape} disabled={addingShape || !newShapeLabel.trim()}
+                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                style={{
+                  background: newShapeLabel.trim() && !addingShape ? ACCENT : "#F5D0D8",
+                  color:      newShapeLabel.trim() && !addingShape ? "white" : "#A05068",
+                  cursor:     newShapeLabel.trim() && !addingShape ? "pointer" : "not-allowed",
+                }}>
+                {addingShape ? "Creating…" : <><Plus size={14} /> Add Shape</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: "#2D000A" }}>Shape Settings</h1>
         <p className="text-sm mt-1" style={{ color: ACCENT }}>Manage images, sauces, and writing limits per cake shape</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {DEFAULT_SHAPES.map(s => (
-          <button key={s.shape} onClick={() => setActiveShape(s.shape)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-            style={{
-              background: activeShape === s.shape ? ACCENT : "white",
-              color:      activeShape === s.shape ? "white"  : ACCENT,
-              border:     `2px solid ${activeShape === s.shape ? ACCENT : "#F5D0D8"}`,
-              boxShadow:  activeShape === s.shape ? `0 2px 12px ${ACCENT}40` : "none",
-            }}>
-            <span>{SHAPE_ICONS[s.shape]}</span> {s.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-2 mb-6 items-center">
+        {configs.map(s => {
+          const icon    = SHAPE_ICONS[s.shape] ?? "✦";
+          const custom  = !BUILTIN_SHAPES.includes(s.shape);
+          const isActive = activeShape === s.shape;
+          return (
+            <div key={s.shape} className="relative group/tab">
+              <button onClick={() => setActiveShape(s.shape)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{
+                  background: isActive ? ACCENT : "white",
+                  color:      isActive ? "white" : ACCENT,
+                  border:     `2px solid ${isActive ? ACCENT : "#F5D0D8"}`,
+                  boxShadow:  isActive ? `0 2px 12px ${ACCENT}40` : "none",
+                  paddingRight: custom ? "2.5rem" : undefined,
+                }}>
+                <span>{icon}</span> {s.label}
+              </button>
+              {custom && (
+                <button
+                  onClick={() => deleteShape(s.shape)}
+                  disabled={deletingShape === s.shape}
+                  className="absolute top-1 right-1 w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover/tab:opacity-100 transition-opacity"
+                  style={{
+                    background: isActive ? "rgba(255,255,255,0.25)" : "#fee2e2",
+                    color:      isActive ? "white" : "#dc2626",
+                  }}
+                  title="Delete shape">
+                  {deletingShape === s.shape ? <span className="text-[9px]">…</span> : <X size={11} />}
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Add Shape button */}
+        <button onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+          style={{ background: "white", color: ACCENT, border: `2px dashed #F5D0D8` }}>
+          <Plus size={15} /> Add Shape
+        </button>
       </div>
 
       {/* Hidden file input */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
 
+      {!configsLoaded ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: `${ACCENT} transparent transparent transparent` }} />
+        </div>
+      ) : !cfg ? (
+        <div className="text-center py-20" style={{ color: ACCENT }}>Shape not found.</div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ── Color Image Grid ── */}
         <div className="lg:col-span-2 rounded-2xl overflow-hidden"
           style={{ background: "white", border: "1px solid #F5D0D8", boxShadow: "0 2px 20px rgba(45,0,10,0.06)" }}>
           <div className="px-6 py-4" style={{ borderBottom: "1px solid #F5D0D8", background: "#FDF8F9" }}>
-            <p className="font-bold text-base" style={{ color: "#2D000A" }}>{SHAPE_ICONS[activeShape]} {cfg.label} Images</p>
+            <p className="font-bold text-base" style={{ color: "#2D000A" }}>{shapeIcon} {cfg.label} Images</p>
             <p className="text-xs mt-0.5" style={{ color: ACCENT }}>Click any slot to upload or replace an image for that color</p>
           </div>
 
@@ -442,7 +579,6 @@ export default function SettingsPage() {
               <p className="text-xs mt-0.5" style={{ color: ACCENT }}>Max words customer can write for {cfg.label}</p>
             </div>
             <div className="p-5 space-y-4">
-              {/* Word tiles preview */}
               {(() => {
                 const limit = draftChars[activeShape] ?? cfg.max_chars;
                 const SAMPLE = ["Happy","Birthday","Dear","My","Love","Sweet","Wishes","Always","Best","You"];
@@ -472,7 +608,6 @@ export default function SettingsPage() {
                 );
               })()}
 
-              {/* Stepper */}
               <div className="flex items-center justify-between gap-3">
                 <button
                   onClick={() => setDraftChars(d => ({ ...d, [activeShape]: Math.max(1, (d[activeShape] ?? cfg.max_chars) - 1) }))}
@@ -504,8 +639,28 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Delete shape (custom only) */}
+          {!isBuiltin && (
+            <div className="rounded-2xl overflow-hidden"
+              style={{ background: "#fff5f5", border: "1px solid #fca5a5", boxShadow: "0 2px 20px rgba(45,0,10,0.06)" }}>
+              <div className="p-5 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-bold text-sm" style={{ color: "#991b1b" }}>Delete Shape</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>Remove this shape and its settings</p>
+                </div>
+                <button onClick={() => deleteShape(activeShape)} disabled={deletingShape === activeShape}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shrink-0"
+                  style={{ background: "#dc2626", color: "white" }}>
+                  <Trash2 size={14} />
+                  {deletingShape === activeShape ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+      )}
     </div>
   );
 }

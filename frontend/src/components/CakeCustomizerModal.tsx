@@ -21,7 +21,7 @@ async function uploadToOrders(file: File, folder: string): Promise<string | null
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const SHAPES = [
+const SHAPES_FALLBACK = [
   {
     id: "cake", label: "Full Cake",
     photo: "https://cmueehgxpbbnrqgjcquv.supabase.co/storage/v1/object/public/shapes/brown1.png?v=2",
@@ -341,10 +341,11 @@ export default function CakeCustomizerModal({
   const router    = useRouter();
   const [custStep,   setCustStep]   = useState(0);
   const [custSel,    setCustSel]    = useState<CustSel>(EMPTY_SEL);
+  const [dbShapes,   setDbShapes]   = useState<{ id: string; label: string; photo: string | null; svg: null }[]>(SHAPES_FALLBACK);
 
   const availableShapes  = product?.allowed_shapes?.length
-    ? SHAPES.filter(s => product.allowed_shapes.includes(s.id))
-    : SHAPES;
+    ? dbShapes.filter(s => product.allowed_shapes.includes(s.id))
+    : dbShapes;
   const availableFlavors = product?.allowed_flavors?.length
     ? FLAVORS.filter(f => product.allowed_flavors.includes(f.id))
     : FLAVORS;
@@ -376,35 +377,34 @@ export default function CakeCustomizerModal({
     return () => { document.body.style.overflow = ""; };
   }, [product]);
 
+  // Load shapes + their images dynamically from DB
   useEffect(() => {
-    fetch("/api/shape-configs", { cache: "no-store" })
+    fetch("/api/shapes", { cache: "no-store" })
       .then(r => r.json())
-      .then((data: { shape: string; max_chars: number; view_count?: number; allowed_colors: string[] }[]) => {
-        if (Array.isArray(data)) {
-          const m: Record<string, ShapeCfg> = {};
-          data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, view_count: c.view_count ?? (c.shape === "cake" ? 2 : 3), allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
-          setShapeConfigs(prev => ({ ...prev, ...m }));
+      .then((data: { shape: string; label: string; thumbnail: string | null; max_chars: number; view_count: number; allowed_colors: string[] }[]) => {
+        if (!Array.isArray(data) || !data.length) return;
+        setDbShapes(data.map(s => ({ id: s.shape, label: s.label, photo: s.thumbnail, svg: null })));
+        const m: Record<string, ShapeCfg> = {};
+        data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, view_count: c.view_count ?? 2, allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
+        setShapeConfigs(prev => ({ ...prev, ...m }));
+        // Load color images for all shapes
+        for (const s of data) {
+          fetch(`/api/shape-color-images?shape=${s.shape}`, { cache: "no-store" })
+            .then(r => r.json())
+            .then((rows: { color: string; view_index: number; url: string }[]) => {
+              if (!Array.isArray(rows) || !rows.length) return;
+              const map: Record<string, string[]> = {};
+              for (const row of rows) {
+                if (!map[row.color]) map[row.color] = [];
+                map[row.color][row.view_index] = row.url;
+              }
+              setShapeImageMaps(prev => ({ ...prev, [s.shape]: map }));
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    for (const shape of ["cake", "heart", "square"]) {
-      fetch(`/api/shape-color-images?shape=${shape}`, { cache: "no-store" })
-        .then(r => r.json())
-        .then((rows: { color: string; view_index: number; url: string }[]) => {
-          if (!Array.isArray(rows) || !rows.length) return;
-          const map: Record<string, string[]> = {};
-          for (const row of rows) {
-            if (!map[row.color]) map[row.color] = [];
-            map[row.color][row.view_index] = row.url;
-          }
-          setShapeImageMaps(prev => ({ ...prev, [shape]: map }));
-        })
-        .catch(() => {});
-    }
-  }, []);
 
   useEffect(() => {
     const category = product?.category ?? "Birthday";
@@ -442,10 +442,15 @@ export default function CakeCustomizerModal({
       .catch(() => {});
   }, []);
 
-  const BASE_PRICES = {
+  const BASE_PRICES: Record<string, number> = {
     cake:   rawPricing["shape_cake"]   ?? DEFAULT_BASE_PRICES.cake,
     heart:  rawPricing["shape_heart"]  ?? DEFAULT_BASE_PRICES.heart,
     square: rawPricing["shape_square"] ?? DEFAULT_BASE_PRICES.square,
+    ...Object.fromEntries(
+      dbShapes
+        .filter(s => !["cake","heart","square"].includes(s.id))
+        .map(s => [s.id, rawPricing[`shape_${s.id}`] ?? 85])
+    ),
   };
   const ADDON_PRICES = {
     sprinkles: rawPricing["addon_sprinkles"] ?? DEFAULT_ADDON_PRICES.sprinkles,
@@ -553,7 +558,7 @@ export default function CakeCustomizerModal({
       quantity:     1,
       unitPrice:    calcPrice(),
       customization: {
-        shape:    SHAPES.find((s) => s.id === custSel.shape)?.label,
+        shape:    dbShapes.find((s) => s.id === custSel.shape)?.label,
         flavor:   flavorLabel,
         color:    cakeColorLabel || undefined,
         toppings: toppingsList.length ? toppingsList : undefined,

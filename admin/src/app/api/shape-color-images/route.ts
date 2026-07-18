@@ -3,15 +3,14 @@ import { getAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
-const BUCKETS: Record<string, string> = {
-  cake:   "shapes",
-  heart:  "shapes heart",
-  square: "shape square",
-};
+async function getBucket(shape: string): Promise<string | null> {
+  const { data } = await getAdmin().from("shape_configs").select("bucket_name").eq("shape", shape).single();
+  return data?.bucket_name ?? null;
+}
 
 export async function GET(req: NextRequest) {
   const shape  = req.nextUrl.searchParams.get("shape") ?? "cake";
-  const bucket = BUCKETS[shape];
+  const bucket = await getBucket(shape);
   if (!bucket) return NextResponse.json({ error: "Unknown shape" }, { status: 400 });
 
   const sb = getAdmin();
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!shape || !color || isNaN(viewIndex) || !file)
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const bucket = BUCKETS[shape];
+  const bucket = await getBucket(shape);
   if (!bucket) return NextResponse.json({ error: "Unknown shape" }, { status: 400 });
 
   const sb  = getAdmin();
@@ -67,7 +66,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { shape, color, view_index } = await req.json();
-  const bucket = BUCKETS[shape];
+  const bucket = await getBucket(shape);
   if (!bucket) return NextResponse.json({ error: "Unknown shape" }, { status: 400 });
 
   const sb = getAdmin();
