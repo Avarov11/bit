@@ -1,10 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, EyeOff } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function ReadOnlyBanner() {
+  const { isReadOnly, username } = useAuth();
+  if (!isReadOnly) return null;
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
+      style={{ background: "#fef3c7", color: "#92400e", borderBottom: "1px solid #fde68a" }}>
+      <EyeOff size={13} />
+      Signed in as <strong>{username}</strong> — Read-only mode. Changes are disabled.
+    </div>
+  );
+}
+
+function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -22,7 +35,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             height: 56,
           }}
         >
-          {/* Hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shrink-0"
@@ -31,7 +43,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu size={17} className="text-white/80" />
           </button>
 
-          {/* Brand */}
           <div className="flex items-center gap-2 flex-1">
             <div
               className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
@@ -48,14 +59,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </span>
           </div>
 
-          {/* Pink accent dot */}
           <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#FF6B9D" }} />
         </header>
+
+        <ReadOnlyBanner />
 
         <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <Layout>{children}</Layout>
+    </AuthProvider>
   );
 }
