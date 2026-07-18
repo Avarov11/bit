@@ -31,6 +31,14 @@ function Toast({ msg, ok, onDone }: { msg: string; ok: boolean; onDone: () => vo
 export default function SlideshowPage() {
   const [slides,   setSlides]   = useState<Slide[]>([]);
   const [loading,  setLoading]  = useState(true);
+
+  const SLIDE_HINTS = [
+    "Qatar's Premier Brownie Brand",
+    "Custom brownie step-by-step",
+    "Accessories collection",
+    "Bride to Be collection",
+    "Gender Reveal",
+  ];
   const [toast,    setToast]    = useState<{ msg: string; ok: boolean } | null>(null);
   const [adding,   setAdding]   = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -213,6 +221,9 @@ export default function SlideshowPage() {
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-gray-800">Slide {idx + 1}</span>
+                  {SLIDE_HINTS[idx] && (
+                    <span className="text-xs text-gray-400 truncate max-w-[160px]">{SLIDE_HINTS[idx]}</span>
+                  )}
                   {slide.hidden && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 uppercase tracking-wide">
                       Hidden

@@ -190,9 +190,7 @@ export default function HomePage() {
       href: "/menu?category=Gender+Reveal",
     },
   ];
-  const [slides,      setSlides]      = useState<{ id: string; desktop_url: string | null; mobile_url: string | null }[]>([]);
-  const [bannerIdx,   setBannerIdx]   = useState(0);
-  const bannerTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [slides, setSlides] = useState<{ id: string; desktop_url: string | null; mobile_url: string | null }[]>([]);
 
   const [products, setProducts]       = useState<DbProduct[]>([]);
   const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
@@ -217,14 +215,6 @@ export default function HomePage() {
       .then(data => { if (Array.isArray(data) && data.length) setSlides(data); })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (slides.length < 2) return;
-    bannerTimer.current = setInterval(() => {
-      setBannerIdx(i => (i + 1) % slides.length);
-    }, 5000);
-    return () => { if (bannerTimer.current) clearInterval(bannerTimer.current); };
-  }, [slides.length]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -252,6 +242,15 @@ export default function HomePage() {
     }, 1500);
   };
 
+  // Merge DB images into HERO_SLIDES; if no DB slides yet, fall back to static files
+  const activeSlides = slides.length > 0
+    ? slides.map((s, i) => ({
+        ...(HERO_SLIDES[i] ?? { label: `Slide ${i + 1}`, headline: ["", ""], sub: "", tags: null, stats: null, steps: null, btn: "Order Now", href: "/menu" }),
+        image:       s.desktop_url ?? HERO_SLIDES[i]?.image  ?? "/slide1.jpeg",
+        mobileImage: s.mobile_url  ?? HERO_SLIDES[i]?.mobileImage,
+      }))
+    : HERO_SLIDES;
+
   return (
     <main className="overflow-x-hidden">
 
@@ -265,13 +264,13 @@ export default function HomePage() {
         onTouchEnd={(e) => {
           const diff = touchStartX.current - e.changedTouches[0].clientX;
           if (Math.abs(diff) > 50) {
-            if (diff > 0) goToSlide(s => (s + 1) % HERO_SLIDES.length);
-            else goToSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+            if (diff > 0) goToSlide(s => (s + 1) % activeSlides.length);
+            else goToSlide(s => (s - 1 + activeSlides.length) % activeSlides.length);
           }
         }}
       >
         {/* Ken Burns slides */}
-        {HERO_SLIDES.map((slide, i) => (
+        {activeSlides.map((slide, i) => (
           <div
             key={i}
             className={cn(
@@ -332,7 +331,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 border border-white/20 rounded-full px-4 py-1.5 mb-5 sm:mb-7 backdrop-blur-sm bg-white/5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B9D] shrink-0" />
                 <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.26em] uppercase text-white/55">
-                  {HERO_SLIDES[heroSlide].label}
+                  {activeSlides[heroSlide].label}
                 </span>
               </div>
 
@@ -341,7 +340,7 @@ export default function HomePage() {
                 className="font-playfair font-bold leading-[1.04] mb-4 sm:mb-5 text-white"
                 style={{ fontSize: "clamp(2.2rem, 5.5vw, 5rem)" }}
               >
-                {HERO_SLIDES[heroSlide].headline[0]}
+                {activeSlides[heroSlide].headline[0]}
                 <br />
                 <span
                   style={{
@@ -351,7 +350,7 @@ export default function HomePage() {
                     backgroundClip: "text",
                   }}
                 >
-                  {HERO_SLIDES[heroSlide].headline[1]}
+                  {activeSlides[heroSlide].headline[1]}
                 </span>
               </h1>
 
@@ -360,14 +359,14 @@ export default function HomePage() {
 
               {/* Subtext */}
               <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-[340px] sm:max-w-md mb-5 sm:mb-6">
-                {HERO_SLIDES[heroSlide].sub}
+                {activeSlides[heroSlide].sub}
               </p>
 
               {/* ── Slide 1: feature tags + stats row ── */}
-              {HERO_SLIDES[heroSlide].tags && (
+              {activeSlides[heroSlide].tags && (
                 <>
                   <div className="flex flex-wrap gap-2 mb-5 sm:mb-6">
-                    {HERO_SLIDES[heroSlide].tags!.map((tag) => (
+                    {activeSlides[heroSlide].tags!.map((tag) => (
                       <span
                         key={tag}
                         className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 backdrop-blur-sm text-white/70 text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-full"
@@ -378,9 +377,9 @@ export default function HomePage() {
                     ))}
                   </div>
 
-                  {HERO_SLIDES[heroSlide].stats && (
+                  {activeSlides[heroSlide].stats && (
                     <div className="flex items-center gap-5 sm:gap-8 mb-6 sm:mb-8">
-                      {HERO_SLIDES[heroSlide].stats!.map((s, i) => (
+                      {activeSlides[heroSlide].stats!.map((s, i) => (
                         <div key={i} className="flex flex-col">
                           <span
                             className="font-playfair font-bold text-white leading-none"
@@ -399,9 +398,9 @@ export default function HomePage() {
               )}
 
               {/* ── Slide 2: customization steps ── */}
-              {HERO_SLIDES[heroSlide].steps && (
+              {activeSlides[heroSlide].steps && (
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-6 sm:mb-8">
-                  {HERO_SLIDES[heroSlide].steps!.map((step) => (
+                  {activeSlides[heroSlide].steps!.map((step) => (
                     <div
                       key={step.text}
                       className="flex items-center gap-2.5 bg-white/6 border border-white/12 backdrop-blur-sm rounded-xl px-3 py-2.5 sm:px-4 sm:py-3"
@@ -426,11 +425,11 @@ export default function HomePage() {
 
               {/* CTA button */}
               <Link
-                href={HERO_SLIDES[heroSlide].href}
+                href={activeSlides[heroSlide].href}
                 className="inline-flex items-center gap-2.5 bg-[#FF6B9D] hover:bg-white hover:text-[#800020] text-white font-semibold px-7 py-3.5 sm:px-9 sm:py-4 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97] text-sm sm:text-base whitespace-nowrap"
                 style={{ boxShadow: "0 10px 32px rgba(255,107,157,0.40)" }}
               >
-                {HERO_SLIDES[heroSlide].btn} <ArrowRight size={16} />
+                {activeSlides[heroSlide].btn} <ArrowRight size={16} />
               </Link>
 
             </div>
@@ -443,7 +442,7 @@ export default function HomePage() {
         >
           {/* Progress strips */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {HERO_SLIDES.map((_, i) => (
+            {activeSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goToSlide(i)}
@@ -468,18 +467,18 @@ export default function HomePage() {
           {/* Label + arrows */}
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden md:block text-white/35 text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
-              {HERO_SLIDES[heroSlide].label}
+              {activeSlides[heroSlide].label}
             </span>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => goToSlide(s => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+                onClick={() => goToSlide(s => (s - 1 + activeSlides.length) % activeSlides.length)}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Previous"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
-                onClick={() => goToSlide(s => (s + 1) % HERO_SLIDES.length)}
+                onClick={() => goToSlide(s => (s + 1) % activeSlides.length)}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 hover:border-white/50 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 touch-manipulation"
                 aria-label="Next"
               >
@@ -506,80 +505,6 @@ export default function HomePage() {
           animation: hero-text-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
       `}</style>
-
-      {/* ═══════════════════════════════════════════════════════════
-          BANNER SLIDESHOW (DB-managed)
-      ═══════════════════════════════════════════════════════════ */}
-      {slides.length > 0 && (
-        <section
-          className="relative w-full overflow-hidden bg-[#0a0005]"
-          style={{ height: "clamp(180px, 35vw, 520px)" }}
-          onTouchStart={e => { touchStartX.current = e.changedTouches[0].clientX; }}
-          onTouchEnd={e => {
-            const diff = touchStartX.current - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) {
-              if (bannerTimer.current) clearInterval(bannerTimer.current);
-              if (diff > 0) setBannerIdx(i => (i + 1) % slides.length);
-              else          setBannerIdx(i => (i - 1 + slides.length) % slides.length);
-            }
-          }}
-        >
-          {slides.map((slide, i) => (
-            <div
-              key={slide.id}
-              className={cn(
-                "absolute inset-0 transition-opacity duration-[1000ms]",
-                i === bannerIdx ? "opacity-100 z-10" : "opacity-0 z-0"
-              )}
-            >
-              {/* Mobile image */}
-              {slide.mobile_url && (
-                <Image
-                  src={slide.mobile_url}
-                  alt={`Slide ${i + 1} mobile`}
-                  fill
-                  sizes="(max-width: 767px) 100vw, 0px"
-                  className="object-cover md:hidden"
-                  priority={i === 0}
-                />
-              )}
-              {/* Desktop image */}
-              {slide.desktop_url && (
-                <Image
-                  src={slide.desktop_url}
-                  alt={`Slide ${i + 1}`}
-                  fill
-                  sizes={slide.mobile_url ? "(min-width: 768px) 100vw, 0px" : "100vw"}
-                  className={cn("object-cover", slide.mobile_url && "hidden md:block")}
-                  priority={i === 0}
-                />
-              )}
-            </div>
-          ))}
-
-          {/* Dot navigation */}
-          {slides.length > 1 && (
-            <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (bannerTimer.current) clearInterval(bannerTimer.current);
-                    setBannerIdx(i);
-                  }}
-                  aria-label={`Banner slide ${i + 1}`}
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    height: 3,
-                    width: i === bannerIdx ? 32 : 12,
-                    background: i === bannerIdx ? "#FF6B9D" : "rgba(255,255,255,0.45)",
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* ═══════════════════════════════════════════════════════════
           BESTSELLERS
