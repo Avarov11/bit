@@ -84,6 +84,8 @@ const STEPS = [
 const DEFAULT_BASE_PRICES: Record<string, number> = { cake: 160, heart: 85, square: 85 };
 const DEFAULT_ADDON_PRICES = { sprinkles: 5, writing: 10, sticker: 30, image: 30, candles: 25, balloons: 25, card: 25 };
 
+interface ExtraItem { url: string; qty: number; }
+
 interface CustSel {
   shape: string;
   flavorType: string;
@@ -95,15 +97,15 @@ interface CustSel {
   toppingText: string;
   stickerUrl: string | null;
   imageFile: File | null;
-  candleUrl: string | null;
-  balloonUrl: string | null;
-  cardUrl: string | null;
+  candles:  ExtraItem[];
+  balloons: ExtraItem[];
+  cards:    ExtraItem[];
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
   sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
-  candleUrl: null, balloonUrl: null, cardUrl: null,
+  candles: [], balloons: [], cards: [],
 };
 
 // ─── Sprinkle overlay ────────────────────────────────────────────────────────
@@ -460,9 +462,9 @@ export default function CakeCustomizerModal({
     const topping = custSel.topping === "write"   ? ADDON_PRICES.writing
                   : custSel.topping === "sticker" ? ADDON_PRICES.sticker
                   : custSel.topping === "image"   ? ADDON_PRICES.image : 0;
-    const extras  = (custSel.candleUrl  ? ADDON_PRICES.candles  : 0)
-                  + (custSel.balloonUrl ? ADDON_PRICES.balloons : 0)
-                  + (custSel.cardUrl    ? ADDON_PRICES.card     : 0);
+    const extras  = custSel.candles.reduce( (s, i) => s + i.qty * ADDON_PRICES.candles,  0)
+                  + custSel.balloons.reduce((s, i) => s + i.qty * ADDON_PRICES.balloons, 0)
+                  + custSel.cards.reduce(  (s, i) => s + i.qty * ADDON_PRICES.card,      0);
     return base + spr + topping + extras;
   };
 
@@ -534,9 +536,9 @@ export default function CakeCustomizerModal({
     const cakeColorLabel = CAKE_COLORS.find((c) => c.id === custSel.cakeColor)?.label;
     const toppingsList: string[] = [];
     if (custSel.sprinkles === "yes") toppingsList.push("Sprinkles");
-    if (custSel.candleUrl)   toppingsList.push("Candles");
-    if (custSel.balloonUrl)  toppingsList.push("Balloons");
-    if (custSel.cardUrl)     toppingsList.push("Card");
+    if (custSel.candles.length)  toppingsList.push(`Candles ×${custSel.candles.reduce( (s,i)=>s+i.qty,0)}`);
+    if (custSel.balloons.length) toppingsList.push(`Balloons ×${custSel.balloons.reduce((s,i)=>s+i.qty,0)}`);
+    if (custSel.cards.length)    toppingsList.push(`Card ×${custSel.cards.reduce(   (s,i)=>s+i.qty,0)}`);
 
     const stickerUrl = custSel.topping === "sticker" ? custSel.stickerUrl ?? undefined : undefined;
     let imageUrl:   string | undefined;
@@ -558,9 +560,12 @@ export default function CakeCustomizerModal({
         message:  custSel.topping === "write" ? custSel.toppingText.trim() || undefined : undefined,
         stickerUrl,
         imageUrl,
-        candleUrl:  custSel.candleUrl  ?? undefined,
-        balloonUrl: custSel.balloonUrl ?? undefined,
-        cardUrl:    custSel.cardUrl    ?? undefined,
+        candleUrl:  custSel.candles[0]?.url,
+        balloonUrl: custSel.balloons[0]?.url,
+        cardUrl:    custSel.cards[0]?.url,
+        candles:    custSel.candles.length  ? custSel.candles  : undefined,
+        balloons:   custSel.balloons.length ? custSel.balloons : undefined,
+        cards:      custSel.cards.length    ? custSel.cards    : undefined,
       },
     });
   };
@@ -601,6 +606,19 @@ export default function CakeCustomizerModal({
     </button>
   );
 
+  const addExtra = (key: "candles"|"balloons"|"cards", url: string) =>
+    setCustSel(p => {
+      const list = p[key];
+      if (list.find(i => i.url === url)) return { ...p, [key]: list.map(i => i.url===url ? {...i, qty: i.qty+1} : i) };
+      return { ...p, [key]: [...list, {url, qty: 1}] };
+    });
+
+  const changeExtraQty = (key: "candles"|"balloons"|"cards", url: string, delta: number) =>
+    setCustSel(p => ({
+      ...p,
+      [key]: p[key].map(i => i.url===url ? {...i, qty: Math.max(0, i.qty+delta)} : i).filter(i => i.qty > 0),
+    }));
+
   const renderStep = () => {
     if (custStep === 4) {
       return (
@@ -608,95 +626,74 @@ export default function CakeCustomizerModal({
           <h2 className="font-playfair text-2xl font-bold text-[#2D000A] mb-0.5">Extras</h2>
           <p className="text-[#A05068] text-sm mb-6">Add a little something extra — totally optional 🎉</p>
           <div className="grid grid-cols-3 gap-3">
-            {/* Candles — image picker */}
+            {/* Candles */}
             <button
               onClick={() => { setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                (custSel.candleUrl || showCandlePicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                (custSel.candles.length || showCandlePicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
               )}
             >
-              {custSel.candleUrl && (
-                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
-                  <Check size={10} className="text-white" strokeWidth={3} />
+              {custSel.candles.length > 0 && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                  {custSel.candles.reduce((s,i)=>s+i.qty,0)}
                 </span>
               )}
-              {custSel.candleUrl ? (
-                <div className="w-full h-[72px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={custSel.candleUrl} alt="Selected candle" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
-                  <Flame size={36} strokeWidth={1.5} className="text-[#800020]" />
-                </div>
-              )}
+              <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                <Flame size={36} strokeWidth={1.5} className="text-[#800020]" />
+              </div>
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Candles</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.candleUrl ? "Change design" : "Choose design"}
+                  {custSel.candles.length ? `${custSel.candles.length} design${custSel.candles.length>1?"s":""}` : "Choose design"}
                 </p>
               </div>
             </button>
 
-            {/* Balloons — image picker */}
+            {/* Balloons */}
             <button
               onClick={() => { setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                (custSel.balloonUrl || showBalloonPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                (custSel.balloons.length || showBalloonPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
               )}
             >
-              {custSel.balloonUrl && (
-                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
-                  <Check size={10} className="text-white" strokeWidth={3} />
+              {custSel.balloons.length > 0 && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                  {custSel.balloons.reduce((s,i)=>s+i.qty,0)}
                 </span>
               )}
-              {custSel.balloonUrl ? (
-                <div className="w-full h-[72px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={custSel.balloonUrl} alt="Selected balloon" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
-                  <Balloon size={36} strokeWidth={1.5} className="text-[#800020]" />
-                </div>
-              )}
+              <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                <Balloon size={36} strokeWidth={1.5} className="text-[#800020]" />
+              </div>
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Balloons</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.balloonUrl ? "Change design" : "Choose design"}
+                  {custSel.balloons.length ? `${custSel.balloons.length} design${custSel.balloons.length>1?"s":""}` : "Choose design"}
                 </p>
               </div>
             </button>
 
-            {/* Cards — image picker */}
+            {/* Cards */}
             <button
               onClick={() => { setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
-                (custSel.cardUrl || showCardPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                (custSel.cards.length || showCardPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
               )}
             >
-              {custSel.cardUrl && (
-                <span className="absolute top-2 right-2 z-10 bg-[#800020] rounded-full p-0.5">
-                  <Check size={10} className="text-white" strokeWidth={3} />
+              {custSel.cards.length > 0 && (
+                <span className="absolute top-2 right-2 z-10 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                  {custSel.cards.reduce((s,i)=>s+i.qty,0)}
                 </span>
               )}
-              {custSel.cardUrl ? (
-                <div className="w-full h-[72px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={custSel.cardUrl} alt="Selected card" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
-                  <Mail size={36} strokeWidth={1.5} className="text-[#800020]" />
-                </div>
-              )}
+              <div className="bg-[#F5D0D8] flex items-center justify-center py-5">
+                <Mail size={36} strokeWidth={1.5} className="text-[#800020]" />
+              </div>
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Cards</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.cardUrl ? "Change design" : "Choose design"}
+                  {custSel.cards.length ? `${custSel.cards.length} design${custSel.cards.length>1?"s":""}` : "Choose design"}
                 </p>
               </div>
             </button>
@@ -706,53 +703,44 @@ export default function CakeCustomizerModal({
           {showCandlePicker && (
             <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
-                  {candleImages.length} Designs
-                </p>
-                <button
-                  onClick={() => setShowCandlePicker(false)}
-                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
-                >
-                  Close
-                </button>
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{candleImages.length} Designs</p>
+                <button onClick={() => setShowCandlePicker(false)} className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors">Done</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {candleImages.map((c) => {
-                  const sel = custSel.candleUrl === c.url;
+                  const item = custSel.candles.find(i => i.url === c.url);
                   return (
-                    <button
-                      key={c.url}
-                      onClick={() => {
-                        setCustSel((p) => ({ ...p, candleUrl: c.url }));
-                        setShowCandlePicker(false);
-                      }}
-                      className={cn(
-                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
-                        sel
-                          ? "border-[#800020] ring-2 ring-[#800020]/20"
-                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                    <div key={c.url} className="flex flex-col gap-1">
+                      <button
+                        onClick={() => addExtra("candles", c.url)}
+                        className={cn(
+                          "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                          item ? "border-[#800020] ring-2 ring-[#800020]/20" : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                        )}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={c.url} alt={c.name} className="w-full aspect-square object-cover" />
+                        {item && (
+                          <>
+                            <span className="absolute inset-0 bg-[#800020]/10" />
+                            <span className="absolute top-1 right-1 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">{item.qty}</span>
+                          </>
+                        )}
+                      </button>
+                      {item && (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => changeExtraQty("candles", c.url, -1)} className="w-6 h-6 rounded-full bg-[#F5D0D8] text-[#800020] font-bold text-sm flex items-center justify-center leading-none">−</button>
+                          <span className="text-xs font-bold text-[#2D000A] min-w-[16px] text-center">{item.qty}</span>
+                          <button onClick={() => changeExtraQty("candles", c.url, +1)} className="w-6 h-6 rounded-full bg-[#800020] text-white font-bold text-sm flex items-center justify-center leading-none">+</button>
+                        </div>
                       )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.url} alt={c.name} className="w-full aspect-square object-cover" />
-                      {sel && (
-                        <>
-                          <span className="absolute inset-0 bg-[#800020]/10" />
-                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
-                            <Check size={10} className="text-white" strokeWidth={3} />
-                          </span>
-                        </>
-                      )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-              {custSel.candleUrl && (
-                <button
-                  onClick={() => { setCustSel((p) => ({ ...p, candleUrl: null })); setShowCandlePicker(false); }}
-                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
-                >
-                  Remove candles
+              {custSel.candles.length > 0 && (
+                <button onClick={() => setCustSel(p => ({ ...p, candles: [] }))} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center">
+                  Clear all candles
                 </button>
               )}
             </div>
@@ -762,53 +750,44 @@ export default function CakeCustomizerModal({
           {showBalloonPicker && (
             <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
-                  {balloonImages.length} Designs
-                </p>
-                <button
-                  onClick={() => setShowBalloonPicker(false)}
-                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
-                >
-                  Close
-                </button>
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{balloonImages.length} Designs</p>
+                <button onClick={() => setShowBalloonPicker(false)} className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors">Done</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {balloonImages.map((b) => {
-                  const sel = custSel.balloonUrl === b.url;
+                  const item = custSel.balloons.find(i => i.url === b.url);
                   return (
-                    <button
-                      key={b.url}
-                      onClick={() => {
-                        setCustSel((p) => ({ ...p, balloonUrl: b.url }));
-                        setShowBalloonPicker(false);
-                      }}
-                      className={cn(
-                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
-                        sel
-                          ? "border-[#800020] ring-2 ring-[#800020]/20"
-                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                    <div key={b.url} className="flex flex-col gap-1">
+                      <button
+                        onClick={() => addExtra("balloons", b.url)}
+                        className={cn(
+                          "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                          item ? "border-[#800020] ring-2 ring-[#800020]/20" : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                        )}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={b.url} alt={b.name} className="w-full aspect-square object-cover" />
+                        {item && (
+                          <>
+                            <span className="absolute inset-0 bg-[#800020]/10" />
+                            <span className="absolute top-1 right-1 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">{item.qty}</span>
+                          </>
+                        )}
+                      </button>
+                      {item && (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => changeExtraQty("balloons", b.url, -1)} className="w-6 h-6 rounded-full bg-[#F5D0D8] text-[#800020] font-bold text-sm flex items-center justify-center leading-none">−</button>
+                          <span className="text-xs font-bold text-[#2D000A] min-w-[16px] text-center">{item.qty}</span>
+                          <button onClick={() => changeExtraQty("balloons", b.url, +1)} className="w-6 h-6 rounded-full bg-[#800020] text-white font-bold text-sm flex items-center justify-center leading-none">+</button>
+                        </div>
                       )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={b.url} alt={b.name} className="w-full aspect-square object-cover" />
-                      {sel && (
-                        <>
-                          <span className="absolute inset-0 bg-[#800020]/10" />
-                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
-                            <Check size={10} className="text-white" strokeWidth={3} />
-                          </span>
-                        </>
-                      )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-              {custSel.balloonUrl && (
-                <button
-                  onClick={() => { setCustSel((p) => ({ ...p, balloonUrl: null })); setShowBalloonPicker(false); }}
-                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
-                >
-                  Remove balloons
+              {custSel.balloons.length > 0 && (
+                <button onClick={() => setCustSel(p => ({ ...p, balloons: [] }))} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center">
+                  Clear all balloons
                 </button>
               )}
             </div>
@@ -818,59 +797,50 @@ export default function CakeCustomizerModal({
           {showCardPicker && (
             <div className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">
-                  {cards.length} Designs
-                </p>
-                <button
-                  onClick={() => setShowCardPicker(false)}
-                  className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors"
-                >
-                  Close
-                </button>
+                <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{cards.length} Designs</p>
+                <button onClick={() => setShowCardPicker(false)} className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors">Done</button>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {cards.map((c) => {
-                  const sel = custSel.cardUrl === c.url;
+                  const item = custSel.cards.find(i => i.url === c.url);
                   return (
-                    <button
-                      key={c.url}
-                      onClick={() => {
-                        setCustSel((p) => ({ ...p, cardUrl: c.url }));
-                        setShowCardPicker(false);
-                      }}
-                      className={cn(
-                        "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
-                        sel
-                          ? "border-[#800020] ring-2 ring-[#800020]/20"
-                          : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                    <div key={c.url} className="flex flex-col gap-1">
+                      <button
+                        onClick={() => addExtra("cards", c.url)}
+                        className={cn(
+                          "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                          item ? "border-[#800020] ring-2 ring-[#800020]/20" : "border-[rgba(128,0,32,0.08)] hover:border-[#800020]/40 hover:scale-[1.03]"
+                        )}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={c.url} alt={c.name} className="w-full aspect-[3/4] object-cover" />
+                        {item && (
+                          <>
+                            <span className="absolute inset-0 bg-[#800020]/10" />
+                            <span className="absolute top-1 right-1 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">{item.qty}</span>
+                          </>
+                        )}
+                      </button>
+                      {item && (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => changeExtraQty("cards", c.url, -1)} className="w-6 h-6 rounded-full bg-[#F5D0D8] text-[#800020] font-bold text-sm flex items-center justify-center leading-none">−</button>
+                          <span className="text-xs font-bold text-[#2D000A] min-w-[16px] text-center">{item.qty}</span>
+                          <button onClick={() => changeExtraQty("cards", c.url, +1)} className="w-6 h-6 rounded-full bg-[#800020] text-white font-bold text-sm flex items-center justify-center leading-none">+</button>
+                        </div>
                       )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.url} alt={c.name} className="w-full aspect-[3/4] object-cover" />
-                      {sel && (
-                        <>
-                          <span className="absolute inset-0 bg-[#800020]/10" />
-                          <span className="absolute top-1 right-1 bg-[#800020] rounded-full p-0.5 shadow">
-                            <Check size={10} className="text-white" strokeWidth={3} />
-                          </span>
-                        </>
-                      )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-              {custSel.cardUrl && (
-                <button
-                  onClick={() => { setCustSel((p) => ({ ...p, cardUrl: null })); setShowCardPicker(false); }}
-                  className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center"
-                >
-                  Remove card
+              {custSel.cards.length > 0 && (
+                <button onClick={() => setCustSel(p => ({ ...p, cards: [] }))} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center">
+                  Clear all cards
                 </button>
               )}
             </div>
           )}
 
-          {!custSel.candleUrl && !custSel.balloonUrl && !custSel.cardUrl && (
+          {!custSel.candles.length && !custSel.balloons.length && !custSel.cards.length && (
             <p className="text-center text-[#A05068]/60 text-xs mt-5">Tap to select, or skip to continue</p>
           )}
         </div>
@@ -904,9 +874,9 @@ export default function CakeCustomizerModal({
                 : "—"
               }
             />
-            <SummaryRow label="Candles"  value={custSel.candleUrl ? `Yes (+QAR ${ADDON_PRICES.candles})` : "None"} />
-            <SummaryRow label="Balloons" value={custSel.balloonUrl ? `Yes (+QAR ${ADDON_PRICES.balloons})` : "None"} />
-            <SummaryRow label="Card"     value={custSel.cardUrl  ? `Yes (+QAR ${ADDON_PRICES.card})`     : "None"} />
+            <SummaryRow label="Candles"  value={custSel.candles.length  ? `×${custSel.candles.reduce((s,i)=>s+i.qty,0)} (+QAR ${custSel.candles.reduce((s,i)=>s+i.qty*ADDON_PRICES.candles,0)})`   : "None"} />
+            <SummaryRow label="Balloons" value={custSel.balloons.length ? `×${custSel.balloons.reduce((s,i)=>s+i.qty,0)} (+QAR ${custSel.balloons.reduce((s,i)=>s+i.qty*ADDON_PRICES.balloons,0)})` : "None"} />
+            <SummaryRow label="Card"     value={custSel.cards.length    ? `×${custSel.cards.reduce((s,i)=>s+i.qty,0)} (+QAR ${custSel.cards.reduce((s,i)=>s+i.qty*ADDON_PRICES.card,0)})`           : "None"} />
           </div>
         </div>
       );
@@ -1372,8 +1342,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[10px] text-[#800020]/40">· +{ADDON_PRICES.image}</span>}
-                      {custSel.candleUrl   && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.candles} <Flame size={9} strokeWidth={2} /></span>}
-                      {custSel.balloonUrl && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{ADDON_PRICES.balloons} <Balloon size={9} strokeWidth={2} /></span>}
+                      {custSel.candles.length  > 0 && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{custSel.candles.reduce((s,i)=>s+i.qty*ADDON_PRICES.candles,0)} <Flame size={9} strokeWidth={2} /></span>}
+                      {custSel.balloons.length > 0 && <span className="inline-flex items-center gap-0.5 text-[10px] text-[#800020]/40">· +{custSel.balloons.reduce((s,i)=>s+i.qty*ADDON_PRICES.balloons,0)} <Balloon size={9} strokeWidth={2} /></span>}
                     </div>
                     <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
                   </div>
@@ -1452,8 +1422,8 @@ export default function CakeCustomizerModal({
                       {custSel.topping === "write"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.writing}</span>}
                       {custSel.topping === "sticker" && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.sticker}</span>}
                       {custSel.topping === "image"   && <span className="text-[9px] text-[#800020]/40">+{ADDON_PRICES.image}</span>}
-                      {custSel.candleUrl   && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.candles} <Flame size={8} strokeWidth={2} /></span>}
-                      {custSel.balloonUrl && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{ADDON_PRICES.balloons} <Balloon size={8} strokeWidth={2} /></span>}
+                      {custSel.candles.length  > 0 && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{custSel.candles.reduce((s,i)=>s+i.qty*ADDON_PRICES.candles,0)} <Flame size={8} strokeWidth={2} /></span>}
+                      {custSel.balloons.length > 0 && <span className="inline-flex items-center gap-0.5 text-[9px] text-[#800020]/40">+{custSel.balloons.reduce((s,i)=>s+i.qty*ADDON_PRICES.balloons,0)} <Balloon size={8} strokeWidth={2} /></span>}
                     </div>
                   </div>
                   <span className="font-playfair font-bold text-[#800020] text-sm shrink-0">QAR {calcPrice()}</span>
