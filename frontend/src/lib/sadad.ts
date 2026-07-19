@@ -1,5 +1,11 @@
 import crypto from 'crypto'
 
+export function getSadadSecretKey(): string {
+  return process.env.SADAD_SANDBOX === 'true'
+    ? process.env.SADAD_TEST_SECRET_KEY!
+    : process.env.SADAD_LIVE_SECRET_KEY!
+}
+
 export function generateSignature(
   params: Record<string, string>,
   secretKey: string
@@ -20,7 +26,7 @@ export function buildSadadForm(orderData: {
   itemName: string
 }): { formHtml: string; signature: string; params: Record<string, string> } {
   const merchantId  = process.env.SADAD_MERCHANT_ID!
-  const secretKey   = process.env.SADAD_SECRET_KEY!
+  const secretKey   = getSadadSecretKey()
   const website     = 'biteezcustomer.vercel.app'
   const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment-callback`
 

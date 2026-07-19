@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateSignature } from '@/lib/sadad'
+import { generateSignature, getSadadSecretKey } from '@/lib/sadad'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as Record<string, string>
     const { checksumhash, ...sigParams } = body
 
-    const computedSig = generateSignature(sigParams, process.env.SADAD_SECRET_KEY!)
+    const computedSig = generateSignature(sigParams, getSadadSecretKey())
     const sigValid    = computedSig === checksumhash
     console.log('[webhook] SADAD webhook received, sig valid:', sigValid, 'status:', body.transactionStatus)
 

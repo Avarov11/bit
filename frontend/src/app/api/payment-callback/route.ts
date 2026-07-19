@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { generateSignature } from '@/lib/sadad'
+import { generateSignature, getSadadSecretKey } from '@/lib/sadad'
 import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -16,12 +16,10 @@ export async function POST(req: NextRequest) {
     console.log('[callback] SADAD callback received:', fields)
 
     const { checksumhash, ...sigParams } = fields
-    const computedSig = generateSignature(sigParams, process.env.SADAD_SECRET_KEY!)
+    const computedSig = generateSignature(sigParams, getSadadSecretKey())
     const sigValid    = computedSig === checksumhash
     // If sigValid is false, compare these two values in Vercel function logs.
-    // A mismatch almost always means SADAD_SECRET_KEY in Vercel env vars differs
-    // from the key shown in the SADAD merchant sandbox console for merchant 4228868.
-    // Verify and update the env var before going live.
+    // Check that SADAD_SANDBOX matches the key in use (true→TEST key, false→LIVE key).
     console.log('[callback] signature check — valid:', sigValid)
     console.log('[callback]   computed :', computedSig)
     console.log('[callback]   received :', checksumhash)
@@ -58,7 +56,7 @@ export async function POST(req: NextRequest) {
         .single()
 
       const token = crypto
-        .createHmac('sha256', process.env.SADAD_SECRET_KEY!)
+        .createHmac('sha256', getSadadSecretKey())
         .update(orderId)
         .digest('hex')
         .slice(0, 16)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { getSadadSecretKey } from "@/lib/sadad";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   // Verify the token is the one we embedded in the success redirect URL.
   // This prevents enumeration of customer data by random 6-digit guessing.
   const expected = crypto
-    .createHmac("sha256", process.env.SADAD_SECRET_KEY!)
+    .createHmac("sha256", getSadadSecretKey())
     .update(n)
     .digest("hex")
     .slice(0, 16);

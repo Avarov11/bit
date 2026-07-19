@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { getSadadSecretKey } from '@/lib/sadad'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,7 @@ export async function POST(req: NextRequest) {
     console.log('[sadad-webhook] received:', JSON.stringify(body))
 
     const { checksumhash, ...rest } = body
-    const secretKey = process.env.SADAD_SECRET_KEY!
+    const secretKey = getSadadSecretKey()
 
     const sorted = Object.keys(rest).sort()
     const str = secretKey + sorted.map((k: string) => String(rest[k])).join('')

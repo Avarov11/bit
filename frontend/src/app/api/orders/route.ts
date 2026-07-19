@@ -33,6 +33,12 @@ export async function POST(req: Request) {
     order_number,
   } = body;
 
+  // ── Minimum order amount ──────────────────────────────────────────────────
+  if (!total || Number(total) < 1) {
+    return NextResponse.json({ error: "Minimum order amount is 1 QAR." }, { status: 400 });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ── Capacity enforcement ──────────────────────────────────────────────────
   if (pickup_date && pickup_time) {
     const sb = getAdmin();
