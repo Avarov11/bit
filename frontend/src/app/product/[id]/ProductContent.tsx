@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Minus, ShoppingBag, Check } from "lucide-react";
+import { ChevronLeft, Plus, Minus, ShoppingBag } from "lucide-react";
 import type { DbProduct } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
@@ -31,21 +31,29 @@ const catKeyMap: Record<string, string> = {
   Cards: "cat_cards",
 };
 
-// Maps category → { api route, customization key }
 const PICKER_CONFIG: Record<string, { api: string; key: "candleUrl" | "balloonUrl" | "cardUrl"; label: string }> = {
   Candles:  { api: "/api/candles",  key: "candleUrl",  label: "candle design"  },
   Balloons: { api: "/api/balloons", key: "balloonUrl", label: "balloon design" },
   Cards:    { api: "/api/cards",    key: "cardUrl",    label: "card design"    },
 };
 
+const EXTRA_ARRAY_KEY: Record<string, "candles" | "balloons" | "cards"> = {
+  candleUrl:  "candles",
+  balloonUrl: "balloons",
+  cardUrl:    "cards",
+};
+
 export default function ProductContent({ product }: { product: DbProduct }) {
   const router        = useRouter();
   const { t, lang }   = useLanguage();
   const addItem       = useCartStore((s) => s.addItem);
-  const [quantity,    setQuantity]    = useState(1);
-  const [adding,      setAdding]      = useState(false);
-  const [designs,     setDesigns]     = useState<{ name: string; url: string }[]>([]);
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [quantity,    setQuantity]   = useState(1);
+  const [adding,      setAdding]     = useState(false);
+  const [designs,     setDesigns]    = useState<{ name: string; url: string }[]>([]);
+  // Per-design quantities for picker products (balloons / candles / cards)
+  const [designQtys,  setDesignQtys] = useState<Record<string, number>>({});
+  // Which design image is shown in the main preview
+  const [previewUrl,  setPreviewUrl] = useState<string | null>(null);
 
   const badgeKey  = product.subcategory ?? product.category;
   const picker    = PICKER_CONFIG[badgeKey] ?? null;
@@ -61,18 +69,44 @@ export default function ProductContent({ product }: { product: DbProduct }) {
       .catch(() => {});
   }, [picker?.api]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mainImage = selectedUrl ?? product.image_url ?? "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
+  const mainImage = previewUrl ?? product.image_url ?? "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
+
+  // Total balloon/candle/card count across all designs
+  const totalPickerQty = Object.values(designQtys).reduce((a, b) => a + b, 0);
+
+  const changeDesignQty = (url: string, delta: number) =>
+    setDesignQtys((prev) => {
+      const next = Math.max(0, (prev[url] ?? 0) + delta);
+      return { ...prev, [url]: next };
+    });
 
   const handleAddToCart = () => {
     setAdding(true);
-    addItem({
-      productId:    product.id,
-      productName:  product.name,
-      productImage: product.image_url || "",
-      quantity,
-      unitPrice:    product.price,
-      customization: picker && selectedUrl ? { [picker.key]: selectedUrl } : {},
-    });
+
+    if (picker) {
+      const selected = designs
+        .filter((d) => (designQtys[d.url] ?? 0) > 0)
+        .map((d) => ({ url: d.url, qty: designQtys[d.url] }));
+
+      addItem({
+        productId:    product.id,
+        productName:  product.name,
+        productImage: product.image_url || "",
+        quantity:     totalPickerQty,
+        unitPrice:    product.price,
+        customization: { [EXTRA_ARRAY_KEY[picker.key]]: selected },
+      });
+    } else {
+      addItem({
+        productId:    product.id,
+        productName:  product.name,
+        productImage: product.image_url || "",
+        quantity,
+        unitPrice:    product.price,
+        customization: {},
+      });
+    }
+
     setTimeout(() => router.push("/cart"), 700);
   };
 
@@ -92,7 +126,7 @@ export default function ProductContent({ product }: { product: DbProduct }) {
 
       <div className="max-w-4xl mx-auto px-6 md:px-12 py-8">
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          {/* Main image — updates to selected design */}
+          {/* Main image — updates to tapped design */}
           <div className="relative w-full md:w-[420px] shrink-0 aspect-square rounded-2xl overflow-hidden bg-[#F5D0D8] shadow-warm-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -115,85 +149,130 @@ export default function ProductContent({ product }: { product: DbProduct }) {
             <h2 className="font-playfair text-3xl md:text-4xl font-bold text-[#2D000A] mb-3">{displayName}</h2>
             <p className="text-[#800020] text-base leading-relaxed mb-6">{displayDesc}</p>
 
-            {/* Design picker — shown for Candles, Balloons, Cards */}
+            {/* Per-design quantity picker — Balloons / Candles / Cards */}
             {picker && designs.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-bold text-[#2D000A]">Choose your design</p>
-                  {selectedUrl && (
+                  <p className="text-sm font-bold text-[#2D000A]">Choose your designs</p>
+                  {totalPickerQty > 0 && (
                     <button
-                      onClick={() => setSelectedUrl(null)}
+                      onClick={() => setDesignQtys({})}
                       className="text-[11px] text-[#800020]/50 hover:text-[#800020] transition-colors"
                     >
-                      Clear
+                      Clear all
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+
+                <div className="grid grid-cols-3 gap-3">
                   {designs.map((d) => {
-                    const sel = selectedUrl === d.url;
+                    const qty = designQtys[d.url] ?? 0;
                     return (
-                      <button
-                        key={d.url}
-                        onClick={() => setSelectedUrl(sel ? null : d.url)}
-                        className={cn(
-                          "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95 aspect-square",
-                          sel
-                            ? "border-[#800020] ring-2 ring-[#800020]/20"
-                            : "border-[rgba(128,0,32,0.12)] hover:border-[#800020]/50 hover:scale-[1.03]"
-                        )}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={d.url} alt={d.name} className="w-full h-full object-cover" />
-                        {sel && (
-                          <>
-                            <span className="absolute inset-0 bg-[#800020]/10" />
-                            <span className="absolute top-1.5 right-1.5 bg-[#800020] rounded-full p-0.5 shadow">
-                              <Check size={10} className="text-white" strokeWidth={3} />
+                      <div key={d.url} className="flex flex-col items-center gap-1.5">
+                        {/* Tap image to preview in main viewer */}
+                        <button
+                          onClick={() => setPreviewUrl(previewUrl === d.url ? null : d.url)}
+                          className={cn(
+                            "relative rounded-xl overflow-hidden border-2 w-full aspect-square transition-all duration-200 active:scale-95",
+                            qty > 0
+                              ? "border-[#800020] shadow-[0_0_0_3px_rgba(128,0,32,0.12)]"
+                              : "border-[rgba(128,0,32,0.12)] hover:border-[#800020]/40",
+                            previewUrl === d.url && "ring-2 ring-[#FF6B9D]/50"
+                          )}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={d.url} alt={d.name} className="w-full h-full object-cover" />
+                          {/* Qty badge in corner */}
+                          {qty > 0 && (
+                            <span className="absolute top-1.5 right-1.5 bg-[#800020] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center leading-none">
+                              {qty}
                             </span>
-                          </>
-                        )}
-                      </button>
+                          )}
+                        </button>
+
+                        {/* +/- stepper below each card */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => changeDesignQty(d.url, -1)}
+                            disabled={qty === 0}
+                            className="w-7 h-7 rounded-full border border-[rgba(128,0,32,0.15)] flex items-center justify-center text-[#800020] disabled:opacity-25 hover:border-[#800020] transition-colors active:scale-[0.93]"
+                          >
+                            <Minus size={11} />
+                          </button>
+                          <span className="w-5 text-center text-sm font-bold text-[#2D000A]">{qty}</span>
+                          <button
+                            onClick={() => changeDesignQty(d.url, +1)}
+                            className="w-7 h-7 rounded-full border border-[rgba(128,0,32,0.15)] flex items-center justify-center text-[#800020] hover:border-[#800020] transition-colors active:scale-[0.93]"
+                          >
+                            <Plus size={11} />
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-                {!selectedUrl && (
-                  <p className="text-[11px] text-[#A05068]/60 mt-2">Tap a design to preview it — optional</p>
+
+                {totalPickerQty === 0 && (
+                  <p className="text-[11px] text-[#A05068]/60 mt-3">
+                    Use + to add quantity per design — tap an image to preview it
+                  </p>
                 )}
               </div>
             )}
 
+            {/* Price / quantity / total box */}
             <div className="bg-white rounded-2xl shadow-warm-xs p-5 space-y-5">
               <div className="flex items-center justify-between">
-                <span className="text-[#A05068] text-sm font-medium">{t("product_price_per_box")}</span>
+                <span className="text-[#A05068] text-sm font-medium">
+                  {picker ? `Price per ${picker.label.split(" ")[0]}` : t("product_price_per_box")}
+                </span>
                 <span className="font-playfair font-bold text-[#800020] text-2xl">QAR {product.price}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[#A05068] text-sm font-medium">{t("product_quantity")}</span>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-9 h-9 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] transition-colors active:scale-[0.97]">
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-8 text-center font-bold text-[#2D000A] text-lg">{quantity}</span>
-                  <button onClick={() => setQuantity((q) => q + 1)}
-                    className="w-9 h-9 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] transition-colors active:scale-[0.97]">
-                    <Plus size={14} />
-                  </button>
+
+              {picker ? (
+                /* Picker products: show total selected count */
+                <div className="flex items-center justify-between">
+                  <span className="text-[#A05068] text-sm font-medium">Selected</span>
+                  <span className="font-bold text-[#2D000A] text-base">
+                    {totalPickerQty > 0 ? `${totalPickerQty} ${totalPickerQty === 1 ? picker.label.split(" ")[0] : picker.label.split(" ")[0] + "s"}` : "—"}
+                  </span>
                 </div>
-              </div>
+              ) : (
+                /* Regular products: single quantity stepper */
+                <div className="flex items-center justify-between">
+                  <span className="text-[#A05068] text-sm font-medium">{t("product_quantity")}</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="w-9 h-9 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] transition-colors active:scale-[0.97]">
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-8 text-center font-bold text-[#2D000A] text-lg">{quantity}</span>
+                    <button onClick={() => setQuantity((q) => q + 1)}
+                      className="w-9 h-9 rounded-full border border-[rgba(128,0,32,0.12)] flex items-center justify-center text-[#800020] hover:border-[#800020] transition-colors active:scale-[0.97]">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between border-t border-[rgba(128,0,32,0.08)] pt-4">
                 <span className="font-bold text-[#2D000A]">{t("product_total")}</span>
-                <span className="font-playfair font-bold text-[#800020] text-xl">QAR {product.price * quantity}</span>
+                <span className="font-playfair font-bold text-[#800020] text-xl">
+                  QAR {picker ? product.price * totalPickerQty : product.price * quantity}
+                </span>
               </div>
             </div>
 
             <button
               onClick={handleAddToCart}
-              disabled={adding}
+              disabled={adding || (picker != null && totalPickerQty === 0)}
               className={cn(
                 "w-full mt-4 font-bold py-4 rounded-2xl transition-all duration-300 font-playfair tracking-wide flex items-center justify-center gap-2",
-                adding ? "bg-[#FF6B9D]/50 text-white/50 cursor-not-allowed" : "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
+                adding
+                  ? "bg-[#FF6B9D]/50 text-white/50 cursor-not-allowed"
+                  : picker != null && totalPickerQty === 0
+                    ? "bg-[#FF6B9D]/30 text-white/40 cursor-not-allowed"
+                    : "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
               )}
             >
               {adding ? (

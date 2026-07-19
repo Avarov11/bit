@@ -61,6 +61,25 @@ function CartCard({ item, onRemove, onQty, t }: {
           <p className="text-[#A05068] text-xs italic mb-1">&ldquo;{c.message}&rdquo;</p>
         )}
 
+        {/* Per-design breakdown for balloons / candles / cards */}
+        {(() => {
+          const designs = c.balloons ?? c.candles ?? c.cards ?? [];
+          if (designs.length === 0) return null;
+          return (
+            <div className="flex flex-wrap gap-1.5 mt-1 mb-1">
+              {designs.map((d, i) => (
+                <div key={i} className="relative w-9 h-9 rounded-lg overflow-hidden border border-[rgba(128,0,32,0.12)] shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={d.url} alt="" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-0 right-0 bg-[#800020] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-tl-md leading-none">
+                    {d.qty}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-2">
             <button
