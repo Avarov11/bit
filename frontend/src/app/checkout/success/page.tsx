@@ -86,7 +86,7 @@ function SuccessContent() {
     : "";
 
   const waLink = summary
-    ? `https://wa.me/2001019383610?text=${encodeURIComponent(buildWhatsAppMessage(summary))}`
+    ? `https://wa.me/97433070800?text=${encodeURIComponent(buildWhatsAppMessage(summary))}`
     : null;
 
   return (
