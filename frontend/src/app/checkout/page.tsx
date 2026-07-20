@@ -6,7 +6,13 @@ import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
-import { DELIVERY_AREAS } from "@/lib/deliveryAreas";
+interface DeliveryAreaRow {
+  id:         string;
+  name_en:    string;
+  name_ar:    string;
+  fee:        number;
+  sort_order: number;
+}
 
 interface SlotInfo {
   id:       string;
@@ -63,6 +69,7 @@ export default function CheckoutPage() {
   const [slots,        setSlots]        = useState<SlotInfo[]>([]);
   const [dayFull,      setDayFull]      = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [areas,        setAreas]        = useState<DeliveryAreaRow[]>([]);
   const sadadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -71,6 +78,13 @@ export default function CheckoutPage() {
     fetch("/api/time-slots")
       .then(r => r.json())
       .then(data => { if (Array.isArray(data.slots)) setSlots(data.slots); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/delivery-areas")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setAreas(data); })
       .catch(() => {});
   }, []);
 
@@ -104,8 +118,8 @@ export default function CheckoutPage() {
   );
 
   const selectedArea = useMemo(
-    () => DELIVERY_AREAS.find(a => a.id === form.area) ?? null,
-    [form.area]
+    () => areas.find(a => a.id === form.area) ?? null,
+    [form.area, areas]
   );
 
   const deliveryFee = selectedArea?.fee ?? 0;
@@ -148,7 +162,7 @@ export default function CheckoutPage() {
 
     // Store area name (in active language) + detailed address together,
     // separated by " — " so the admin can display them as two distinct lines.
-    const areaName      = lang === "ar" ? (selectedArea?.nameAr ?? "") : (selectedArea?.nameEn ?? "");
+    const areaName      = lang === "ar" ? (selectedArea?.name_ar ?? "") : (selectedArea?.name_en ?? "");
     const combinedAddress = `${areaName} — ${form.address}`;
 
     const orderBase = {
@@ -349,9 +363,9 @@ export default function CheckoutPage() {
                     <option value="" disabled>
                       {t("checkout_area_placeholder")}
                     </option>
-                    {DELIVERY_AREAS.map((area) => (
+                    {areas.map((area) => (
                       <option key={area.id} value={area.id}>
-                        {lang === "ar" ? area.nameAr : area.nameEn}
+                        {lang === "ar" ? area.name_ar : area.name_en}
                         {" "}— QAR {area.fee}
                       </option>
                     ))}

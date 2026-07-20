@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Plus, Trash2, ChevronUp, ChevronDown, CheckCircle2, AlertCircle,
-  Eye, EyeOff, Save, Calendar, Clock, Users, TrendingUp,
+  Eye, EyeOff, Save, Calendar, Clock, Users, TrendingUp, MapPin,
 } from "lucide-react";
 
 interface TimeSlot {
@@ -15,6 +15,15 @@ interface TimeSlot {
   active:     boolean;
 }
 
+interface DeliveryArea {
+  id:         string;
+  name_en:    string;
+  name_ar:    string;
+  fee:        number;
+  sort_order: number;
+  active:     boolean;
+}
+
 interface SlotCount {
   label:  string;
   booked: number;
@@ -22,21 +31,23 @@ interface SlotCount {
 }
 
 export default function DeliveryPage() {
-  const [slots,        setSlots]        = useState<TimeSlot[]>([]);
-  const [maxPerDay,    setMaxPerDay]    = useState(50);
+  const [slots,          setSlots]          = useState<TimeSlot[]>([]);
+  const [areas,          setAreas]          = useState<DeliveryArea[]>([]);
+  const [maxPerDay,      setMaxPerDay]      = useState(50);
   const [maxPerDayDraft, setMaxPerDayDraft] = useState(50);
-  const [loading,      setLoading]      = useState(true);
-  const [adding,       setAdding]       = useState(false);
-  const [toast,        setToast]        = useState<{ msg: string; ok: boolean } | null>(null);
+  const [loading,        setLoading]        = useState(true);
+  const [adding,         setAdding]         = useState(false);
+  const [addingArea,     setAddingArea]     = useState(false);
+  const [toast,          setToast]          = useState<{ msg: string; ok: boolean } | null>(null);
 
-  // Calendar
   const today = new Date().toISOString().split("T")[0];
-  const [calDate,     setCalDate]      = useState(today);
-  const [slotCounts,  setSlotCounts]   = useState<SlotCount[]>([]);
-  const [totalBooked, setTotalBooked]  = useState(0);
-  const [calLoading,  setCalLoading]   = useState(false);
+  const [calDate,     setCalDate]     = useState(today);
+  const [slotCounts,  setSlotCounts]  = useState<SlotCount[]>([]);
+  const [totalBooked, setTotalBooked] = useState(0);
+  const [calLoading,  setCalLoading]  = useState(false);
 
   const textTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const areaTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -44,14 +55,17 @@ export default function DeliveryPage() {
   }
 
   const loadData = useCallback(async () => {
-    const res  = await fetch("/api/delivery");
-    const data = await res.json();
-    if (Array.isArray(data.slots)) setSlots(data.slots);
-    if (data.settings?.max_orders_per_day) {
-      const v = parseInt(data.settings.max_orders_per_day);
+    const [slotsRes, areasRes] = await Promise.all([
+      fetch("/api/delivery").then(r => r.json()),
+      fetch("/api/delivery-areas").then(r => r.json()),
+    ]);
+    if (Array.isArray(slotsRes.slots)) setSlots(slotsRes.slots);
+    if (slotsRes.settings?.max_orders_per_day) {
+      const v = parseInt(slotsRes.settings.max_orders_per_day);
       setMaxPerDay(v);
       setMaxPerDayDraft(v);
     }
+    if (Array.isArray(areasRes)) setAreas(areasRes);
     setLoading(false);
   }, []);
 
@@ -61,7 +75,6 @@ export default function DeliveryPage() {
       fetch(`/api/orders?date=${date}`).then(r => r.json()),
       Promise.resolve(slots),
     ]);
-
     const orders: { pickup_time: string }[] = Array.isArray(ordersRes) ? ordersRes : [];
     const countMap: Record<string, number> = {};
     for (const o of orders) {
@@ -79,6 +92,8 @@ export default function DeliveryPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => { if (!loading) loadCalendar(calDate); }, [loading, calDate, loadCalendar]);
+
+  // ── Time slot handlers ──────────────────────────────────────────────
 
   async function saveMaxPerDay() {
     const res = await fetch("/api/delivery", {
@@ -141,7 +156,61 @@ export default function DeliveryPage() {
     }, 600);
   }
 
-  const sorted = [...slots].sort((a, b) => a.sort_order - b.sort_order);
+  // ── Delivery area handlers ──────────────────────────────────────────
+
+  async function addArea() {
+    setAddingArea(true);
+    const res  = await fetch("/api/delivery-areas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const data = await res.json();
+    if (res.ok) { setAreas(prev => [...prev, data].sort((a, b) => a.sort_order - b.sort_order)); showToast("Area added.", true); }
+    else showToast(data.error ?? "Failed.", false);
+    setAddingArea(false);
+  }
+
+  async function deleteArea(id: string) {
+    if (!confirm("Delete this delivery area?")) return;
+    const res = await fetch("/api/delivery-areas", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    if (res.ok) { setAreas(prev => prev.filter(a => a.id !== id)); showToast("Deleted.", true); }
+    else showToast("Failed.", false);
+  }
+
+  async function toggleAreaActive(area: DeliveryArea) {
+    const res = await fetch("/api/delivery-areas", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: area.id, active: !area.active }) });
+    if (res.ok) setAreas(prev => prev.map(a => a.id === area.id ? { ...a, active: !a.active } : a));
+  }
+
+  async function moveArea(id: string, dir: -1 | 1) {
+    const sorted = [...areas].sort((a, b) => a.sort_order - b.sort_order);
+    const idx   = sorted.findIndex(a => a.id === id);
+    const other = sorted[idx + dir];
+    if (!other) return;
+    const [aO, bO] = [sorted[idx].sort_order, other.sort_order];
+    await Promise.all([
+      fetch("/api/delivery-areas", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: sorted[idx].id, sort_order: bO }) }),
+      fetch("/api/delivery-areas", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: other.id,       sort_order: aO }) }),
+    ]);
+    setAreas(prev => prev.map(a => {
+      if (a.id === sorted[idx].id) return { ...a, sort_order: bO };
+      if (a.id === other.id)       return { ...a, sort_order: aO };
+      return a;
+    }).sort((a, b) => a.sort_order - b.sort_order));
+  }
+
+  function handleAreaField(id: string, field: keyof DeliveryArea, value: string | number) {
+    setAreas(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    const key = `${id}-${field}`;
+    clearTimeout(areaTimers.current[key]);
+    areaTimers.current[key] = setTimeout(async () => {
+      await fetch("/api/delivery-areas", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, [field]: value }),
+      });
+    }, 600);
+  }
+
+  const sorted      = [...slots].sort((a, b) => a.sort_order - b.sort_order);
+  const sortedAreas = [...areas].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -156,11 +225,11 @@ export default function DeliveryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Delivery Settings</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Manage time slots and order capacity</p>
+          <p className="text-sm text-gray-400 mt-0.5">Manage delivery areas, time slots, and order capacity</p>
         </div>
       </div>
 
-      {/* ── Global limits ── */}
+      {/* ── Daily Order Limit ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={16} className="text-gray-400" />
@@ -188,7 +257,88 @@ export default function DeliveryPage() {
         <p className="text-xs text-gray-400 mt-2">Current: <span className="font-semibold text-gray-600">{maxPerDay} orders/day</span></p>
       </div>
 
-      {/* ── Time slots ── */}
+      {/* ── Delivery Areas ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+          <div className="flex items-center gap-2">
+            <MapPin size={15} className="text-gray-400" />
+            <h2 className="text-sm font-bold text-gray-800">Delivery Areas</h2>
+            <span className="text-xs text-gray-400">{sortedAreas.filter(a => a.active).length} active · {sortedAreas.filter(a => !a.active).length} hidden</span>
+          </div>
+          <button
+            onClick={addArea} disabled={addingArea || loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50 transition-all"
+            style={{ background: "#800020" }}
+          >
+            <Plus size={13} /> {addingArea ? "Adding…" : "Add area"}
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="p-8 text-center text-sm text-gray-400">Loading…</div>
+        ) : sortedAreas.length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-400">No delivery areas yet. Add one above.</div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {sortedAreas.map((area, idx) => (
+              <div key={area.id} className="p-5" style={{ opacity: area.active ? 1 : 0.55 }}>
+                <div className="flex items-start gap-3">
+                  {/* Reorder */}
+                  <div className="flex flex-col gap-1 pt-1 shrink-0">
+                    <button onClick={() => moveArea(area.id, -1)} disabled={idx === 0} className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 disabled:opacity-20"><ChevronUp size={13} className="text-gray-500" /></button>
+                    <button onClick={() => moveArea(area.id, 1)} disabled={idx === sortedAreas.length - 1} className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 disabled:opacity-20"><ChevronDown size={13} className="text-gray-500" /></button>
+                  </div>
+
+                  {/* Fields */}
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Name (English)</label>
+                      <input
+                        type="text"
+                        value={area.name_en}
+                        onChange={e => handleAreaField(area.id, "name_en", e.target.value)}
+                        placeholder="e.g. Doha"
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Name (Arabic)</label>
+                      <input
+                        type="text" dir="rtl"
+                        value={area.name_ar}
+                        onChange={e => handleAreaField(area.id, "name_ar", e.target.value)}
+                        placeholder="e.g. الدوحة"
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Fee (QAR)</label>
+                      <input
+                        type="number" min={0} max={9999}
+                        value={area.fee}
+                        onChange={e => handleAreaField(area.id, "fee", parseInt(e.target.value) || 0)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#800020]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex items-center gap-2 pt-1 shrink-0">
+                    <button onClick={() => toggleAreaActive(area)} title={area.active ? "Hide area" : "Show area"} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+                      {area.active ? <Eye size={14} style={{ color: "#800020" }} /> : <EyeOff size={14} className="text-gray-400" />}
+                    </button>
+                    <button onClick={() => deleteArea(area.id)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors">
+                      <Trash2 size={13} className="text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Time Slots ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
           <div className="flex items-center gap-2">
@@ -214,13 +364,11 @@ export default function DeliveryPage() {
             {sorted.map((slot, idx) => (
               <div key={slot.id} className="p-5" style={{ opacity: slot.active ? 1 : 0.55 }}>
                 <div className="flex items-start gap-3">
-                  {/* Reorder + delete */}
                   <div className="flex flex-col gap-1 pt-1 shrink-0">
                     <button onClick={() => moveSlot(slot.id, -1)} disabled={idx === 0} className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 disabled:opacity-20"><ChevronUp size={13} className="text-gray-500" /></button>
                     <button onClick={() => moveSlot(slot.id, 1)} disabled={idx === sorted.length - 1} className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100 disabled:opacity-20"><ChevronDown size={13} className="text-gray-500" /></button>
                   </div>
 
-                  {/* Fields */}
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Label (English)</label>
@@ -253,7 +401,6 @@ export default function DeliveryPage() {
                     </div>
                   </div>
 
-                  {/* Controls */}
                   <div className="flex items-center gap-2 pt-1 shrink-0">
                     <button onClick={() => toggleActive(slot)} title={slot.active ? "Hide slot" : "Show slot"} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
                       {slot.active ? <Eye size={14} style={{ color: "#800020" }} /> : <EyeOff size={14} className="text-gray-400" />}
@@ -269,7 +416,7 @@ export default function DeliveryPage() {
         )}
       </div>
 
-      {/* ── Calendar / schedule view ── */}
+      {/* ── Schedule / Calendar ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
           <div className="flex items-center gap-2">
@@ -285,7 +432,6 @@ export default function DeliveryPage() {
         </div>
 
         <div className="p-5">
-          {/* Day summary */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Users size={14} className="text-gray-400" />
@@ -303,7 +449,6 @@ export default function DeliveryPage() {
             )}
           </div>
 
-          {/* Day progress bar */}
           <div className="w-full h-2 rounded-full bg-gray-100 mb-6 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
