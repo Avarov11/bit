@@ -922,14 +922,14 @@ export default function CakeCustomizerModal({
                   </span>
                 )}
                 {shape.photo ? (
-                  <div className="w-full h-36 md:h-40 bg-[#F5D0D8] overflow-hidden">
+                  <div className="w-full h-36 md:h-44 bg-[#F5D0D8] overflow-hidden">
                     <div className="relative w-full h-full">
                       <Image
                         src={shape.photo}
                         alt={shape.label}
                         fill
                         sizes="(max-width: 768px) 33vw, 200px"
-                        className="object-cover"
+                        className="object-contain p-3"
                         quality={90}
                         priority
                       />
