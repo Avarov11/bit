@@ -286,25 +286,24 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
 
   const rawUrls = shapeImageMap[colorId] ?? shapeImageMap["brown"] ?? getFallbackUrls();
   const urls = rawUrls.length > 0 ? rawUrls : getFallbackUrls();
-  const views: JSX.Element[] = urls.length > 0 ? urls.map((src, i) => (
-    <div key={i} className="relative w-full h-full flex items-center justify-center p-6">
-      <PreviewImg src={src} alt={`View ${i + 1}`} />
-      {i === 1 ? photoOverlay : null}
-    </div>
-  )) : [
-    <div key="empty" className="relative w-full h-full flex items-center justify-center">
-      <span className="text-4xl opacity-30">✦</span>
-    </div>
-  ];
-
-  const viewCount = views.length;
+  const viewCount = urls.length > 0 ? urls.length : 1;
   const idx = Math.min(viewIdx, viewCount - 1);
 
   return (
     <div className="relative w-full h-full">
-      {/* Views + sprinkle overlay isolated so they can never reach the nav buttons */}
+      {/* All views rendered simultaneously so images preload; opacity toggles which is visible */}
       <div className="absolute inset-0 overflow-hidden">
-        {views[idx]}
+        {urls.length > 0 ? urls.map((src, i) => (
+          <div key={i} className="absolute inset-0 flex items-center justify-center p-6"
+            style={{ opacity: i === idx ? 1 : 0, transition: "opacity 0.15s ease" }}>
+            <PreviewImg src={src} alt={`View ${i + 1}`} />
+            {i === 1 ? photoOverlay : null}
+          </div>
+        )) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl opacity-30">✦</span>
+          </div>
+        )}
         <SprinkleOverlay key={"sp-" + animKey} active={sprinkles === "yes"} />
       </div>
       {/* Nav buttons are siblings of the inner container — no stacking conflict */}
