@@ -657,7 +657,7 @@ export default function CakeCustomizerModal({
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Candles</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.candles.length ? `${custSel.candles.length} design${custSel.candles.length>1?"s":""}` : "Choose design"}
+                  {custSel.candles.length ? `${custSel.candles.length} design${custSel.candles.length>1?"s":""}` : `+QAR ${ADDON_PRICES.candles} each`}
                 </p>
               </div>
             </button>
@@ -681,7 +681,7 @@ export default function CakeCustomizerModal({
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Balloons</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.balloons.length ? `${custSel.balloons.length} design${custSel.balloons.length>1?"s":""}` : "Choose design"}
+                  {custSel.balloons.length ? `${custSel.balloons.length} design${custSel.balloons.length>1?"s":""}` : `+QAR ${ADDON_PRICES.balloons} each`}
                 </p>
               </div>
             </button>
@@ -705,7 +705,7 @@ export default function CakeCustomizerModal({
               <div className="p-2.5">
                 <p className="font-playfair font-bold text-[#2D000A] text-xs">Cards</p>
                 <p className="text-[#A05068] text-[10px] mt-0.5">
-                  {custSel.cards.length ? `${custSel.cards.length} design${custSel.cards.length>1?"s":""}` : "Choose design"}
+                  {custSel.cards.length ? `${custSel.cards.length} design${custSel.cards.length>1?"s":""}` : `+QAR ${ADDON_PRICES.card} each`}
                 </p>
               </div>
             </button>
@@ -1074,7 +1074,7 @@ export default function CakeCustomizerModal({
               key={opt.id} id={opt.id}
               icon={<opt.Icon size={40} strokeWidth={1.5} className="text-white" />}
               iconStyle={{ background: opt.bg }}
-              label={t(opt.labelKey)} sub={t(opt.subKey)}
+              label={t(opt.labelKey)} sub={opt.id === "yes" ? `${t(opt.subKey)} · +QAR ${ADDON_PRICES.sprinkles}` : t(opt.subKey)}
               selected={custSel.sprinkles === opt.id}
               onClick={() => setCustSel((p) => ({ ...p, sprinkles: opt.id }))}
             />
@@ -1109,7 +1109,7 @@ export default function CakeCustomizerModal({
                   icon={<PenLine size={40} strokeWidth={1.5} className="text-white" />}
                   iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
                   label={t("cust_modal_write")}
-                  sub={`Max ${wordLimit} word${wordLimit !== 1 ? "s" : ""}`}
+                  sub={`Max ${wordLimit} word${wordLimit !== 1 ? "s" : ""} · +QAR ${ADDON_PRICES.writing}`}
                   selected={custSel.topping === "write"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "write" ? "" : "write", stickerUrl: null, imageFile: null }))}
                 />
@@ -1120,7 +1120,7 @@ export default function CakeCustomizerModal({
                   icon={<Camera size={40} strokeWidth={1.5} className="text-white" />}
                   iconStyle={{ background: "linear-gradient(145deg, #800020, #3A0010)" }}
                   label={t("cust_modal_image")}
-                  sub={t("cust_modal_image_sub")}
+                  sub={`${t("cust_modal_image_sub")} · +QAR ${ADDON_PRICES.image}`}
                   selected={custSel.topping === "image"}
                   onClick={() => setCustSel((p) => ({ ...p, topping: p.topping === "image" ? "" : "image", toppingText: "", stickerUrl: null }))}
                 />
