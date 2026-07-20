@@ -294,7 +294,7 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
       {/* All views rendered simultaneously so images preload; opacity toggles which is visible */}
       <div className="absolute inset-0 overflow-hidden">
         {urls.length > 0 ? urls.map((src, i) => (
-          <div key={i} className="absolute inset-0 flex items-center justify-center p-6"
+          <div key={i} className="absolute inset-0 flex items-center justify-center p-3"
             style={{ opacity: i === idx ? 1 : 0, transition: "opacity 0.15s ease" }}>
             <PreviewImg src={src} alt={`View ${i + 1}`} />
             {i === 1 ? photoOverlay : null}
@@ -1424,16 +1424,16 @@ export default function CakeCustomizerModal({
         className="hidden md:flex fixed inset-0 z-50 items-center justify-center p-8 bg-black/45 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="bg-white rounded-3xl w-full max-w-[820px] max-h-[90vh] overflow-hidden flex shadow-2xl">
+        <div className="bg-white rounded-3xl w-full max-w-[960px] max-h-[90vh] overflow-hidden flex shadow-2xl">
 
           {/* Left panel */}
-          <div className="w-64 shrink-0 bg-[#F5D0D8] flex flex-col p-6">
+          <div className="w-80 shrink-0 bg-[#F5D0D8] flex flex-col p-6">
             <p className="text-[9px] font-bold text-[#A05068] uppercase tracking-widest mb-1">{t("cust_modal_customising")}</p>
             <h3 className="font-playfair font-bold text-[#2D000A] text-lg leading-tight mb-4 line-clamp-2">{product.name}</h3>
 
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden mb-5 shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 bg-white/60" />
-              <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
+              <div className="absolute inset-0 flex items-center justify-center p-1 pb-8">
                 <CakePreview shape={custSel.shape} colorId={custSel.cakeColor} sprinkles={custSel.sprinkles} text={previewText} stickerUrl={previewSticker} imageUrl={previewImageUrl} shapeImageMap={shapeImageMaps[custSel.shape ?? "cake"] ?? {}} />
               </div>
               {custSel.shape && (
