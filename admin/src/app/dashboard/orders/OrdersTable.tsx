@@ -504,12 +504,14 @@ function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; im
 
 // ─── Order Card ───────────────────────────────────────────────────────────────
 
-function OrderCard({ order, updating, onChangeStatus }: {
+function OrderCard({ order, updating, onChangeStatus, onDelete }: {
   order: Order;
   updating: boolean;
   onChangeStatus: (id: string, s: OrderStatus) => void;
+  onDelete: (id: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded,    setExpanded]    = useState(false);
+  const [confirmDel,  setConfirmDel]  = useState(false);
   const [items, setItems] = useState<OrderItem[]>(Array.isArray(order.items) ? order.items : []);
   const m         = STATUS_META[order.status];
   const itemCount = items.length;
@@ -623,6 +625,31 @@ function OrderCard({ order, updating, onChangeStatus }: {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
+          {/* Delete */}
+          {confirmDel ? (
+            <div className="flex items-center gap-1.5 ml-2">
+              <span className="text-[11px] text-red-600 font-semibold">Delete?</span>
+              <button
+                onClick={() => onDelete(order.id)}
+                className="text-[11px] font-bold px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >Yes</button>
+              <button
+                onClick={() => setConfirmDel(false)}
+                className="text-[11px] font-bold px-2 py-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              >No</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDel(true)}
+              className="ml-2 p-2 rounded-xl text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+              title="Delete order"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Expanded detail */}
@@ -717,6 +744,15 @@ export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; on
       body: JSON.stringify({ orderId, status }),
     });
     setUpdating(null);
+    onRefresh();
+  }
+
+  async function deleteOrder(orderId: string) {
+    await fetch("/api/orders", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: orderId }),
+    });
     onRefresh();
   }
 
@@ -825,6 +861,7 @@ export default function OrdersTable({ orders, onRefresh }: { orders: Order[]; on
             order={order}
             updating={updating === order.id}
             onChangeStatus={changeStatus}
+            onDelete={deleteOrder}
           />
         ))}
       </div>
