@@ -258,9 +258,14 @@ function CakePreview({ shape, colorId, sprinkles = "", text = "", stickerUrl = "
         <img src={stickerUrl} alt="" className="max-w-[44%] max-h-[36%] object-contain drop-shadow-lg" />
       )}
       {text && (
-        <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-tight"
+        <p className="text-white font-bold text-sm md:text-base text-center px-4 leading-snug whitespace-pre-line"
           style={{fontFamily:"Georgia,serif", textShadow:"0 1px 4px rgba(0,0,0,0.7),0 0 1px rgba(0,0,0,0.4)"}}>
-          {text}
+          {text.trim().split(/\s+/).reduce<string[][]>((acc, word, i) => {
+            const li = Math.floor(i / 3);
+            if (!acc[li]) acc[li] = [];
+            acc[li].push(word);
+            return acc;
+          }, []).map(l => l.join(" ")).join("\n")}
         </p>
       )}
     </div>
