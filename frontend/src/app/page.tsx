@@ -63,6 +63,7 @@ function ProductCard({
                 alt={product.name}
                 fill
                 sizes="224px"
+                priority
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             </div>
@@ -304,7 +305,7 @@ export default function HomePage() {
                 fill
                 sizes="(max-width: 767px) 100vw, 0px"
                 className={cn("object-cover md:hidden", i === heroSlide && "animate-kenburns")}
-                priority={i === 0}
+                priority
                 quality={85}
               />
             )}
@@ -319,7 +320,7 @@ export default function HomePage() {
                 slide.mobileImage && "hidden md:block",
                 i === heroSlide && "animate-kenburns"
               )}
-              priority={i === 0}
+              priority
               quality={85}
             />
             {/* Vignette: strong left panel + bottom fade */}
