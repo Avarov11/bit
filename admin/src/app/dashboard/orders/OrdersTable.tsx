@@ -548,6 +548,15 @@ function OrderCard({ order, updating, onChangeStatus }: {
             onChange={e => onChangeStatus(order.id, e.target.value as OrderStatus)}
             className="text-xs font-semibold border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 bg-white text-gray-700 cursor-pointer"
           >
+            {/* If the current status isn't in ADMIN_STATUSES (e.g. pending_payment,
+                payment_failed), show it as a disabled sentinel so the dropdown
+                displays the correct label instead of falling through to the first
+                admin option and falsely showing "Paid". */}
+            {!ADMIN_STATUSES.includes(order.status) && (
+              <option value={order.status} disabled>
+                {STATUS_META[order.status]?.label ?? order.status}
+              </option>
+            )}
             {ADMIN_STATUSES.map(s => (
               <option key={s} value={s}>{STATUS_META[s].label}</option>
             ))}
