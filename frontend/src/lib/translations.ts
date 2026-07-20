@@ -504,7 +504,7 @@ const ar: Record<string, string> = {
   footer_navigate: "روابط",
   footer_visit: "زورونا",
   footer_address: "الدوحة، قطر",
-  footer_copyright: "© ٢٠٢٤ بيتيز. جميع الحقوق محفوظة.",
+  footer_copyright: "© ٢٠٢٤ بايتيز. جميع الحقوق محفوظة.",
   footer_crafted: "صُنع بكل حب ♥",
   footer_instagram: "إنستغرام",
   footer_facebook: "فيسبوك",
@@ -560,7 +560,7 @@ const ar: Record<string, string> = {
   checkout_phone: "رقم الهاتف",
   checkout_email: "البريد الإلكتروني",
   checkout_pickup_section: "تفاصيل التوصيل",
-  checkout_boutique_name: "بوتيك بيتيز",
+  checkout_boutique_name: "بوتيك بايتيز",
   checkout_address: "الدوحة، قطر",
   checkout_hours: "مفتوح يومياً · ٩:٠٠ ص – ٩:٠٠ م",
   checkout_pickup_date: "تاريخ التوصيل",
@@ -606,7 +606,7 @@ const ar: Record<string, string> = {
     "تم استلام طلبك وبدأ فريقنا في التحضير. سيكون جاهزاً طازجاً للاستلام.",
   success_order_number: "رقم الطلب",
   success_pickup_location: "موقع الاستلام",
-  success_boutique_name: "بوتيك بيتيز",
+  success_boutique_name: "بوتيك بايتيز",
   success_address: "الدوحة، قطر",
   success_pickup_time: "وقت الاستلام",
   success_email_note:
@@ -759,7 +759,7 @@ const ar: Record<string, string> = {
   about_story_tag: "البداية",
   about_story_title: "قصة حلوة تستحق أن تُروى",
   about_story_body1:
-    "وُلدت بيتيز من قناعة بسيطة: أن أجمل الهدايا تأتي من المطبخ. انطلقنا من قطر لنحوّل البراونيز الفاخرة إلى تجارب لا تُنسى — لأعياد الميلاد والتخرج والأفراح وكل لحظة تستحق الاحتفال.",
+    "وُلدت بايتيز من قناعة بسيطة: أن أجمل الهدايا تأتي من المطبخ. انطلقنا من قطر لنحوّل البراونيز الفاخرة إلى تجارب لا تُنسى — لأعياد الميلاد والتخرج والأفراح وكل لحظة تستحق الاحتفال.",
   about_story_body2:
     "كل علبة تُصنع يدوياً حسب الطلب، باستخدام أجود المكونات من حول العالم. من الشوكولاتة البلجيكية إلى الفستق الإيراني، نهتم بكل تفصيل حتى لا تحتاج أن تقلق.",
   about_values_tag: "ما نؤمن به",
@@ -783,7 +783,7 @@ const ar: Record<string, string> = {
   about_stats_custom_num: "+500",
   about_stats_custom_label: "طلب مخصص",
   about_diff_tag: "ما يميّزنا",
-  about_diff_title: "ثلاثة أسباب تجعل بيتيز مختلفة",
+  about_diff_title: "ثلاثة أسباب تجعل بايتيز مختلفة",
   about_diff1_sub: "نطوّر كل وصفة يومياً.",
   about_diff2_sub: "طازج حسب الطلب — دون تجهيز مسبق.",
   about_diff3_sub: "موثوق من عائلات في جميع أنحاء قطر.",
@@ -908,7 +908,7 @@ const ar: Record<string, string> = {
   home_slide1_label: "صُنع بحب في قطر · منذ 2021",
   home_slide1_headline_1: "العلامة الأولى في قطر",
   home_slide1_headline_2: "للبراونيز الفاخرة.",
-  home_slide1_sub: "وُلدت بيتيز في الدوحة بمهمة واحدة — صنع براونيز تتجاوز المألوف. من نكهاتنا الحرفية المميزة إلى علب الهدايا الشخصية بالكامل، كل قضمة تحتفل بالجودة والإبداع والحب.",
+  home_slide1_sub: "وُلدت بايتيز في الدوحة بمهمة واحدة — صنع براونيز تتجاوز المألوف. من نكهاتنا الحرفية المميزة إلى علب الهدايا الشخصية بالكامل، كل قضمة تحتفل بالجودة والإبداع والحب.",
   home_slide1_tag_1: "مخبوز طازج يومياً",
   home_slide1_tag_2: "+10 نكهات",
   home_slide1_tag_3: "علب هدايا",
@@ -967,7 +967,7 @@ const ar: Record<string, string> = {
   home_story_tag: "قصتنا",
   home_story_est: "تأسست في قطر",
   home_story_quote: "كل قضمة تحكي قصة شغف وإتقان وأجود الشوكولاتة.",
-  home_story_body: "وُلدت بيتيز في قلب قطر على قناعة بسيطة: أن البراونيز يمكن أن تكون استثنائية. نصنع كل علبة يدوياً بحب، باستخدام مكونات فاخرة من حول العالم.",
+  home_story_body: "وُلدت بايتيز في قلب قطر على قناعة بسيطة: أن البراونيز يمكن أن تكون استثنائية. نصنع كل علبة يدوياً بحب، باستخدام مكونات فاخرة من حول العالم.",
   home_story_cta: "اقرأ قصتنا",
 };
 
