@@ -520,9 +520,18 @@ function OrderCard({ order, updating, onChangeStatus }: {
               </span>
             </div>
             <p className="text-xs text-gray-500">{order.pickup_date} · {order.pickup_time}</p>
-            {order.delivery_address && (
-              <p className="text-[11px] text-gray-400 sm:text-right max-w-[200px]">{order.delivery_address}</p>
-            )}
+            {order.delivery_address && (() => {
+              // Format: "Area Name — Building/street details"
+              const sep   = order.delivery_address.indexOf(" — ");
+              const area  = sep !== -1 ? order.delivery_address.slice(0, sep) : null;
+              const detail = sep !== -1 ? order.delivery_address.slice(sep + 3) : order.delivery_address;
+              return (
+                <div className="sm:text-right max-w-[200px]">
+                  {area && <p className="text-[11px] font-semibold text-gray-700">{area}</p>}
+                  <p className="text-[11px] text-gray-400">{detail}</p>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -625,6 +634,14 @@ function OrderCard({ order, updating, onChangeStatus }: {
               <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
                 <span className="text-base leading-none mt-0.5">📝</span>
                 <p className="text-xs text-amber-800 leading-relaxed">{order.notes}</p>
+              </div>
+            )}
+
+            {/* Delivery fee */}
+            {order.delivery_fee > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400 font-medium">Delivery fee</span>
+                <span className="text-xs font-bold text-gray-700">QAR {order.delivery_fee}</span>
               </div>
             )}
 

@@ -6,6 +6,7 @@ import { ChevronLeft, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
+import { DELIVERY_AREAS } from "@/lib/deliveryAreas";
 
 interface SlotInfo {
   id:       string;
@@ -52,20 +53,20 @@ export default function CheckoutPage() {
   const [sadadHtml, setSadadHtml] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", phone: "", email: "",
+    area: "",
     address: "",
     orderDate: "", orderTime: "",
     notes: "",
   });
-  const [errors,      setErrors]      = useState<Record<string, string>>({});
-  const [placing,     setPlacing]     = useState(false);
-  const [slots,       setSlots]       = useState<SlotInfo[]>([]);
-  const [dayFull,     setDayFull]     = useState(false);
+  const [errors,       setErrors]       = useState<Record<string, string>>({});
+  const [placing,      setPlacing]      = useState(false);
+  const [slots,        setSlots]        = useState<SlotInfo[]>([]);
+  const [dayFull,      setDayFull]      = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const sadadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Load slots (no availability) on mount
   useEffect(() => {
     fetch("/api/time-slots")
       .then(r => r.json())
@@ -73,7 +74,6 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
 
-  // Re-fetch with availability when date changes
   useEffect(() => {
     if (!form.orderDate) return;
     setSlotsLoading(true);
@@ -82,7 +82,6 @@ export default function CheckoutPage() {
       .then(data => {
         if (Array.isArray(data.slots)) setSlots(data.slots);
         setDayFull(!!data.dayFull);
-        // Clear selected slot if it's now full
         if (form.orderTime) {
           const chosen = data.slots.find((s: SlotInfo) => s.label === form.orderTime);
           if (chosen?.full) setForm(f => ({ ...f, orderTime: "" }));
@@ -104,6 +103,14 @@ export default function CheckoutPage() {
     [items]
   );
 
+  const selectedArea = useMemo(
+    () => DELIVERY_AREAS.find(a => a.id === form.area) ?? null,
+    [form.area]
+  );
+
+  const deliveryFee = selectedArea?.fee ?? 0;
+  const total       = subtotal + deliveryFee;
+
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const maxDate = useMemo(() => {
     const d = new Date();
@@ -123,6 +130,7 @@ export default function CheckoutPage() {
     if (!form.name.trim())    e.name    = t("checkout_error_name");
     if (!form.phone.trim())   e.phone   = t("checkout_error_phone");
     if (!form.email.trim() || !form.email.includes("@")) e.email = t("checkout_error_email");
+    if (!form.area)           e.area    = t("checkout_error_area");
     if (!form.address.trim()) e.address = t("checkout_error_address");
     if (!form.orderDate)      e.orderDate = t("checkout_error_pickup_date");
     if (!form.orderTime)      e.orderTime = t("checkout_error_pickup_time");
@@ -138,16 +146,21 @@ export default function CheckoutPage() {
     const stickerUrl = items.map(i => i.customization?.stickerUrl).find(Boolean) ?? null;
     const imageUrl   = items.map(i => i.customization?.imageUrl).find(Boolean) ?? null;
 
+    // Store area name (in active language) + detailed address together,
+    // separated by " — " so the admin can display them as two distinct lines.
+    const areaName      = lang === "ar" ? (selectedArea?.nameAr ?? "") : (selectedArea?.nameEn ?? "");
+    const combinedAddress = `${areaName} — ${form.address}`;
+
     const orderBase = {
       customer_name:    form.name,
       customer_phone:   form.phone,
       customer_email:   form.email || null,
       delivery_method:  "delivery",
-      delivery_address: form.address,
+      delivery_address: combinedAddress,
       pickup_date:      form.orderDate,
       pickup_time:      form.orderTime,
-      sticker_url:     stickerUrl,
-      image_url:       imageUrl,
+      sticker_url:      stickerUrl,
+      image_url:        imageUrl,
       items: items.map((i) => ({
         productId:     i.productId,
         productName:   i.productName,
@@ -158,10 +171,10 @@ export default function CheckoutPage() {
         customization: i.customization,
       })),
       subtotal,
-      delivery_fee: 0,
-      total:        subtotal,
-      notes:        form.notes || null,
-      language:     lang,
+      delivery_fee: deliveryFee,
+      total,
+      notes:   form.notes || null,
+      language: lang,
     };
 
     try {
@@ -192,12 +205,13 @@ export default function CheckoutPage() {
           ? items[0].productName
           : `Biteez Order (${items.length} items)`;
 
+      // Pass the full total (subtotal + delivery fee) to SADAD
       const res = await fetch("/api/checkout", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
           orderId:        orderNumber,
-          amount:         subtotal.toFixed(2),
+          amount:         total.toFixed(2),
           customerEmail:  form.email,
           customerMobile: form.phone,
           itemName,
@@ -315,23 +329,56 @@ export default function CheckoutPage() {
               </Section>
 
               <Section title={t("checkout_pickup_section")}>
-                {/* Address */}
+                {/* ── Area dropdown (required, first) ── */}
                 <div>
                   <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
-                    {t("checkout_address_label")}
+                    {t("checkout_area_label")}
                   </label>
-                  <textarea
-                    value={form.address}
-                    onChange={(e) => set("address", e.target.value)}
-                    placeholder={t("checkout_address_placeholder")}
-                    rows={2}
+                  <select
+                    value={form.area}
+                    onChange={(e) => set("area", e.target.value)}
+                    dir={lang === "ar" ? "rtl" : "ltr"}
                     className={cn(
-                      "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none",
-                      errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
+                      "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] outline-none transition-colors appearance-none cursor-pointer",
+                      errors.area
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]",
+                      !form.area && "text-[#A05068]"
                     )}
-                  />
-                  {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
+                  >
+                    <option value="" disabled>
+                      {t("checkout_area_placeholder")}
+                    </option>
+                    {DELIVERY_AREAS.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {lang === "ar" ? area.nameAr : area.nameEn}
+                        {" "}— QAR {area.fee}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.area && <p className="text-red-500 text-[11px] mt-1">{errors.area}</p>}
                 </div>
+
+                {/* ── Detailed address (shown after area selected) ── */}
+                {form.area && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#A05068] uppercase tracking-wider mb-1.5">
+                      {t("checkout_address_label")}
+                    </label>
+                    <textarea
+                      value={form.address}
+                      onChange={(e) => set("address", e.target.value)}
+                      placeholder={t("checkout_address_placeholder")}
+                      dir={lang === "ar" ? "rtl" : "ltr"}
+                      rows={2}
+                      className={cn(
+                        "w-full px-4 py-3 bg-white border rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none",
+                        errors.address ? "border-red-400 focus:border-red-500" : "border-[rgba(128,0,32,0.10)] focus:border-[#800020]"
+                      )}
+                    />
+                    {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
+                  </div>
+                )}
 
                 {/* Date */}
                 <div>
@@ -412,6 +459,7 @@ export default function CheckoutPage() {
                   value={form.notes} onChange={(e) => set("notes", e.target.value)}
                   data-i18n="checkout_notes_placeholder"
                   placeholder={t("checkout_notes_placeholder")}
+                  dir={lang === "ar" ? "rtl" : "ltr"}
                   rows={3}
                   className="w-full px-4 py-3 bg-white border border-[rgba(128,0,32,0.10)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068] outline-none transition-colors resize-none"
                 />
@@ -445,22 +493,33 @@ export default function CheckoutPage() {
                     <span className="font-semibold text-[#2D000A]">QAR {subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span data-i18n="cart_delivery" className="text-[#A05068]">{t("cart_delivery")}</span>
-                    <span data-i18n="checkout_delivery_free" className="text-emerald-600 font-semibold">{t("checkout_delivery_free")}</span>
+                    <span data-i18n="checkout_delivery_fee" className="text-[#A05068]">{t("checkout_delivery_fee")}</span>
+                    {selectedArea ? (
+                      <span className="font-semibold text-[#2D000A]">QAR {deliveryFee}</span>
+                    ) : (
+                      <span className="text-[#A05068]/60 italic text-xs self-center">
+                        {t("checkout_area_placeholder")}
+                      </span>
+                    )}
                   </div>
                   <div className="border-t border-[rgba(128,0,32,0.08)] pt-3 flex justify-between">
                     <span data-i18n="checkout_total" className="font-bold text-[#2D000A]">{t("checkout_total")}</span>
-                    <span className="font-playfair font-bold text-[#800020] text-xl">QAR {subtotal}</span>
+                    <span className="font-playfair font-bold text-[#800020] text-xl">
+                      {selectedArea ? `QAR ${total}` : "—"}
+                    </span>
                   </div>
                 </div>
 
                 <button
-                  type="submit" disabled={placing}
+                  type="submit"
+                  disabled={placing || !form.area}
                   className={cn(
                     "w-full font-bold py-4 rounded-2xl transition-all duration-300 font-playfair tracking-wide",
                     placing
                       ? "bg-[#FF6B9D]/50 text-white/50 cursor-not-allowed"
-                      : "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
+                      : !form.area
+                        ? "bg-[#FF6B9D]/30 text-white/40 cursor-not-allowed"
+                        : "bg-[#FF6B9D] hover:bg-[#2D000A] text-white shadow-warm-sm hover:shadow-warm-lg active:scale-[0.97]"
                   )}
                 >
                   {placing ? (
@@ -472,6 +531,12 @@ export default function CheckoutPage() {
                     <span data-i18n="checkout_place_order">{t("checkout_place_order")}</span>
                   )}
                 </button>
+
+                {!form.area && (
+                  <p className="text-center text-[#A05068]/60 text-xs mt-2">
+                    {t("checkout_error_area")}
+                  </p>
+                )}
 
                 <p data-i18n="checkout_terms" className="text-center text-[#A05068] text-xs mt-3">
                   {t("checkout_terms")}
