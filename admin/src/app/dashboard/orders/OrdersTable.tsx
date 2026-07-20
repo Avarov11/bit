@@ -201,19 +201,33 @@ function ItemDetail({ item, orderId, itemIndex, onExtrasUpdated }: {
         </div>
       )}
 
-      {/* ── Candles ──────────────────────────────────────────────── */}
-      {(hasCandles || c?.candleUrl) && (
+      {/* ── Candles: multi-design (product page picker) ──────────── */}
+      {c?.candles && c.candles.length > 0 && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-amber-100 bg-amber-50">
+          <div className="px-3 py-1.5 bg-amber-100/60 flex items-center gap-2">
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">🕯️ Candles</span>
+            <span className="text-[10px] text-amber-600">× {c.candles.reduce((s, i) => s + i.qty, 0)} total</span>
+          </div>
+          <div className="p-2 bg-white grid grid-cols-5 gap-1.5">
+            {c.candles.map((d, i) => (
+              <div key={i} className="relative rounded-lg overflow-hidden border border-amber-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.url} alt="" className="w-full aspect-square object-cover" />
+                <span className="absolute bottom-0 right-0 bg-amber-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-tl-md leading-none">×{d.qty}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Candles: single design (cake customizer) ─────────────── */}
+      {(hasCandles || c?.candleUrl) && !(c?.candles?.length) && (
         <div className="mt-2 rounded-xl overflow-hidden border border-amber-100 bg-amber-50">
           <div className="flex items-center justify-between px-3 py-1.5 bg-amber-100/60">
             <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">🕯️ Candles</span>
             {c?.candleUrl && (
-              <a
-                href={c.candleUrl}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 transition-colors"
-              >
+              <a href={c.candleUrl} download target="_blank" rel="noopener noreferrer"
+                className="text-[10px] font-bold text-amber-700 hover:text-amber-900 flex items-center gap-1 transition-colors">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -228,45 +242,32 @@ function ItemDetail({ item, orderId, itemIndex, onExtrasUpdated }: {
         </div>
       )}
 
-      {/* ── Balloon design ───────────────────────────────────────── */}
-      {c?.balloonUrl && (
+      {/* ── Balloons: multi-design (product page picker) ─────────── */}
+      {c?.balloons && c.balloons.length > 0 && (
         <div className="mt-2 rounded-xl overflow-hidden border border-purple-100 bg-purple-50">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-purple-100/60">
-            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">🎈 Balloon design</span>
-            <a
-              href={c.balloonUrl}
-              download
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download
-            </a>
+          <div className="px-3 py-1.5 bg-purple-100/60 flex items-center gap-2">
+            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">🎈 Balloons</span>
+            <span className="text-[10px] text-purple-600">× {c.balloons.reduce((s, i) => s + i.qty, 0)} total</span>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={c.balloonUrl}
-            alt="Selected balloon design"
-            className="w-full object-contain max-h-48 bg-white"
-          />
+          <div className="p-2 bg-white grid grid-cols-5 gap-1.5">
+            {c.balloons.map((d, i) => (
+              <div key={i} className="relative rounded-lg overflow-hidden border border-purple-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.url} alt="" className="w-full aspect-square object-cover" />
+                <span className="absolute bottom-0 right-0 bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-tl-md leading-none">×{d.qty}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ── Greeting card ────────────────────────────────────────── */}
-      {c?.cardUrl && (
-        <div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-50">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-100/60">
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">🎴 Greeting card</span>
-            <a
-              href={c.cardUrl}
-              download
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition-colors"
-            >
+      {/* ── Balloons: single design (cake customizer) ────────────── */}
+      {c?.balloonUrl && !(c?.balloons?.length) && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-purple-100 bg-purple-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-purple-100/60">
+            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">🎈 Balloon design</span>
+            <a href={c.balloonUrl} download target="_blank" rel="noopener noreferrer"
+              className="text-[10px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -274,11 +275,44 @@ function ItemDetail({ item, orderId, itemIndex, onExtrasUpdated }: {
             </a>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={c.cardUrl}
-            alt="Selected greeting card"
-            className="w-full object-contain max-h-48 bg-white"
-          />
+          <img src={c.balloonUrl} alt="Selected balloon design" className="w-full object-contain max-h-48 bg-white" />
+        </div>
+      )}
+
+      {/* ── Cards: multi-design (product page picker) ────────────── */}
+      {c?.cards && c.cards.length > 0 && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-50">
+          <div className="px-3 py-1.5 bg-emerald-100/60 flex items-center gap-2">
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">🎴 Cards</span>
+            <span className="text-[10px] text-emerald-600">× {c.cards.reduce((s, i) => s + i.qty, 0)} total</span>
+          </div>
+          <div className="p-2 bg-white grid grid-cols-5 gap-1.5">
+            {c.cards.map((d, i) => (
+              <div key={i} className="relative rounded-lg overflow-hidden border border-emerald-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.url} alt="" className="w-full aspect-[3/4] object-cover" />
+                <span className="absolute bottom-0 right-0 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-tl-md leading-none">×{d.qty}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Card: single design (cake customizer) ────────────────── */}
+      {c?.cardUrl && !(c?.cards?.length) && (
+        <div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-50">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-100/60">
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">🎴 Greeting card</span>
+            <a href={c.cardUrl} download target="_blank" rel="noopener noreferrer"
+              className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 transition-colors">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download
+            </a>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={c.cardUrl} alt="Selected greeting card" className="w-full object-contain max-h-48 bg-white" />
         </div>
       )}
 
@@ -520,6 +554,9 @@ function OrderCard({ order, updating, onChangeStatus }: {
               </span>
             </div>
             <p className="text-xs text-gray-500">{order.pickup_date} · {order.pickup_time}</p>
+            {order.delivery_fee > 0 && (
+              <p className="text-[11px] text-blue-600 font-semibold">+QAR {order.delivery_fee} delivery</p>
+            )}
             {order.delivery_address && (() => {
               // Format: "Area Name — Building/street details"
               const sep   = order.delivery_address.indexOf(" — ");

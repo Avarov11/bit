@@ -9,6 +9,11 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export interface ExtraItem {
+  url: string;
+  qty: number;
+}
+
 export interface CartItemCustomization {
   shape?: string;
   flavor?: string;
@@ -20,6 +25,9 @@ export interface CartItemCustomization {
   candleUrl?: string;
   balloonUrl?: string;
   cardUrl?: string;
+  candles?: ExtraItem[];
+  balloons?: ExtraItem[];
+  cards?: ExtraItem[];
 }
 
 export interface OrderItem {
