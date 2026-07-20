@@ -398,6 +398,13 @@ export default function CakeCustomizerModal({
         const m: Record<string, ShapeCfg> = {};
         data.forEach(c => { m[c.shape] = { max_chars: c.max_chars, view_count: c.view_count ?? 2, allowed_colors: c.allowed_colors ?? ALL_SAUCE_IDS }; });
         setShapeConfigs(prev => ({ ...prev, ...m }));
+        // Warm Next.js image cache so thumbnails render instantly when modal opens
+        data.forEach(s => {
+          if (!s.thumbnail) return;
+          [256, 384].forEach(w =>
+            fetch(`/_next/image?url=${encodeURIComponent(s.thumbnail)}&w=${w}&q=90`).catch(() => {})
+          );
+        });
         // Load color images for all shapes
         for (const s of data) {
           fetch(`/api/shape-color-images?shape=${s.shape}`, { cache: "no-store" })
@@ -410,6 +417,12 @@ export default function CakeCustomizerModal({
                 map[row.color][row.view_index] = row.url;
               }
               setShapeImageMaps(prev => ({ ...prev, [s.shape]: map }));
+              // Warm cache for all color/view images
+              rows.forEach(row => {
+                [256, 384, 640].forEach(w =>
+                  fetch(`/_next/image?url=${encodeURIComponent(row.url)}&w=${w}&q=85`).catch(() => {})
+                );
+              });
             })
             .catch(() => {});
         }
