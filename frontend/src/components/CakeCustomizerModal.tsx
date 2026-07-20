@@ -401,8 +401,9 @@ export default function CakeCustomizerModal({
         // Warm Next.js image cache so thumbnails render instantly when modal opens
         data.forEach(s => {
           if (!s.thumbnail) return;
+          const thumb = s.thumbnail;
           [256, 384].forEach(w =>
-            fetch(`/_next/image?url=${encodeURIComponent(s.thumbnail)}&w=${w}&q=90`).catch(() => {})
+            fetch(`/_next/image?url=${encodeURIComponent(thumb)}&w=${w}&q=90`).catch(() => {})
           );
         });
         // Load color images for all shapes
