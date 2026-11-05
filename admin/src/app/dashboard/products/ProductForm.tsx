@@ -85,7 +85,18 @@ export default function ProductForm({ product }: { product?: Product }) {
     fetch("/api/extras-types", { cache: "no-store" })
       .then(r => r.json())
       .then((data: { key: string; label: string; emoji: string; active: boolean }[]) => {
-        if (Array.isArray(data)) setExtraTypes(data);
+        if (Array.isArray(data)) {
+          setExtraTypes(data);
+          // For products that predate per-product extras control, default all active extras to on
+          setForm(f => {
+            const hasAnyExtra = data.some(et => (f.allowed_toppings ?? []).includes(et.key));
+            if (!hasAnyExtra) {
+              const activeExtras = data.filter(et => et.active).map(et => et.key);
+              return { ...f, allowed_toppings: [...(f.allowed_toppings ?? []), ...activeExtras] };
+            }
+            return f;
+          });
+        }
       })
       .catch(() => {});
   }, []);
@@ -415,33 +426,56 @@ export default function ProductForm({ product }: { product?: Product }) {
         </div>
       </Field>
 
-      {/* Extras — global library, not per-product */}
+      {/* Extras — per-product control */}
       <Field label="Available Extras">
         <p className="text-xs text-gray-400 mb-3">
-          Extras (candles, balloons, cards, etc.) are shown globally for all products.
-          Manage which extras appear using the{" "}
-          <a href="/dashboard/extras" className="text-[#800020] underline font-medium">Extras Library</a>.
+          Toggle which extras customers can add to this product. Extras hidden in the{" "}
+          <a href="/dashboard/extras" className="text-[#800020] underline font-medium">Extras Library</a>{" "}
+          are always hidden regardless.
         </p>
         <div className="grid grid-cols-3 gap-3">
           {extraTypes.length === 0 && (
             <p className="col-span-3 text-xs text-gray-400 italic">Loading extras…</p>
           )}
-          {extraTypes.map(({ key, label, emoji, active }) => (
-            <div
-              key={key}
-              className={`flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 ${
-                active ? "border-green-400 bg-green-50" : "border-gray-200 bg-gray-50 opacity-50"
-              }`}
-            >
-              <span className="text-2xl">{emoji}</span>
-              <span className={`text-xs font-semibold ${active ? "text-green-700" : "text-gray-400"}`}>{label}</span>
-              <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
-                active ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
-              }`}>
-                {active ? "Visible" : "Hidden"}
-              </span>
-            </div>
-          ))}
+          {extraTypes.map(({ key, label, emoji, active: globallyActive }) => {
+            const checked = (form.allowed_toppings ?? []).includes(key);
+            const disabled = !globallyActive;
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (disabled) return;
+                  const next = checked
+                    ? (form.allowed_toppings ?? []).filter(t => t !== key)
+                    : [...(form.allowed_toppings ?? []), key];
+                  set("allowed_toppings", next);
+                }}
+                title={disabled ? "Hidden globally in Extras Library" : undefined}
+                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 ${
+                  disabled
+                    ? "border-gray-100 bg-gray-50 opacity-30 cursor-not-allowed"
+                    : checked
+                    ? "border-[#800020] bg-[#800020]/5 cursor-pointer"
+                    : "border-gray-200 bg-gray-50 opacity-50 cursor-pointer"
+                }`}
+              >
+                {checked && !disabled && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                {disabled && (
+                  <span className="absolute top-1 right-1 text-[9px] font-bold text-gray-400 bg-gray-100 px-1 rounded">HIDDEN</span>
+                )}
+                <span className="text-2xl">{emoji}</span>
+                <span className={`text-xs font-semibold ${checked && !disabled ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
         </div>
       </Field>
 

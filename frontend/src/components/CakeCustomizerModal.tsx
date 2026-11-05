@@ -361,6 +361,11 @@ export default function CakeCustomizerModal({
     ? FLAVORS.filter(f => product.allowed_flavors.includes(f.id))
     : FLAVORS;
   const allowedToppings  = product?.allowed_toppings ?? ["write", "sticker", "image"];
+  // Per-product extras control: if no extra key appears in allowed_toppings (old data), default to all shown
+  const isExtraShown = (key: string) => {
+    const hasAnyExtra = activeExtraKeys.size > 0 && Array.from(activeExtraKeys).some(k => allowedToppings.includes(k));
+    return activeExtraKeys.has(key) && (!hasAnyExtra || allowedToppings.includes(key));
+  };
   const ALL_SAUCE_IDS = ["brown","beige","black","white","pink","blue"];
   interface ShapeCfg { max_chars: number; view_count: number; allowed_colors: string[]; }
   const DEFAULT_CFG: ShapeCfg = { max_chars: 5, view_count: 2, allowed_colors: ALL_SAUCE_IDS };
@@ -665,7 +670,7 @@ export default function CakeCustomizerModal({
           <p className="text-[#A05068] text-sm mb-6">Add a little something extra — totally optional 🎉</p>
           <div className="grid grid-cols-3 gap-3">
             {/* Candles */}
-            {activeExtraKeys.has("candles") && <button
+            {isExtraShown("candles") && <button
               onClick={() => { setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
@@ -689,7 +694,7 @@ export default function CakeCustomizerModal({
             </button>}
 
             {/* Balloons */}
-            {activeExtraKeys.has("balloons") && <button
+            {isExtraShown("balloons") && <button
               onClick={() => { setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
@@ -713,7 +718,7 @@ export default function CakeCustomizerModal({
             </button>}
 
             {/* Cards */}
-            {activeExtraKeys.has("cards") && <button
+            {isExtraShown("cards") && <button
               onClick={() => { setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
