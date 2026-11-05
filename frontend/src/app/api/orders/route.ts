@@ -120,7 +120,7 @@ async function sendOrderEmail(order: {
 </html>`;
 
   await resend.emails.send({
-    from: "Biteez Orders <onboarding@resend.dev>",
+    from: "Biteez <onboarding@resend.dev>",
     to: NOTIFY_EMAIL,
     subject: `🎂 New Order #${order.order_number} — ${order.customer_name} · ${order.total} QAR`,
     html,
