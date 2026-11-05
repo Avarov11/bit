@@ -105,7 +105,7 @@ async function sendOrderEmail(order: {
       </div>` : ""}
 
       <div style="text-align:center;margin-top:24px">
-        <a href="${process.env.NEXT_PUBLIC_ADMIN_URL ?? "https://admin.biteez.com"}/dashboard/orders"
+        <a href="${process.env.NEXT_PUBLIC_ADMIN_URL ?? "https://biteezadmin.vercel.app"}/dashboard/orders"
           style="display:inline-block;background:linear-gradient(90deg,#800020,#c0416a);color:#fff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:14px">
           View in Dashboard →
         </a>
