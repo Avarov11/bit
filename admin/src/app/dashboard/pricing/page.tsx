@@ -3,6 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Save, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 
+const TOPPING_PRESETS = [
+  { value: "Writing",      label: "Writing" },
+  { value: "Sticker",      label: "Sticker" },
+  { value: "Image Upload", label: "Image Upload" },
+  { value: "Candles",      label: "Candles" },
+  { value: "Balloons",     label: "Balloons" },
+  { value: "Cards",        label: "Cards" },
+];
+
+const EXTRAS_PRESETS = [
+  { value: "Candles",  label: "🕯️ Candles" },
+  { value: "Balloons", label: "🎈 Balloons" },
+  { value: "Cards",    label: "🎴 Cards" },
+];
+
 interface PricingRow {
   key: string;
   label: string;
@@ -33,6 +48,16 @@ export default function PricingPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newItem, setNewItem] = useState({ label: "", price: "", section: "custom" });
   const [adding,  setAdding]  = useState(false);
+  const [shapes,  setShapes]  = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/shapes")
+      .then(r => r.json())
+      .then((data: { shape: string; label: string }[]) => {
+        if (Array.isArray(data)) setShapes(data.map(s => ({ id: s.shape, label: s.label })));
+      })
+      .catch(() => {});
+  }, []);
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
@@ -160,63 +185,90 @@ export default function PricingPage() {
       </div>
 
       {/* Add new item form */}
-      {showAdd && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className="text-sm font-bold text-gray-700">New pricing item</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Label</label>
-              <input
-                type="text"
-                value={newItem.label}
-                onChange={e => setNewItem(p => ({ ...p, label: e.target.value }))}
-                placeholder="e.g. Flowers"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
-              />
+      {showAdd && (() => {
+        const presets =
+          newItem.section === "shapes"   ? shapes.map(s => ({ value: s.label, label: s.label })) :
+          newItem.section === "toppings" ? TOPPING_PRESETS :
+          newItem.section === "extras"   ? EXTRAS_PRESETS  : null;
+
+        return (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <h2 className="text-sm font-bold text-gray-700">New pricing item</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Group */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Group</label>
+                <select
+                  value={newItem.section}
+                  onChange={e => setNewItem(p => ({ ...p, section: e.target.value, label: "" }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
+                >
+                  {SECTION_ORDER.map(s => (
+                    <option key={s} value={s}>{getSection(s).emoji} {getSection(s).label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Item picker or free-text label */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">
+                  {presets ? "Item" : "Label"}
+                </label>
+                {presets ? (
+                  <select
+                    value={newItem.label}
+                    onChange={e => setNewItem(p => ({ ...p, label: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
+                  >
+                    <option value="">— Select —</option>
+                    {presets.map(p => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={newItem.label}
+                    onChange={e => setNewItem(p => ({ ...p, label: e.target.value }))}
+                    placeholder="e.g. Custom add-on"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
+                  />
+                )}
+              </div>
+
+              {/* Price */}
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Price (QAR)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={newItem.price}
+                  onChange={e => setNewItem(p => ({ ...p, price: e.target.value }))}
+                  placeholder="0"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Price (QAR)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                value={newItem.price}
-                onChange={e => setNewItem(p => ({ ...p, price: e.target.value }))}
-                placeholder="0"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">Group</label>
-              <select
-                value={newItem.section}
-                onChange={e => setNewItem(p => ({ ...p, section: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#800020]/20"
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={addItem}
+                disabled={adding}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+                style={{ background: "#800020" }}
               >
-                {SECTION_ORDER.map(s => (
-                  <option key={s} value={s}>{getSection(s).emoji} {getSection(s).label}</option>
-                ))}
-              </select>
+                {adding ? "Adding…" : "Add"}
+              </button>
+              <button
+                onClick={() => { setShowAdd(false); setNewItem({ label: "", price: "", section: "custom" }); }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={addItem}
-              disabled={adding}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
-              style={{ background: "#800020" }}
-            >
-              {adding ? "Adding…" : "Add"}
-            </button>
-            <button
-              onClick={() => { setShowAdd(false); setNewItem({ label: "", price: "", section: "custom" }); }}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Sections */}
       {SECTION_ORDER.map(sectionKey => {
