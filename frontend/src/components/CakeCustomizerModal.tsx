@@ -693,6 +693,16 @@ export default function CakeCustomizerModal({
       [key]: p[key].map(i => i.url===url ? {...i, qty: Math.max(0, i.qty+delta)} : i).filter(i => i.qty > 0),
     }));
 
+  const clearOtherExtras = (keepKey: string) => {
+    setCustSel(p => ({
+      ...p,
+      candles:   keepKey === "candles"  ? p.candles  : [],
+      balloons:  keepKey === "balloons" ? p.balloons : [],
+      cards:     keepKey === "cards"    ? p.cards    : [],
+      dynExtras: Object.fromEntries(Object.entries(p.dynExtras).filter(([k]) => k === keepKey)),
+    }));
+  };
+
   const addDynExtra = (key: string, url: string) =>
     setCustSel(p => {
       const list = p.dynExtras[key] ?? [];
@@ -722,7 +732,7 @@ export default function CakeCustomizerModal({
           <div className="grid grid-cols-3 gap-3">
             {/* Candles */}
             {isExtraShown("candles") && <button
-              onClick={() => { setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); }}
+              onClick={() => { if (!showCandlePicker) clearOtherExtras("candles"); setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); setShowDynPicker(null); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                 (custSel.candles.length || showCandlePicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -746,7 +756,7 @@ export default function CakeCustomizerModal({
 
             {/* Balloons */}
             {isExtraShown("balloons") && <button
-              onClick={() => { setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); }}
+              onClick={() => { if (!showBalloonPicker) clearOtherExtras("balloons"); setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); setShowDynPicker(null); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                 (custSel.balloons.length || showBalloonPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -775,7 +785,7 @@ export default function CakeCustomizerModal({
                 const sel = custSel.dynExtras[t.key] ?? [];
                 return (
                   <button key={t.key}
-                    onClick={() => { setShowDynPicker(p => p === t.key ? null : t.key); setShowCandlePicker(false); setShowBalloonPicker(false); setShowCardPicker(false); }}
+                    onClick={() => { if (showDynPicker !== t.key) clearOtherExtras(t.key); setShowDynPicker(p => p === t.key ? null : t.key); setShowCandlePicker(false); setShowBalloonPicker(false); setShowCardPicker(false); }}
                     className={cn(
                       "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                       (sel.length || showDynPicker === t.key) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
@@ -802,7 +812,7 @@ export default function CakeCustomizerModal({
 
             {/* Cards */}
             {isExtraShown("cards") && <button
-              onClick={() => { setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); }}
+              onClick={() => { if (!showCardPicker) clearOtherExtras("cards"); setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); setShowDynPicker(null); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
                 (custSel.cards.length || showCardPicker) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
