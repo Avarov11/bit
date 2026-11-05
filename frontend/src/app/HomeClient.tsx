@@ -106,7 +106,26 @@ function ProductCard({
   );
 }
 
-export default function HomeClient({ initialSlides }: { initialSlides: SlideRow[] }) {
+// Map a DB row to its matching HERO_SLIDES entry by filename (e.g. "slide3.jpeg" → index 2),
+// falling back to position index so existing slides without a numbered name still work.
+function heroBase(desktopUrl: string | null, fallbackIndex: number, heroSlides: typeof HERO_SLIDES) {
+  if (desktopUrl) {
+    const m = desktopUrl.match(/slide(\d+)/i);
+    if (m) {
+      const idx = parseInt(m[1], 10) - 1;
+      if (idx >= 0 && idx < heroSlides.length) return heroSlides[idx];
+    }
+  }
+  return heroSlides[fallbackIndex] ?? heroSlides[0];
+}
+
+export default function HomeClient({
+  initialSlides,
+  initialProducts,
+}: {
+  initialSlides: SlideRow[];
+  initialProducts: DbProduct[];
+}) {
   const { t } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
 
@@ -191,12 +210,12 @@ export default function HomeClient({ initialSlides }: { initialSlides: SlideRow[
     },
   ];
 
-  // Initialize with SSR-fetched data — no flash of wrong order on first render
-  const [slides, setSlides] = useState<SlideRow[]>(initialSlides);
-  const [products, setProducts]       = useState<DbProduct[]>([]);
-  const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
-  const [heroSlide, setHeroSlide]     = useState(0);
-  const [prevSlide,  setPrevSlide]    = useState<number | null>(null);
+  const [slides]                        = useState<SlideRow[]>(initialSlides);
+  const [products, setProducts]         = useState<DbProduct[]>(initialProducts);
+  const [addedIds, setAddedIds]         = useState<Set<string>>(new Set());
+  const [heroSlide, setHeroSlide]       = useState(0);
+  const [prevSlide,  setPrevSlide]      = useState<number | null>(null);
+  const [custProduct, setCustProduct]   = useState<DbProduct | null>(null);
   const touchStartX = useRef(0);
 
   const goToSlide = (next: number | ((s: number) => number)) => {
@@ -208,21 +227,28 @@ export default function HomeClient({ initialSlides }: { initialSlides: SlideRow[
       return n;
     });
   };
-  const [custProduct, setCustProduct] = useState<DbProduct | null>(null);
 
-  useEffect(() => {
-    fetch("/api/slideshow")
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length) setSlides(data); })
-      .catch(() => {});
-  }, []);
-
+  // Revalidate products client-side (keeps data fresh if user stays on page)
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data)) setProducts(data.slice(0, 8)); })
       .catch(() => {});
   }, []);
+
+  // Auto-advance: 6-second timer resets whenever heroSlide or slide count changes
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = setTimeout(() => {
+      setHeroSlide(cur => {
+        const next = (cur + 1) % slides.length;
+        setPrevSlide(cur);
+        setTimeout(() => setPrevSlide(null), 1200);
+        return next;
+      });
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [heroSlide, slides.length]);
 
   const handleAdd = (p: DbProduct) => {
     addItem({
@@ -243,10 +269,11 @@ export default function HomeClient({ initialSlides }: { initialSlides: SlideRow[
     }, 1500);
   };
 
-  // Merge DB data into HERO_SLIDES; DB text fields override hardcoded ones when set
+  // Merge DB data into HERO_SLIDES; match each row to its base by filename (not position)
+  // so reordering slides doesn't swap tags/stats/steps content between slides.
   const activeSlides = slides.length > 0
     ? slides.map((s, i) => {
-        const base = HERO_SLIDES[i] ?? { label: `Slide ${i + 1}`, headline: ["", ""], sub: "", tags: null, stats: null, steps: null, btn: "Order Now", href: "/menu" };
+        const base = heroBase(s.desktop_url, i, HERO_SLIDES);
         return {
           ...base,
           image:       s.desktop_url ?? base.image ?? "/slide1.jpeg",
