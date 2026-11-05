@@ -18,7 +18,7 @@ interface Toast {
 function playDing() {
   try {
     const ctx = new AudioContext();
-    const times = [0, 0.18, 0.36];
+    const times = [0, 0.55, 1.1];
     const freqs = [880, 1108, 1320];
     times.forEach((t, i) => {
       const osc  = ctx.createOscillator();
@@ -27,12 +27,12 @@ function playDing() {
       gain.connect(ctx.destination);
       osc.type = "sine";
       osc.frequency.value = freqs[i];
-      gain.gain.setValueAtTime(0.25, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.55);
+      gain.gain.setValueAtTime(0.28, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.9);
       osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.6);
+      osc.stop(ctx.currentTime + t + 1.0);
     });
-    setTimeout(() => ctx.close(), 2000);
+    setTimeout(() => ctx.close(), 3000);
   } catch {}
 }
 
