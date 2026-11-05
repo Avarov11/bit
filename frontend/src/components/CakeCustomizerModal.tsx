@@ -97,15 +97,16 @@ interface CustSel {
   toppingText: string;
   stickerUrl: string | null;
   imageFile: File | null;
-  candles:  ExtraItem[];
-  balloons: ExtraItem[];
-  cards:    ExtraItem[];
+  candles:   ExtraItem[];
+  balloons:  ExtraItem[];
+  cards:     ExtraItem[];
+  dynExtras: Record<string, ExtraItem[]>;
 }
 
 const EMPTY_SEL: CustSel = {
   shape: "", flavorType: "", flavor: "", colour: "", cakeColor: "",
   sprinkles: "", topping: "", toppingText: "", stickerUrl: null, imageFile: null,
-  candles: [], balloons: [], cards: [],
+  candles: [], balloons: [], cards: [], dynExtras: {},
 };
 
 // ─── Sprinkle overlay ────────────────────────────────────────────────────────
@@ -385,6 +386,9 @@ export default function CakeCustomizerModal({
   const [cards,              setCards]              = useState<{ name: string; url: string }[]>([]);
   const [showCardPicker,     setShowCardPicker]     = useState(false);
   const [activeExtraKeys,    setActiveExtraKeys]    = useState<Set<string>>(new Set(["candles","balloons","cards"]));
+  const [extraTypesList,     setExtraTypesList]     = useState<{ key: string; label: string; emoji: string }[]>([]);
+  const [dynExtraImages,     setDynExtraImages]     = useState<Record<string, { name: string; url: string }[]>>({});
+  const [showDynPicker,      setShowDynPicker]      = useState<string | null>(null);
   const [rawPricing,        setRawPricing]        = useState<Record<string, number>>({});
   const imageInputRef                             = useRef<HTMLInputElement>(null);
 
@@ -448,7 +452,11 @@ export default function CakeCustomizerModal({
   useEffect(() => {
     fetch("/api/extras-types")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setActiveExtraKeys(new Set(data.map((t: { key: string }) => t.key))); })
+      .then((data: { key: string; label: string; emoji: string }[]) => {
+        if (!Array.isArray(data)) return;
+        setActiveExtraKeys(new Set(data.map((t) => t.key)));
+        setExtraTypesList(data);
+      })
       .catch(() => {});
   }, []);
 
@@ -472,6 +480,18 @@ export default function CakeCustomizerModal({
       .then((data) => { if (Array.isArray(data)) setCards(data); })
       .catch(() => {});
   }, []);
+
+  const STANDARD_EXTRAS = new Set(["candles", "balloons", "cards"]);
+  useEffect(() => {
+    extraTypesList
+      .filter(t => !STANDARD_EXTRAS.has(t.key))
+      .forEach(t => {
+        fetch(`/api/extras/${t.key}`)
+          .then(r => r.json())
+          .then((data) => { if (Array.isArray(data)) setDynExtraImages(prev => ({ ...prev, [t.key]: data })); })
+          .catch(() => {});
+      });
+  }, [extraTypesList]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch("/api/customizer-pricing")
@@ -507,7 +527,11 @@ export default function CakeCustomizerModal({
                   : custSel.topping === "image"   ? ADDON_PRICES.image : 0;
     const extras  = custSel.candles.reduce( (s, i) => s + i.qty * ADDON_PRICES.candles,  0)
                   + custSel.balloons.reduce((s, i) => s + i.qty * ADDON_PRICES.balloons, 0)
-                  + custSel.cards.reduce(  (s, i) => s + i.qty * ADDON_PRICES.card,      0);
+                  + custSel.cards.reduce(  (s, i) => s + i.qty * ADDON_PRICES.card,      0)
+                  + Object.entries(custSel.dynExtras).reduce((total, [key, items]) => {
+                      const price = rawPricing[`addon_${key}`] ?? 25;
+                      return total + items.reduce((s, i) => s + i.qty * price, 0);
+                    }, 0);
     return base + spr + topping + extras;
   };
 
@@ -582,6 +606,12 @@ export default function CakeCustomizerModal({
     if (custSel.candles.length)  toppingsList.push(`Candles ×${custSel.candles.reduce( (s,i)=>s+i.qty,0)}`);
     if (custSel.balloons.length) toppingsList.push(`Balloons ×${custSel.balloons.reduce((s,i)=>s+i.qty,0)}`);
     if (custSel.cards.length)    toppingsList.push(`Card ×${custSel.cards.reduce(   (s,i)=>s+i.qty,0)}`);
+    Object.entries(custSel.dynExtras).forEach(([key, items]) => {
+      if (items.length) {
+        const typeDef = extraTypesList.find(t => t.key === key);
+        toppingsList.push(`${typeDef?.label ?? key} ×${items.reduce((s,i)=>s+i.qty,0)}`);
+      }
+    });
 
     const stickerUrl = custSel.topping === "sticker" ? custSel.stickerUrl ?? undefined : undefined;
     let imageUrl:   string | undefined;
@@ -609,6 +639,7 @@ export default function CakeCustomizerModal({
         candles:    custSel.candles.length  ? custSel.candles  : undefined,
         balloons:   custSel.balloons.length ? custSel.balloons : undefined,
         cards:      custSel.cards.length    ? custSel.cards    : undefined,
+        dynExtras:  Object.keys(custSel.dynExtras).length ? custSel.dynExtras : undefined,
       },
     });
   };
@@ -660,6 +691,26 @@ export default function CakeCustomizerModal({
     setCustSel(p => ({
       ...p,
       [key]: p[key].map(i => i.url===url ? {...i, qty: Math.max(0, i.qty+delta)} : i).filter(i => i.qty > 0),
+    }));
+
+  const addDynExtra = (key: string, url: string) =>
+    setCustSel(p => {
+      const list = p.dynExtras[key] ?? [];
+      const updated = list.find(i => i.url === url)
+        ? list.map(i => i.url === url ? { ...i, qty: i.qty + 1 } : i)
+        : [...list, { url, qty: 1 }];
+      return { ...p, dynExtras: { ...p.dynExtras, [key]: updated } };
+    });
+
+  const changeDynExtraQty = (key: string, url: string, delta: number) =>
+    setCustSel(p => ({
+      ...p,
+      dynExtras: {
+        ...p.dynExtras,
+        [key]: (p.dynExtras[key] ?? [])
+          .map(i => i.url === url ? { ...i, qty: Math.max(0, i.qty + delta) } : i)
+          .filter(i => i.qty > 0),
+      },
     }));
 
   const renderStep = () => {
@@ -716,6 +767,38 @@ export default function CakeCustomizerModal({
                 </p>
               </div>
             </button>}
+
+            {/* Dynamic extras (custom types from Extras Library) */}
+            {extraTypesList
+              .filter(t => !STANDARD_EXTRAS.has(t.key) && isExtraShown(t.key))
+              .map(t => {
+                const sel = custSel.dynExtras[t.key] ?? [];
+                return (
+                  <button key={t.key}
+                    onClick={() => { setShowDynPicker(p => p === t.key ? null : t.key); setShowCandlePicker(false); setShowBalloonPicker(false); setShowCardPicker(false); }}
+                    className={cn(
+                      "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
+                      (sel.length || showDynPicker === t.key) ? "ring-2 ring-[#800020] shadow-warm-md" : "hover:shadow-warm-md"
+                    )}
+                  >
+                    {sel.length > 0 && (
+                      <span className="absolute top-2 right-2 z-10 bg-[#800020] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+                        {sel.reduce((s,i)=>s+i.qty,0)}
+                      </span>
+                    )}
+                    <div className="bg-[#F5D0D8] flex items-center justify-center py-5 text-3xl">
+                      {t.emoji}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="font-playfair font-bold text-[#2D000A] text-xs">{t.label}</p>
+                      <p className="text-[#A05068] text-[10px] mt-0.5">
+                        {sel.length ? `${sel.length} design${sel.length>1?"s":""}` : `+QAR ${rawPricing[`addon_${t.key}`] ?? 25} each`}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })
+            }
 
             {/* Cards */}
             {isExtraShown("cards") && <button
@@ -883,7 +966,60 @@ export default function CakeCustomizerModal({
             </div>
           )}
 
-          {!custSel.candles.length && !custSel.balloons.length && !custSel.cards.length && (
+          {/* Dynamic extra pickers */}
+          {extraTypesList
+            .filter(t => !STANDARD_EXTRAS.has(t.key))
+            .map(t => {
+              if (showDynPicker !== t.key) return null;
+              const images = dynExtraImages[t.key] ?? [];
+              const sel = custSel.dynExtras[t.key] ?? [];
+              return (
+                <div key={t.key} className="mt-4 bg-white rounded-2xl p-4 shadow-warm-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-[#A05068] uppercase tracking-wider">{images.length} Designs</p>
+                    <button onClick={() => setShowDynPicker(null)} className="text-[11px] font-bold text-[#800020]/50 hover:text-[#800020] transition-colors">Done</button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {images.map((img) => {
+                      const item = sel.find(i => i.url === img.url);
+                      return (
+                        <div key={img.url} className="flex flex-col gap-1">
+                          <button
+                            onClick={() => addDynExtra(t.key, img.url)}
+                            className={cn(
+                              "relative rounded-xl overflow-hidden border-2 transition-all duration-200 active:scale-95",
+                              item ? "border-[#800020]" : "border-transparent hover:border-[#F5D0D8]"
+                            )}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={img.url} alt={img.name} className="w-full aspect-square object-cover" />
+                            {item && (
+                              <span className="absolute top-1 right-1 bg-[#800020] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">{item.qty}</span>
+                            )}
+                          </button>
+                          {item && (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button onClick={() => changeDynExtraQty(t.key, img.url, -1)} className="w-6 h-6 rounded-full bg-[#F5D0D8] text-[#800020] font-bold text-sm flex items-center justify-center leading-none">−</button>
+                              <span className="text-xs font-bold text-[#2D000A] min-w-[16px] text-center">{item.qty}</span>
+                              <button onClick={() => changeDynExtraQty(t.key, img.url, +1)} className="w-6 h-6 rounded-full bg-[#800020] text-white font-bold text-sm flex items-center justify-center leading-none">+</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {sel.length > 0 && (
+                    <button onClick={() => setCustSel(p => ({ ...p, dynExtras: { ...p.dynExtras, [t.key]: [] } }))} className="text-[11px] text-[#800020]/60 hover:text-[#800020] mt-3 transition-colors w-full text-center">
+                      Clear all {t.label.toLowerCase()}
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          }
+
+          {!custSel.candles.length && !custSel.balloons.length && !custSel.cards.length &&
+           !Object.values(custSel.dynExtras).some(arr => arr.length) && (
             <p className="text-center text-[#A05068]/60 text-xs mt-5">Tap to select, or skip to continue</p>
           )}
         </div>
