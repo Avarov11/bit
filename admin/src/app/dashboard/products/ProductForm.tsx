@@ -25,11 +25,6 @@ const ALL_TOPPINGS = [
   { id: "image",   label: "Image Upload", icon: "📷" },
 ];
 
-const ALL_EXTRAS = [
-  { id: "candles",  label: "Candles",  icon: "🕯️" },
-  { id: "balloons", label: "Balloons", icon: "🎈" },
-  { id: "card",     label: "Cards",    icon: "🎴" },
-];
 
 const ALL_SAUCES = [
   { id: "brown", label: "Milk",     hex: "#8B5E3C" },
@@ -67,6 +62,7 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [uploadError, setUploadError] = useState("");
   const [allCats, setAllCats]     = useState<CatData[]>([]);
   const [allShapes, setAllShapes] = useState<{ id: string; label: string; icon: string }[]>(BUILTIN_SHAPES);
+  const [extraTypes, setExtraTypes] = useState<{ key: string; label: string; emoji: string; active: boolean }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,6 +80,12 @@ export default function ProductForm({ product }: { product?: Product }) {
             icon:  s.shape === "cake" ? "🎂" : s.shape === "heart" ? "❤️" : s.shape === "square" ? "🟫" : "✦",
           })));
         }
+      })
+      .catch(() => {});
+    fetch("/api/extras-types", { cache: "no-store" })
+      .then(r => r.json())
+      .then((data: { key: string; label: string; emoji: string; active: boolean }[]) => {
+        if (Array.isArray(data)) setExtraTypes(data);
       })
       .catch(() => {});
   }, []);
@@ -413,38 +415,33 @@ export default function ProductForm({ product }: { product?: Product }) {
         </div>
       </Field>
 
-      {/* Extras selection */}
+      {/* Extras — global library, not per-product */}
       <Field label="Available Extras">
-        <p className="text-xs text-gray-400 mb-3">Choose which extras customers can add (candles, balloons, cards).</p>
+        <p className="text-xs text-gray-400 mb-3">
+          Extras (candles, balloons, cards, etc.) are shown globally for all products.
+          Manage which extras appear using the{" "}
+          <a href="/dashboard/extras" className="text-[#800020] underline font-medium">Extras Library</a>.
+        </p>
         <div className="grid grid-cols-3 gap-3">
-          {ALL_EXTRAS.map(({ id, label, icon }) => {
-            const checked = (form.allowed_toppings ?? []).includes(id);
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  const next = checked
-                    ? (form.allowed_toppings ?? []).filter(t => t !== id)
-                    : [...(form.allowed_toppings ?? []), id];
-                  set("allowed_toppings", next);
-                }}
-                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
-                  checked ? "border-[#800020] bg-[#800020]/5" : "border-gray-200 bg-gray-50 opacity-50"
-                }`}
-              >
-                {checked && (
-                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                )}
-                <span className="text-2xl">{icon}</span>
-                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
-              </button>
-            );
-          })}
+          {extraTypes.length === 0 && (
+            <p className="col-span-3 text-xs text-gray-400 italic">Loading extras…</p>
+          )}
+          {extraTypes.map(({ key, label, emoji, active }) => (
+            <div
+              key={key}
+              className={`flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 ${
+                active ? "border-green-400 bg-green-50" : "border-gray-200 bg-gray-50 opacity-50"
+              }`}
+            >
+              <span className="text-2xl">{emoji}</span>
+              <span className={`text-xs font-semibold ${active ? "text-green-700" : "text-gray-400"}`}>{label}</span>
+              <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
+                active ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
+              }`}>
+                {active ? "Visible" : "Hidden"}
+              </span>
+            </div>
+          ))}
         </div>
       </Field>
 
