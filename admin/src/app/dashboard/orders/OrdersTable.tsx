@@ -450,6 +450,24 @@ function ItemDetail({ item, orderId, itemIndex, onExtrasUpdated }: {
 
 // ─── Uploaded Media ───────────────────────────────────────────────────────────
 
+function printImage(url: string) {
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Customer Photo</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}
+  img{max-width:100%;max-height:100vh;object-fit:contain;display:block}
+  @media print{body{min-height:unset}img{max-height:100%}}
+</style></head>
+<body><img src="${url}" /></body></html>`;
+  const w = window.open("", "_blank", "width=900,height=900");
+  if (!w) return;
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+}
+
 function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; imageUrl: string | null }) {
   if (!stickerUrl && !imageUrl) return null;
   return (
@@ -459,6 +477,15 @@ function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; im
           <div className="flex items-center justify-between px-3 py-1.5 bg-blue-100/60">
             <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Customer photo — print this</span>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => printImage(imageUrl)}
+                className="text-[10px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z" />
+                </svg>
+                Print image
+              </button>
               <a
                 href={imageUrl}
                 download
