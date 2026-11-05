@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import OrdersTable from "./OrdersTable";
 import type { Order } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 function Skeleton() {
   return (
@@ -70,6 +71,17 @@ export default function OrdersPage() {
   useEffect(() => {
     const id = setInterval(() => load(true), 30_000);
     return () => clearInterval(id);
+  }, [load]);
+
+  // instant refresh when a new order is inserted via Supabase Realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel("orders-page-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => {
+        load(true);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [load]);
 
   return (
