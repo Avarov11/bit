@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, EyeOff } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import NewOrderAlert from "@/components/NewOrderAlert";
 
 function ReadOnlyBanner() {
   const { isReadOnly, username } = useAuth();
@@ -68,6 +69,8 @@ function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      <NewOrderAlert />
     </div>
   );
 }
