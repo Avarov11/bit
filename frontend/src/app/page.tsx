@@ -191,6 +191,7 @@ export default function HomePage() {
       href: "/menu?category=Gender+Reveal",
     },
   ];
+  const [slidesLoaded, setSlidesLoaded] = useState(false);
   const [slides, setSlides] = useState<{
     id: string;
     desktop_url: string | null;
@@ -224,7 +225,8 @@ export default function HomePage() {
     fetch("/api/slideshow")
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length) setSlides(data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setSlidesLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -288,7 +290,8 @@ export default function HomePage() {
           }
         }}
       >
-        {/* Ken Burns slides */}
+        {/* Ken Burns slides — hidden until DB order loads to avoid flash of wrong order */}
+        <div className={`absolute inset-0 transition-opacity duration-300 ${slidesLoaded ? "opacity-100" : "opacity-0"}`}>
         {activeSlides.map((slide, i) => (
           <div
             key={i}
@@ -501,6 +504,7 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+        </div>{/* end slidesLoaded wrapper */}
       </section>
 
       <style jsx global>{`
