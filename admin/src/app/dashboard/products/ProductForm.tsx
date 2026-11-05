@@ -20,12 +20,15 @@ const ALL_FLAVORS = [
 ];
 
 const ALL_TOPPINGS = [
-  { id: "write",    label: "Writing",      icon: "✍️" },
-  { id: "sticker",  label: "Sticker",      icon: "🎨" },
-  { id: "image",    label: "Image Upload", icon: "📷" },
-  { id: "candles",  label: "Candles",      icon: "🕯️" },
-  { id: "balloons", label: "Balloons",     icon: "🎈" },
-  { id: "card",     label: "Cards",        icon: "🎴" },
+  { id: "write",   label: "Writing",      icon: "✍️" },
+  { id: "sticker", label: "Sticker",      icon: "🎨" },
+  { id: "image",   label: "Image Upload", icon: "📷" },
+];
+
+const ALL_EXTRAS = [
+  { id: "candles",  label: "Candles",  icon: "🕯️" },
+  { id: "balloons", label: "Balloons", icon: "🎈" },
+  { id: "card",     label: "Cards",    icon: "🎴" },
 ];
 
 const ALL_SAUCES = [
@@ -380,6 +383,41 @@ export default function ProductForm({ product }: { product?: Product }) {
         <p className="text-xs text-gray-400 mb-3">Choose which topping options customers can add.</p>
         <div className="grid grid-cols-3 gap-3">
           {ALL_TOPPINGS.map(({ id, label, icon }) => {
+            const checked = (form.allowed_toppings ?? []).includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? (form.allowed_toppings ?? []).filter(t => t !== id)
+                    : [...(form.allowed_toppings ?? []), id];
+                  set("allowed_toppings", next);
+                }}
+                className={`relative flex flex-col items-center gap-2 rounded-xl border-2 py-4 px-3 transition-all duration-150 cursor-pointer ${
+                  checked ? "border-[#800020] bg-[#800020]/5" : "border-gray-200 bg-gray-50 opacity-50"
+                }`}
+              >
+                {checked && (
+                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#800020] flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-2xl">{icon}</span>
+                <span className={`text-xs font-semibold ${checked ? "text-[#800020]" : "text-gray-400"}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Field>
+
+      {/* Extras selection */}
+      <Field label="Available Extras">
+        <p className="text-xs text-gray-400 mb-3">Choose which extras customers can add (candles, balloons, cards).</p>
+        <div className="grid grid-cols-3 gap-3">
+          {ALL_EXTRAS.map(({ id, label, icon }) => {
             const checked = (form.allowed_toppings ?? []).includes(id);
             return (
               <button
