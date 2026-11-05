@@ -504,6 +504,91 @@ function UploadedMedia({ stickerUrl, imageUrl }: { stickerUrl: string | null; im
 
 // ─── Order Card ───────────────────────────────────────────────────────────────
 
+function printOrder(order: Order) {
+  const items: OrderItem[] = Array.isArray(order.items) ? order.items : [];
+  const statusLabel = STATUS_META[order.status]?.label ?? order.status;
+
+  const itemRows = items.map(item => {
+    const c = item.customization;
+    const details = [c?.shape, c?.flavor, c?.color, ...(c?.toppings ?? [])].filter(Boolean).join(", ");
+    return `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${item.productName}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;color:#555;font-size:11px">${details || "—"}</td>
+        ${c?.message ? `<td style="padding:6px 8px;border-bottom:1px solid #eee;font-style:italic;color:#555;font-size:11px">"${c.message}"</td>` : `<td style="padding:6px 8px;border-bottom:1px solid #eee">—</td>`}
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600">${item.subtotal} QAR</td>
+      </tr>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Order #${order.order_number}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:32px;max-width:720px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{color:#666;font-size:12px;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  .box{background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;padding:14px}
+  .box h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:8px}
+  .box p{margin-bottom:3px;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{background:#f3f3f3;padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#666}
+  .total-row{font-weight:700;font-size:14px}
+  .status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#f0fdf4;color:#15803d}
+  .footer{margin-top:24px;padding-top:16px;border-top:1px solid #eee;color:#888;font-size:11px;text-align:center}
+  @media print{body{padding:16px}}
+</style>
+</head><body>
+<h1>Order #${order.order_number}</h1>
+<p class="sub">${new Date(order.created_at).toLocaleString()} &nbsp;·&nbsp; <span class="status">${statusLabel}</span></p>
+
+<div class="grid">
+  <div class="box">
+    <h3>Customer</h3>
+    <p><strong>${order.customer_name}</strong></p>
+    <p>${order.customer_phone}</p>
+    ${order.customer_email ? `<p>${order.customer_email}</p>` : ""}
+  </div>
+  <div class="box">
+    <h3>${order.delivery_method === "delivery" ? "Delivery" : "Pickup"}</h3>
+    <p>${order.pickup_date} · ${order.pickup_time}</p>
+    ${order.delivery_method === "delivery" && order.delivery_address ? `<p>${order.delivery_address}</p>` : ""}
+    ${order.delivery_fee > 0 ? `<p>Delivery fee: <strong>${order.delivery_fee} QAR</strong></p>` : ""}
+  </div>
+</div>
+
+<table>
+  <thead><tr>
+    <th>Item</th><th>Qty</th><th>Details</th><th>Message</th><th style="text-align:right">Subtotal</th>
+  </tr></thead>
+  <tbody>${itemRows}</tbody>
+  <tfoot>
+    ${order.delivery_fee > 0 ? `<tr><td colspan="4" style="padding:6px 8px;text-align:right;color:#555">Delivery fee</td><td style="padding:6px 8px;text-align:right">${order.delivery_fee} QAR</td></tr>` : ""}
+    <tr class="total-row"><td colspan="4" style="padding:8px 8px;text-align:right">Total</td><td style="padding:8px 8px;text-align:right">${order.total} QAR</td></tr>
+  </tfoot>
+</table>
+
+<div class="grid">
+  <div class="box">
+    <h3>Payment</h3>
+    <p>${order.payment_method === "sadad_online" ? "SADAD Online" : order.payment_method === "card" ? "Card" : "Cash"}</p>
+  </div>
+  ${order.notes ? `<div class="box"><h3>Notes</h3><p>${order.notes}</p></div>` : ""}
+</div>
+
+<div class="footer">Biteez · Printed ${new Date().toLocaleString()}</div>
+</body></html>`;
+
+  const w = window.open("", "_blank", "width=800,height=900");
+  if (!w) return;
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 400);
+}
+
 function OrderCard({ order, updating, onChangeStatus, onDelete }: {
   order: Order;
   updating: boolean;
@@ -623,6 +708,17 @@ function OrderCard({ order, updating, onChangeStatus, onDelete }: {
             <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
               fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Print */}
+          <button
+            onClick={() => printOrder({ ...order, items })}
+            className="p-2 rounded-xl text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+            title="Print order"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z" />
             </svg>
           </button>
 
