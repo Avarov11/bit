@@ -250,7 +250,7 @@ export default function HomeClient({ initialSlides }: { initialSlides: SlideRow[
         return {
           ...base,
           image:       s.desktop_url ?? base.image ?? "/slide1.jpeg",
-          mobileImage: s.mobile_url  ?? base.mobileImage,
+          mobileImage: s.mobile_url  ?? undefined,
           label:       s.label       ?? base.label,
           headline:    [s.headline_1 ?? base.headline[0], s.headline_2 ?? base.headline[1]],
           sub:         s.subtitle    ?? base.sub,

@@ -151,7 +151,20 @@ export default function NewOrderAlert() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  if (toasts.length === 0) return null;
+  function fireTest() {
+    playDing();
+    const mock: Toast = {
+      id: ++counter.current,
+      order: {
+        id: "test-" + Date.now(),
+        order_number: "TEST-001",
+        customer_name: "Test Customer",
+        total: 160,
+        delivery_method: "pickup",
+      },
+    };
+    setToasts(prev => [...prev, mock]);
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
@@ -163,6 +176,18 @@ export default function NewOrderAlert() {
           />
         </div>
       ))}
+      {/* Test button */}
+      <button
+        onClick={fireTest}
+        className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-[#800020] hover:border-[#800020]/30 transition-all"
+        title="Test order notification"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        Test alert
+      </button>
     </div>
   );
 }
