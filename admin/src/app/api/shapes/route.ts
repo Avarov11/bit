@@ -3,6 +3,15 @@ import { getAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  const { data, error } = await getAdmin()
+    .from("shape_configs")
+    .select("shape, label")
+    .order("sort_order", { ascending: true });
+  if (error) return NextResponse.json([], { status: 500 });
+  return NextResponse.json(data ?? []);
+}
+
 export async function POST(req: NextRequest) {
   const { label } = await req.json();
   if (!label?.trim()) return NextResponse.json({ error: "Label is required" }, { status: 400 });
