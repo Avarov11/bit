@@ -20,9 +20,12 @@ const ALL_FLAVORS = [
 ];
 
 const ALL_TOPPINGS = [
-  { id: "write",   label: "Writing",      icon: "✍️" },
-  { id: "sticker", label: "Sticker",      icon: "🎨" },
-  { id: "image",   label: "Image Upload", icon: "📷" },
+  { id: "write",    label: "Writing",      icon: "✍️" },
+  { id: "sticker",  label: "Sticker",      icon: "🎨" },
+  { id: "image",    label: "Image Upload", icon: "📷" },
+  { id: "candles",  label: "Candles",      icon: "🕯️" },
+  { id: "balloons", label: "Balloons",     icon: "🎈" },
+  { id: "card",     label: "Cards",        icon: "🎴" },
 ];
 
 const ALL_SAUCES = [
