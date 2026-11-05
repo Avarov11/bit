@@ -7,7 +7,7 @@ export async function GET() {
   const { data, error } = await getAdmin()
     .from("shape_configs")
     .select("shape, label")
-    .order("sort_order", { ascending: true });
+    .order("shape", { ascending: true });
   if (error) return NextResponse.json([], { status: 500 });
   return NextResponse.json(data ?? []);
 }

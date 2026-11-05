@@ -7,15 +7,6 @@ const TOPPING_PRESETS = [
   { value: "Writing",      label: "Writing" },
   { value: "Sticker",      label: "Sticker" },
   { value: "Image Upload", label: "Image Upload" },
-  { value: "Candles",      label: "Candles" },
-  { value: "Balloons",     label: "Balloons" },
-  { value: "Cards",        label: "Cards" },
-];
-
-const EXTRAS_PRESETS = [
-  { value: "Candles",  label: "🕯️ Candles" },
-  { value: "Balloons", label: "🎈 Balloons" },
-  { value: "Cards",    label: "🎴 Cards" },
 ];
 
 interface PricingRow {
@@ -48,13 +39,20 @@ export default function PricingPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newItem, setNewItem] = useState({ label: "", price: "", section: "custom" });
   const [adding,  setAdding]  = useState(false);
-  const [shapes,  setShapes]  = useState<{ id: string; label: string }[]>([]);
+  const [shapes,     setShapes]     = useState<{ id: string; label: string }[]>([]);
+  const [extraTypes, setExtraTypes] = useState<{ key: string; label: string; emoji: string }[]>([]);
 
   useEffect(() => {
     fetch("/api/shapes")
       .then(r => r.json())
       .then((data: { shape: string; label: string }[]) => {
         if (Array.isArray(data)) setShapes(data.map(s => ({ id: s.shape, label: s.label })));
+      })
+      .catch(() => {});
+    fetch("/api/extras-types")
+      .then(r => r.json())
+      .then((data: { key: string; label: string; emoji: string }[]) => {
+        if (Array.isArray(data)) setExtraTypes(data);
       })
       .catch(() => {});
   }, []);
@@ -189,7 +187,8 @@ export default function PricingPage() {
         const presets =
           newItem.section === "shapes"   ? shapes.map(s => ({ value: s.label, label: s.label })) :
           newItem.section === "toppings" ? TOPPING_PRESETS :
-          newItem.section === "extras"   ? EXTRAS_PRESETS  : null;
+          newItem.section === "extras"   ? extraTypes.map(t => ({ value: t.label, label: `${t.emoji} ${t.label}` })) :
+          null;
 
         return (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
