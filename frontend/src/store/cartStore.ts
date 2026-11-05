@@ -21,9 +21,10 @@ export interface CartItem {
     candleUrl?: string;
     balloonUrl?: string;
     cardUrl?: string;
-    candles?:  ExtraItem[];
-    balloons?: ExtraItem[];
-    cards?:    ExtraItem[];
+    candles?:   ExtraItem[];
+    balloons?:  ExtraItem[];
+    cards?:     ExtraItem[];
+    dynExtras?: Record<string, ExtraItem[]>;
   };
 }
 
