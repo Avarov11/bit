@@ -602,7 +602,7 @@ export default function HomePage() {
                 style={{ boxShadow: "0 8px 32px rgba(128,0,32,0.12)" }}
               >
                 <p className="font-playfair text-2xl font-bold text-[#800020] leading-none">
-                  2021
+                  2025
                 </p>
                 <p className="text-[#A05068] text-xs font-semibold mt-0.5">
                   {t("home_story_est")}
