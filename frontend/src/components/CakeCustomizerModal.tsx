@@ -379,6 +379,7 @@ export default function CakeCustomizerModal({
   const [showBalloonPicker,  setShowBalloonPicker]  = useState(false);
   const [cards,              setCards]              = useState<{ name: string; url: string }[]>([]);
   const [showCardPicker,     setShowCardPicker]     = useState(false);
+  const [activeExtraKeys,    setActiveExtraKeys]    = useState<Set<string>>(new Set(["candles","balloons","cards"]));
   const [rawPricing,        setRawPricing]        = useState<Record<string, number>>({});
   const imageInputRef                             = useRef<HTMLInputElement>(null);
 
@@ -438,6 +439,13 @@ export default function CakeCustomizerModal({
       .then((data) => { if (Array.isArray(data)) setStickers(data); })
       .catch(() => {});
   }, [product?.category]);
+
+  useEffect(() => {
+    fetch("/api/extras-types")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setActiveExtraKeys(new Set(data.map((t: { key: string }) => t.key))); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/candles")
@@ -657,7 +665,7 @@ export default function CakeCustomizerModal({
           <p className="text-[#A05068] text-sm mb-6">Add a little something extra — totally optional 🎉</p>
           <div className="grid grid-cols-3 gap-3">
             {/* Candles */}
-            <button
+            {activeExtraKeys.has("candles") && <button
               onClick={() => { setShowCandlePicker((p) => !p); setShowBalloonPicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
@@ -678,10 +686,10 @@ export default function CakeCustomizerModal({
                   {custSel.candles.length ? `${custSel.candles.length} design${custSel.candles.length>1?"s":""}` : `+QAR ${ADDON_PRICES.candles} each`}
                 </p>
               </div>
-            </button>
+            </button>}
 
             {/* Balloons */}
-            <button
+            {activeExtraKeys.has("balloons") && <button
               onClick={() => { setShowBalloonPicker((p) => !p); setShowCandlePicker(false); setShowCardPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
@@ -702,10 +710,10 @@ export default function CakeCustomizerModal({
                   {custSel.balloons.length ? `${custSel.balloons.length} design${custSel.balloons.length>1?"s":""}` : `+QAR ${ADDON_PRICES.balloons} each`}
                 </p>
               </div>
-            </button>
+            </button>}
 
             {/* Cards */}
-            <button
+            {activeExtraKeys.has("cards") && <button
               onClick={() => { setShowCardPicker((p) => !p); setShowCandlePicker(false); setShowBalloonPicker(false); }}
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-white text-center transition-all duration-200 active:scale-[0.97] shadow-warm-sm",
@@ -726,7 +734,7 @@ export default function CakeCustomizerModal({
                   {custSel.cards.length ? `${custSel.cards.length} design${custSel.cards.length>1?"s":""}` : `+QAR ${ADDON_PRICES.card} each`}
                 </p>
               </div>
-            </button>
+            </button>}
           </div>
 
           {/* Candle picker panel */}
