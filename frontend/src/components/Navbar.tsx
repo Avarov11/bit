@@ -167,7 +167,7 @@ export default function Navbar() {
         "md:hidden overflow-hidden transition-all duration-300 ease-in-out",
         mobileOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="bg-white/98 backdrop-blur-2xl border-t border-[rgba(128,0,32,0.06)] px-6 pt-1 pb-6 shadow-[0_12px_40px_rgba(0,0,0,0.10)]">
+        <div className="bg-white backdrop-blur-2xl border-t border-[rgba(128,0,32,0.06)] px-6 pt-1 pb-6 shadow-[0_12px_40px_rgba(0,0,0,0.10)]">
 
           {/* Nav links */}
           <div className="divide-y divide-[rgba(128,0,32,0.05)]">
