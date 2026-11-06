@@ -108,7 +108,7 @@ function ProductCard({
 
 // Map a DB row to its matching HERO_SLIDES entry by filename (e.g. "slide3.jpeg" → index 2),
 // falling back to position index so existing slides without a numbered name still work.
-function heroBase(desktopUrl: string | null, fallbackIndex: number, heroSlides: typeof HERO_SLIDES) {
+function heroBase<T>(desktopUrl: string | null, fallbackIndex: number, heroSlides: T[]): T {
   if (desktopUrl) {
     const m = desktopUrl.match(/slide(\d+)/i);
     if (m) {
