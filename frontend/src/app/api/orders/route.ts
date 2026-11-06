@@ -4,7 +4,7 @@ import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
-const NOTIFY_EMAIL = process.env.ORDER_NOTIFY_EMAIL ?? "youssef.farid13003@gmail.com";
+const NOTIFY_EMAIL = process.env.ORDER_NOTIFY_EMAIL ?? "Biteezqa@gmail.com";
 
 async function sendOrderEmail(order: {
   order_number: string;
