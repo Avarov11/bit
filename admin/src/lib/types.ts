@@ -55,6 +55,8 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   delivery_fee: number;
+  discount_code: string | null;
+  discount_amount: number;
   total: number;
   notes: string | null;
   language: "en" | "ar";

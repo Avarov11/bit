@@ -593,6 +593,7 @@ function printOrder(order: Order) {
   <tbody>${itemRows}</tbody>
   <tfoot>
     ${order.delivery_fee > 0 ? `<tr><td colspan="4" style="padding:6px 8px;text-align:right;color:#555">Delivery fee</td><td style="padding:6px 8px;text-align:right">${order.delivery_fee} QAR</td></tr>` : ""}
+    ${order.discount_code ? `<tr><td colspan="4" style="padding:6px 8px;text-align:right;color:#059669">Discount (${order.discount_code})</td><td style="padding:6px 8px;text-align:right;color:#059669">− ${order.discount_amount} QAR</td></tr>` : ""}
     <tr class="total-row"><td colspan="4" style="padding:8px 8px;text-align:right">Total</td><td style="padding:8px 8px;text-align:right">${order.total} QAR</td></tr>
   </tfoot>
 </table>
@@ -829,6 +830,14 @@ function OrderCard({ order, updating, onChangeStatus, onDelete }: {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400 font-medium">Delivery fee</span>
                 <span className="text-xs font-bold text-gray-700">QAR {order.delivery_fee}</span>
+              </div>
+            )}
+
+            {/* Discount */}
+            {order.discount_code && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-emerald-600 font-medium">Discount ({order.discount_code})</span>
+                <span className="text-xs font-bold text-emerald-600">− QAR {order.discount_amount}</span>
               </div>
             )}
 
