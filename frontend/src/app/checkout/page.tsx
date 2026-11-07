@@ -64,12 +64,16 @@ export default function CheckoutPage() {
     orderDate: "", orderTime: "",
     notes: "",
   });
-  const [errors,       setErrors]       = useState<Record<string, string>>({});
-  const [placing,      setPlacing]      = useState(false);
-  const [slots,        setSlots]        = useState<SlotInfo[]>([]);
-  const [dayFull,      setDayFull]      = useState(false);
-  const [slotsLoading, setSlotsLoading] = useState(false);
-  const [areas,        setAreas]        = useState<DeliveryAreaRow[]>([]);
+  const [errors,          setErrors]          = useState<Record<string, string>>({});
+  const [placing,         setPlacing]         = useState(false);
+  const [slots,           setSlots]           = useState<SlotInfo[]>([]);
+  const [dayFull,         setDayFull]         = useState(false);
+  const [slotsLoading,    setSlotsLoading]    = useState(false);
+  const [areas,           setAreas]           = useState<DeliveryAreaRow[]>([]);
+  const [discountInput,   setDiscountInput]   = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; type: string; value: number; amount: number } | null>(null);
+  const [discountError,   setDiscountError]   = useState("");
+  const [discountLoading, setDiscountLoading] = useState(false);
   const sadadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -122,8 +126,34 @@ export default function CheckoutPage() {
     [form.area, areas]
   );
 
-  const deliveryFee = selectedArea?.fee ?? 0;
-  const total       = subtotal + deliveryFee;
+  const deliveryFee    = selectedArea?.fee ?? 0;
+  const discountAmount = appliedDiscount?.amount ?? 0;
+  const total          = subtotal + deliveryFee - discountAmount;
+
+  async function applyDiscount() {
+    if (!discountInput.trim()) return;
+    setDiscountLoading(true);
+    setDiscountError("");
+    try {
+      const res  = await fetch("/api/validate-discount", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ code: discountInput.trim(), subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDiscountError(data.error ?? "Invalid code");
+        setAppliedDiscount(null);
+      } else {
+        setAppliedDiscount(data);
+        setDiscountError("");
+      }
+    } catch {
+      setDiscountError("Failed to apply code");
+    } finally {
+      setDiscountLoading(false);
+    }
+  }
 
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const maxDate = useMemo(() => {
@@ -185,9 +215,11 @@ export default function CheckoutPage() {
         customization: i.customization,
       })),
       subtotal,
-      delivery_fee: deliveryFee,
+      delivery_fee:    deliveryFee,
+      discount_code:   appliedDiscount?.code ?? null,
+      discount_amount: discountAmount,
       total,
-      notes:   form.notes || null,
+      notes:    form.notes || null,
       language: lang,
     };
 
@@ -501,6 +533,45 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
+                {/* Discount code input */}
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Discount code"
+                      value={discountInput}
+                      onChange={e => { setDiscountInput(e.target.value.toUpperCase()); setDiscountError(""); }}
+                      disabled={!!appliedDiscount}
+                      className="flex-1 px-3 py-2.5 border border-[rgba(128,0,32,0.10)] focus:border-[#800020] rounded-xl text-sm text-[#2D000A] placeholder:text-[#A05068]/50 outline-none font-mono disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                    {appliedDiscount ? (
+                      <button
+                        type="button"
+                        onClick={() => { setAppliedDiscount(null); setDiscountInput(""); }}
+                        className="px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 border border-red-200 hover:bg-red-50 transition-colors shrink-0"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={applyDiscount}
+                        disabled={discountLoading || !discountInput.trim()}
+                        className="px-3 py-2.5 rounded-xl text-xs font-bold text-white shrink-0 transition-all disabled:opacity-40"
+                        style={{ background: "linear-gradient(135deg,#800020,#c0416a)" }}
+                      >
+                        {discountLoading ? "…" : "Apply"}
+                      </button>
+                    )}
+                  </div>
+                  {discountError && <p className="text-red-500 text-[11px] mt-1">{discountError}</p>}
+                  {appliedDiscount && (
+                    <p className="text-emerald-600 text-[11px] mt-1 font-semibold">
+                      ✓ {appliedDiscount.code} applied — {appliedDiscount.type === "fixed" ? `QAR ${appliedDiscount.value}` : `${appliedDiscount.value}%`} off
+                    </p>
+                  )}
+                </div>
+
                 <div className="border-t border-[rgba(128,0,32,0.08)] pt-4 space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
                     <span data-i18n="checkout_subtotal" className="text-[#A05068]">{t("checkout_subtotal")}</span>
@@ -516,6 +587,12 @@ export default function CheckoutPage() {
                       </span>
                     )}
                   </div>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-600 font-semibold">Discount ({appliedDiscount.code})</span>
+                      <span className="font-semibold text-emerald-600">− QAR {discountAmount}</span>
+                    </div>
+                  )}
                   <div className="border-t border-[rgba(128,0,32,0.08)] pt-3 flex justify-between">
                     <span data-i18n="checkout_total" className="font-bold text-[#2D000A]">{t("checkout_total")}</span>
                     <span className="font-playfair font-bold text-[#800020] text-xl">

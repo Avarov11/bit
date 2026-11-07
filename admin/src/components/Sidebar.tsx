@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings, CircleDollarSign, Images, Truck } from "lucide-react";
+import { X, LayoutDashboard, ShoppingBag, Package, LogOut, Layers, Gift, FolderTree, Settings, CircleDollarSign, Images, Truck, Tag } from "lucide-react";
 
 const nav = [
   {
@@ -51,6 +51,12 @@ const nav = [
     label: "Delivery",
     Icon:  Truck,
     desc:  "Time slots & order limits",
+  },
+  {
+    href:  "/dashboard/discounts",
+    label: "Discounts",
+    Icon:  Tag,
+    desc:  "Discount codes for customers",
   },
   {
     href:  "/dashboard/pricing",
